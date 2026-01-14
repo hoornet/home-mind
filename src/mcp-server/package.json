@@ -1,0 +1,37 @@
+{
+  "name": "@librechat-homeassistant/mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server bridging LibreChat to Home Assistant",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "home-assistant",
+    "librechat",
+    "ai"
+  ],
+  "license": "AGPL-3.0",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "undici": "^6.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}
