@@ -1,0 +1,14 @@
+# Docker Compose override for LibreChat with Home Assistant MCP
+# Copy this file to your LibreChat directory as docker-compose.override.yml
+#
+# This mounts:
+# - The MCP server code into the LibreChat container
+# - The librechat.yaml configuration file
+
+services:
+  api:
+    volumes:
+      # Mount MCP server (copy from this repo's src/mcp-server/)
+      - ./mcp-server:/app/mcp-server
+      # Mount LibreChat configuration
+      - ./librechat.yaml:/app/librechat.yaml

@@ -49,16 +49,63 @@ npm run typecheck
 npm run lint
 ```
 
-### Running the MCP Server
+### Running the MCP Server Standalone
 
 The server requires environment variables:
 ```bash
 export HA_URL=https://192.168.88.14:8123
 export HA_TOKEN=<your_long_lived_access_token>
+export HA_SKIP_TLS_VERIFY=true
 npm start
 ```
 
 Or create a `.env` file (copy from `.env.example`).
+
+## Deployment
+
+### Current Deployment
+
+| Service | Host | URL |
+|---------|------|-----|
+| LibreChat | ubuntuserver (192.168.88.12) | http://100.95.208.82:3080/ (Tailscale) |
+| Home Assistant | haos12 (192.168.88.14) | https://192.168.88.14:8123 |
+| MCP Server | Inside LibreChat container | stdio transport |
+
+### LibreChat Deployment
+
+LibreChat runs via Docker Compose on ubuntuserver with our MCP server mounted as a volume:
+
+```bash
+# On ubuntuserver
+cd ~/LibreChat
+
+# Key files:
+# - docker-compose.override.yml  - Mounts MCP server and librechat.yaml
+# - librechat.yaml               - MCP server configuration
+# - mcp-server/                  - Our MCP server code
+
+# Restart after changes
+docker compose down && docker compose up -d
+
+# View logs
+docker logs LibreChat -f
+```
+
+### Updating MCP Server on Deployment
+
+```bash
+# From dev workstation (omarchy)
+cd /home/hoornet/projects/librechat-homeassistant
+
+# Copy updated MCP server to ubuntuserver
+scp -r src/mcp-server ubuntuserver:~/LibreChat/
+
+# Rebuild on ubuntuserver
+ssh ubuntuserver "cd ~/LibreChat && docker run --rm -v ~/LibreChat/mcp-server:/app -w /app node:20 sh -c 'npm install && npm run build'"
+
+# Restart LibreChat
+ssh ubuntuserver "cd ~/LibreChat && docker compose restart api"
+```
 
 ## Development Environment
 

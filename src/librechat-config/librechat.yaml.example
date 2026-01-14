@@ -1,0 +1,22 @@
+# LibreChat configuration for Home Assistant MCP integration
+# Copy this file to your LibreChat directory as librechat.yaml
+# Documentation: https://www.librechat.ai/docs/configuration
+
+version: 1.2.1
+
+mcpServers:
+  homeassistant:
+    type: stdio
+    command: node
+    args:
+      - /app/mcp-server/dist/index.js
+    env:
+      # Home Assistant URL (use HTTPS if your instance requires it)
+      HA_URL: "https://your-homeassistant-instance:8123"
+      # Long-lived access token from HA (Profile > Security > Long-Lived Access Tokens)
+      HA_TOKEN: "your_long_lived_access_token_here"
+      # Set to "true" if using self-signed certificates
+      HA_SKIP_TLS_VERIFY: "true"
+    timeout: 30000
+    # Optional: Custom icon for the MCP server in LibreChat UI
+    # iconPath: /app/mcp-server/icon.svg

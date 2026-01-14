@@ -45,27 +45,101 @@ This integration bridges LibreChat with Home Assistant to provide:
 
 **Current Phase:** Phase 1 - Proof of Concept
 
-- [x] MCP Server with Home Assistant integration (working)
-- [ ] LibreChat deployment
+- [x] MCP Server with Home Assistant integration
+- [x] LibreChat deployment with MCP integration
 - [ ] End-to-end integration testing
+- [ ] Documentation and polish
 
 See [PROJECT_PLAN.md](PROJECT_PLAN.md) for detailed roadmap and [ARCHITECTURE.md](ARCHITECTURE.md) for technical design.
 
-## Requirements
-
-- Home Assistant instance with REST API access
-- Docker & Docker Compose
-- API key for AI provider (Anthropic, OpenAI, or local Ollama)
-- Home Assistant long-lived access token
-
 ## Quick Start
 
-> **Note:** Installation instructions will be added once the project reaches MVP stage.
+### Prerequisites
+
+- Docker & Docker Compose
+- Home Assistant instance with API access
+- Anthropic API key (or other AI provider)
+
+### 1. Clone LibreChat
+
+```bash
+git clone https://github.com/danny-avila/LibreChat.git
+cd LibreChat
+cp .env.example .env
+```
+
+### 2. Configure Environment
+
+Edit `.env` and set your Anthropic API key:
+```bash
+ANTHROPIC_API_KEY=your_api_key_here
+```
+
+### 3. Add MCP Server
+
+Clone this repository and copy the MCP server:
+```bash
+git clone https://github.com/hoornet/librechat-homeassistant.git
+cp -r librechat-homeassistant/src/mcp-server ./mcp-server
+```
+
+Build the MCP server:
+```bash
+docker run --rm -v $(pwd)/mcp-server:/app -w /app node:20 sh -c 'npm install && npm run build'
+```
+
+### 4. Configure LibreChat for MCP
+
+Create `librechat.yaml`:
+```yaml
+version: 1.2.1
+
+mcpServers:
+  homeassistant:
+    type: stdio
+    command: node
+    args:
+      - /app/mcp-server/dist/index.js
+    env:
+      HA_URL: "https://your-ha-instance:8123"
+      HA_TOKEN: "your_long_lived_access_token"
+      HA_SKIP_TLS_VERIFY: "true"  # If using self-signed cert
+    timeout: 30000
+```
+
+Create `docker-compose.override.yml`:
+```yaml
+services:
+  api:
+    volumes:
+      - ./mcp-server:/app/mcp-server
+      - ./librechat.yaml:/app/librechat.yaml
+```
+
+### 5. Start LibreChat
+
+```bash
+docker compose up -d
+```
+
+Access LibreChat at http://localhost:3080
+
+## Available MCP Tools
+
+Once configured, Claude can use these tools to interact with Home Assistant:
+
+| Tool | Description |
+|------|-------------|
+| `get_state` | Get current state of an entity |
+| `get_entities` | List entities by domain |
+| `search_entities` | Search entities by name |
+| `call_service` | Control devices (turn_on, turn_off, etc.) |
 
 ## Documentation
 
 - [PROJECT_PLAN.md](PROJECT_PLAN.md) - Project roadmap and milestones
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Technical architecture and design decisions
+- [src/librechat-config/](src/librechat-config/) - Example configuration files
 
 ## Contributing
 
