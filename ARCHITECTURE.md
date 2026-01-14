@@ -168,13 +168,13 @@ ws://<ha_host>:8123/api/websocket
 
 ```bash
 # MCP Server
-HA_URL=http://192.168.88.14:8123
+HA_URL=https://192.168.88.14:8123
 HA_TOKEN=<long_lived_access_token>
-MCP_PORT=3000
+HA_SKIP_TLS_VERIFY=true  # For self-signed certificates
+LOG_LEVEL=info
 
 # LibreChat
 ANTHROPIC_API_KEY=<api_key>
-MCP_SERVERS='[{"name":"homeassistant","url":"http://localhost:3000"}]'
 ```
 
 ### LibreChat MCP Configuration
@@ -236,7 +236,7 @@ Not all entities should be controllable via AI. Consider:
 | Performance | Excellent | Good |
 | Package ecosystem | npm | pip |
 
-**Decision Pending**: Will prototype both approaches in Phase 1.
+**Decision**: Node.js/TypeScript chosen for official MCP SDK support and LibreChat ecosystem alignment.
 
 ### State Management Strategy
 
@@ -260,39 +260,24 @@ Options:
 ```
 librechat-homeassistant/
 ├── src/
-│   ├── mcp-server/          # MCP server implementation
-│   │   ├── index.ts         # Entry point
-│   │   ├── tools/           # Tool implementations
-│   │   │   ├── entities.ts
-│   │   │   ├── services.ts
-│   │   │   └── history.ts
-│   │   ├── ha-client/       # HA API client
-│   │   │   ├── api.ts
-│   │   │   └── types.ts
-│   │   └── config.ts
-│   ├── ha-integration/      # Optional HA custom component
-│   │   ├── manifest.json
-│   │   ├── __init__.py
-│   │   └── config_flow.py
-│   └── librechat-config/    # LibreChat configuration templates
-│       ├── librechat.yaml
-│       └── .env.example
-├── docker/
-│   ├── docker-compose.yml   # Full stack deployment
-│   ├── Dockerfile.mcp       # MCP server container
-│   └── .env.example
-├── docs/
-│   ├── INSTALLATION.md
-│   ├── CONFIGURATION.md
-│   └── TROUBLESHOOTING.md
-├── examples/
-│   └── example-commands.md
-├── tests/
-│   ├── unit/
-│   └── integration/
+│   ├── mcp-server/          # MCP server implementation (Node.js/TypeScript)
+│   │   ├── src/
+│   │   │   ├── index.ts     # MCP server entry point with tool handlers
+│   │   │   ├── config.ts    # Configuration with Zod validation
+│   │   │   └── ha-client.ts # Home Assistant REST API client
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── .env.example
+│   ├── ha-integration/      # Optional HA custom component (future)
+│   └── librechat-config/    # LibreChat configuration templates (future)
+├── docker/                  # Docker Compose files (future)
+├── docs/                    # Documentation (future)
+├── examples/                # Example configurations (future)
+├── tests/                   # Unit and integration tests (future)
 ├── ARCHITECTURE.md          # This file
 ├── PROJECT_PLAN.md
 ├── README.md
+├── CLAUDE.md
 └── LICENSE
 ```
 

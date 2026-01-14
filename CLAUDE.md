@@ -53,7 +53,7 @@ npm run lint
 
 The server requires environment variables:
 ```bash
-export HA_URL=http://192.168.88.14:8123
+export HA_URL=https://192.168.88.14:8123
 export HA_TOKEN=<your_long_lived_access_token>
 npm start
 ```

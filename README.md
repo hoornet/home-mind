@@ -1,7 +1,7 @@
 # LibreChat-HomeAssistant
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Status: Planning](https://img.shields.io/badge/Status-Planning-yellow.svg)]()
+[![Status: Development](https://img.shields.io/badge/Status-Phase%201-green.svg)]()
 
 Persistent AI assistant for Home Assistant using LibreChat. Adds conversation memory, learning capabilities, and advanced AI features to your smart home.
 
@@ -43,7 +43,11 @@ This integration bridges LibreChat with Home Assistant to provide:
 
 ## Project Status
 
-**Current Phase:** Planning (Phase 0)
+**Current Phase:** Phase 1 - Proof of Concept
+
+- [x] MCP Server with Home Assistant integration (working)
+- [ ] LibreChat deployment
+- [ ] End-to-end integration testing
 
 See [PROJECT_PLAN.md](PROJECT_PLAN.md) for detailed roadmap and [ARCHITECTURE.md](ARCHITECTURE.md) for technical design.
 
