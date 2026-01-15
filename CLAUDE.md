@@ -4,57 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LibreChat-HomeAssistant is an MCP (Model Context Protocol) server that bridges LibreChat and Home Assistant, enabling AI models to query and control smart home devices.
+MCP (Model Context Protocol) server that bridges LibreChat and Home Assistant, enabling AI models to query and control smart home devices with persistent memory across sessions.
 
-## Current Status
-
-**Phase 2 (Core Features): IN PROGRESS** - Memory working, MCP integration complete.
-
-**Verified working:**
-- Querying devices by room: "Tell me what devices are in the bedroom"
-- Querying sensor states: "What is the state of air quality in the bedroom"
-- Controlling devices: "Turn off the lights in the kitchen"
-- **Persistent memory across chat sessions** - AI remembers facts like "NOx 100 is baseline for my home"
-
-## Project Phases (from PROJECT_PLAN.md)
-
-| Phase | Status | Description |
-|-------|--------|-------------|
-| Phase 0: Planning & Setup | ✅ Complete | Repo, architecture, dev environment |
-| Phase 1: Proof of Concept | ✅ Complete | Basic MCP server, device control working |
-| Phase 2: Core Features | 🔄 In Progress | Memory working, need full device support, error handling |
-| Phase 3: Polish | Pending | Installation wizard, documentation, testing |
-| Phase 4: Community Release | Pending | Public release, HACS submission |
-
-## Enabling Memory (Phase 2 Priority)
-
-LibreChat's memory feature must be configured in `librechat.yaml`. See `src/librechat-config/librechat.yaml.example` for the full config.
-
-**Minimum required addition to librechat.yaml:**
-```yaml
-memory:
-  disabled: false
-  tokenLimit: 2000
-  agent:
-    provider: "anthropic"
-    model: "claude-3-5-haiku-20241022"
-```
-
-**How it works:**
-- Memory agent runs before each chat response
-- Analyzes recent messages (`messageWindowSize`) to decide what to remember
-- Stores facts that persist across chat sessions
-- Users can toggle memory on/off per chat when `personalize: true`
-
-**Key gotchas:**
-- **Use Haiku, not Sonnet 4** - Sonnet 4 has "extended thinking" which causes `temperature is not supported when thinking is enabled` errors
-- Agent provider/model must exist in your config (invalid refs break all chats)
-- Memory runs on every request when enabled (cost implications)
-- Custom endpoints require exact name matching
-
-**Documentation:**
-- [Memory Feature](https://www.librechat.ai/docs/features/memory)
-- [Memory Configuration](https://www.librechat.ai/docs/configuration/librechat_yaml/object_structure/memory)
+**Status:** Phase 2 (Core Features) - Memory working, MCP integration complete. See `PROJECT_PLAN.md` for roadmap.
 
 ## Architecture
 
@@ -62,19 +14,19 @@ memory:
 LibreChat (chat UI) ──► MCP Server (this repo) ──► Home Assistant REST API
 ```
 
-The MCP server runs inside the LibreChat container via stdio transport. It receives tool calls from the LLM and translates them to Home Assistant API requests.
+The MCP server runs inside the LibreChat container via stdio transport. It receives tool calls from the LLM and translates them to Home Assistant API requests. See `ARCHITECTURE.md` for detailed diagrams.
 
-## MCP Server Code Structure (`src/mcp-server/src/`)
+## MCP Server Code (`src/mcp-server/src/`)
 
 | File | Purpose |
 |------|---------|
-| `index.ts` | MCP server entry point, tool definitions, and request handlers |
+| `index.ts` | Server entry point, Zod tool schemas (`*Schema`), and request handlers |
 | `config.ts` | Environment config loading with Zod validation |
-| `ha-client.ts` | Home Assistant REST API client (fetch-based with self-signed cert support) |
+| `ha-client.ts` | Home Assistant REST API client (uses undici Agent for self-signed cert support) |
 
 ## Development Commands
 
-All commands run from `src/mcp-server/`:
+All commands run from `src/mcp-server/`. Requires Node.js 18+.
 
 ```bash
 npm install          # Install dependencies
@@ -85,9 +37,11 @@ npm run lint         # ESLint
 npm start            # Run compiled dist/index.js
 ```
 
+**Local debugging:** Run `npm run dev` with `.env` configured, then test via stdio (the server reads from stdin and writes JSON responses to stdout, logs go to stderr).
+
 ## Environment Variables
 
-Create `.env` from `.env.example`:
+Create `src/mcp-server/.env` from `.env.example`:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -124,9 +78,27 @@ ssh ubuntuserver "cd ~/LibreChat && docker compose restart api"
 ssh ubuntuserver "docker logs LibreChat -f"
 ```
 
+## LibreChat Memory Configuration
+
+Memory enables persistent facts across chat sessions. Configuration in `librechat.yaml` (see `src/librechat-config/librechat.yaml.example`):
+
+```yaml
+memory:
+  disabled: false
+  tokenLimit: 2000
+  agent:
+    provider: "anthropic"
+    model: "claude-3-5-haiku-20241022"  # MUST use Haiku, not Sonnet 4
+```
+
+**Gotchas:**
+- **Use Haiku, not Sonnet 4** - Sonnet 4's extended thinking causes `temperature is not supported when thinking is enabled` errors
+- Agent provider/model must exist in your config (invalid refs break all chats)
+- Memory runs on every request when enabled (cost implications)
+
 ## Code Patterns
 
-- **Zod schemas** for all tool parameter validation (see `*Schema` objects in index.ts)
+- **Zod schemas** for all tool parameter validation (see `*Schema` objects in `index.ts`)
 - **ES Modules** (`"type": "module"` in package.json, `.js` extensions in imports)
 - **undici Agent** for TLS certificate bypass when `HA_SKIP_TLS_VERIFY=true`
 - Tool handlers return `{ content: [{ type: "text", text: "..." }] }` format
@@ -136,3 +108,4 @@ ssh ubuntuserver "docker logs LibreChat -f"
 - [MCP SDK](https://github.com/modelcontextprotocol/typescript-sdk)
 - [Home Assistant REST API](https://developers.home-assistant.io/docs/api/rest)
 - [LibreChat MCP Config](https://www.librechat.ai/docs/configuration/librechat_yaml/object_structure/mcp_servers)
+- [LibreChat Memory Config](https://www.librechat.ai/docs/configuration/librechat_yaml/object_structure/memory)

@@ -1,9 +1,9 @@
 # LibreChat-HomeAssistant Integration
 ## Project Plan v1.0
 
-**Repository:** https://github.com/hoornet/librechat-homeassistant  
-**License:** AGPL v3.0  
-**Status:** Planning Phase  
+**Repository:** https://github.com/hoornet/librechat-homeassistant
+**License:** AGPL v3.0
+**Status:** Phase 2 - Core Features
 **Started:** January 2026  
 
 ---
@@ -202,17 +202,17 @@ Integrate LibreChat with Home Assistant to provide:
 
 ## Development Phases
 
-### Phase 0: Planning & Setup ✅ (Current)
-**Duration:** 1 week  
-**Status:** In Progress
+### Phase 0: Planning & Setup ✅
+**Duration:** 1 week
+**Status:** Complete
 
 **Tasks:**
 - [x] Create GitHub repository
 - [x] Define project scope and goals
 - [x] Create project plan
-- [ ] Create architecture documentation
-- [ ] Set up development environment on omarchy
-- [ ] Choose: Node.js vs Python for MCP server
+- [x] Create architecture documentation
+- [x] Set up development environment on omarchy
+- [x] Choose: Node.js vs Python for MCP server (chose Node.js/TypeScript)
 
 **Deliverables:**
 - PROJECT_PLAN.md (this document)
@@ -222,66 +222,68 @@ Integrate LibreChat with Home Assistant to provide:
 
 ---
 
-### Phase 1: Proof of Concept (MVP)
-**Duration:** 2-3 weeks  
+### Phase 1: Proof of Concept (MVP) ✅
+**Duration:** 2-3 weeks
 **Goal:** Get basic LibreChat ↔ HA communication working
+**Status:** Complete
 
 **Milestone 1.1: Deploy LibreChat**
-- [ ] Deploy LibreChat on ubuntuserver (192.168.88.12)
-- [ ] Configure with Anthropic API key
-- [ ] Test basic chat functionality
-- [ ] Document deployment process
+- [x] Deploy LibreChat on ubuntuserver (192.168.88.12)
+- [x] Configure with Anthropic API key
+- [x] Test basic chat functionality
+- [x] Document deployment process
 
 **Milestone 1.2: Basic MCP Server**
-- [ ] Create minimal MCP server
-- [ ] Implement HA authentication
-- [ ] Add single test function: "get_state"
-- [ ] Test querying HA entity state
+- [x] Create minimal MCP server
+- [x] Implement HA authentication
+- [x] Add single test function: "get_state"
+- [x] Test querying HA entity state
 
 **Milestone 1.3: Device Control**
-- [ ] Implement "turn_on" action
-- [ ] Implement "turn_off" action
-- [ ] Test with real HA devices (e.g., wled-kitchen)
-- [ ] Handle errors gracefully
+- [x] Implement "turn_on" action
+- [x] Implement "turn_off" action
+- [x] Test with real HA devices (e.g., wled-kitchen)
+- [x] Handle errors gracefully
 
 **Milestone 1.4: Integration Testing**
-- [ ] Connect LibreChat to MCP server
-- [ ] Test end-to-end: "Turn on kitchen lights"
-- [ ] Verify response in LibreChat
-- [ ] Document what works/what doesn't
+- [x] Connect LibreChat to MCP server
+- [x] Test end-to-end: "Turn on kitchen lights"
+- [x] Verify response in LibreChat
+- [x] Document what works/what doesn't
 
 **Success Criteria:**
-- User can ask Claude in LibreChat to control at least 1 HA device
-- State queries work
-- Errors are handled gracefully
+- [x] User can ask Claude in LibreChat to control at least 1 HA device
+- [x] State queries work
+- [x] Errors are handled gracefully
 
 ---
 
-### Phase 2: Core Features
-**Duration:** 3-4 weeks  
+### Phase 2: Core Features (Current)
+**Duration:** 3-4 weeks
 **Goal:** Add essential functionality for daily use
+**Status:** In Progress
 
 **Milestone 2.1: Full Device Control**
-- [ ] Support all HA service calls (set_value, toggle, etc.)
+- [x] Support all HA service calls (via generic call_service tool)
 - [ ] Support climate controls (thermostats)
 - [ ] Support media players
 - [ ] Support covers (blinds, garage doors)
-- [ ] Add parameter validation
+- [x] Add parameter validation (Zod schemas)
 
 **Milestone 2.2: State Queries & Context**
 - [ ] Get all entity states in an area
 - [ ] Get sensor history
 - [ ] Provide context to LLM (current state of home)
-- [ ] Handle multiple entities in single command
+- [x] Handle multiple entities in single command (get_entities, search_entities)
 
 **Milestone 2.3: Memory & Learning**
-- [ ] Configure LibreChat memory for HA context
+- [x] Configure LibreChat memory for HA context
 - [ ] Add "learned preferences" storage
 - [ ] Implement sensor baseline system
 - [ ] Test: AI remembers corrections
 
 **Milestone 2.4: Error Handling & UX**
-- [ ] Better error messages
+- [x] Better error messages
 - [ ] Confirmation for destructive actions
 - [ ] Usage logging
 - [ ] Rate limiting
@@ -636,25 +638,23 @@ While keeping core open-source (AGPL v3.0):
 
 ## Next Steps
 
-### Immediate (This Week)
+### Completed
 1. ✅ Create GitHub repository
 2. ✅ Write PROJECT_PLAN.md
-3. [ ] Set up development environment on omarchy
-4. [ ] Create ARCHITECTURE.md
-5. [ ] Add AGPL v3.0 license
-6. [ ] Create proper README.md
+3. ✅ Set up development environment on omarchy
+4. ✅ Create ARCHITECTURE.md
+5. ✅ Add AGPL v3.0 license
+6. ✅ Create proper README.md
+7. ✅ Deploy LibreChat on ubuntuserver
+8. ✅ Create MCP server with full tool suite
+9. ✅ Configure persistent memory
+10. ✅ Complete Phase 1 MVP
 
-### Next Week
-1. [ ] Deploy LibreChat on ubuntuserver
-2. [ ] Create basic MCP server prototype
-3. [ ] Test first HA API call
-4. [ ] Document initial findings
-
-### This Month
-1. [ ] Complete Phase 1 MVP
-2. [ ] Get basic device control working
-3. [ ] Test with real HA devices
-4. [ ] Write initial documentation
+### Current Focus (Phase 2)
+1. [ ] Add area-based queries (get entities by area)
+2. [ ] Add sensor history retrieval
+3. [ ] Test memory learning with corrections
+4. [ ] Add domain-specific tool helpers (climate, media, covers)
 
 ---
 
@@ -682,8 +682,9 @@ See EXAMPLES.md (to be created) for detailed use cases and command examples.
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-01-12 | Jure + Claude | Initial project plan |
+| 1.1 | 2026-01-15 | Jure + Claude | Updated checkboxes for Phase 1 completion, Phase 2 progress |
 
 ---
 
-**Last Updated:** 2026-01-12  
+**Last Updated:** 2026-01-15
 **Status:** Living document - will evolve as project progresses
