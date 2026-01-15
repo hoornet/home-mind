@@ -8,17 +8,13 @@ LibreChat-HomeAssistant is an MCP (Model Context Protocol) server that bridges L
 
 ## Current Status
 
-**Phase 1 (Proof of Concept): COMPLETE** - MCP integration tested and working.
+**Phase 2 (Core Features): IN PROGRESS** - Memory working, MCP integration complete.
 
 **Verified working:**
 - Querying devices by room: "Tell me what devices are in the bedroom"
 - Querying sensor states: "What is the state of air quality in the bedroom"
 - Controlling devices: "Turn off the lights in the kitchen"
-
-**Next up (Phase 2): Persistent Memory**
-- LibreChat has a "Memory" section in the UI but it's not configured yet
-- Memory requires explicit configuration in `librechat.yaml` (disabled by default)
-- See "Enabling Memory" section below
+- **Persistent memory across chat sessions** - AI remembers facts like "NOx 100 is baseline for my home"
 
 ## Project Phases (from PROJECT_PLAN.md)
 
@@ -26,7 +22,7 @@ LibreChat-HomeAssistant is an MCP (Model Context Protocol) server that bridges L
 |-------|--------|-------------|
 | Phase 0: Planning & Setup | ✅ Complete | Repo, architecture, dev environment |
 | Phase 1: Proof of Concept | ✅ Complete | Basic MCP server, device control working |
-| Phase 2: Core Features | 🔄 Next | Memory/learning, full device support, error handling |
+| Phase 2: Core Features | 🔄 In Progress | Memory working, need full device support, error handling |
 | Phase 3: Polish | Pending | Installation wizard, documentation, testing |
 | Phase 4: Community Release | Pending | Public release, HACS submission |
 
@@ -41,7 +37,7 @@ memory:
   tokenLimit: 2000
   agent:
     provider: "anthropic"
-    model: "claude-sonnet-4-20250514"
+    model: "claude-3-5-haiku-20241022"
 ```
 
 **How it works:**
@@ -51,6 +47,7 @@ memory:
 - Users can toggle memory on/off per chat when `personalize: true`
 
 **Key gotchas:**
+- **Use Haiku, not Sonnet 4** - Sonnet 4 has "extended thinking" which causes `temperature is not supported when thinking is enabled` errors
 - Agent provider/model must exist in your config (invalid refs break all chats)
 - Memory runs on every request when enabled (cost implications)
 - Custom endpoints require exact name matching

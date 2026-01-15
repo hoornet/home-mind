@@ -17,9 +17,11 @@ memory:
   # Number of recent messages analyzed for memory updates
   messageWindowSize: 5
   # Agent that processes and stores memories (runs before each response)
+  # NOTE: Use a model WITHOUT extended thinking (e.g., Haiku) - Sonnet 4's thinking mode
+  # causes "temperature is not supported when thinking is enabled" errors
   agent:
     provider: "anthropic"
-    model: "claude-sonnet-4-20250514"
+    model: "claude-3-5-haiku-20241022"
     # Optional: customize what the memory agent focuses on
     # instructions: "Remember user preferences, sensor baselines, and device nicknames."
 
