@@ -4,6 +4,25 @@
 
 version: 1.2.1
 
+# Memory configuration - enables persistent memory across chat sessions
+# Documentation: https://www.librechat.ai/docs/configuration/librechat_yaml/object_structure/memory
+memory:
+  disabled: false
+  # Token limit for memory storage (controls costs)
+  tokenLimit: 2000
+  # Max characters per memory entry
+  charLimit: 10000
+  # Allow users to toggle memory on/off per chat
+  personalize: true
+  # Number of recent messages analyzed for memory updates
+  messageWindowSize: 5
+  # Agent that processes and stores memories (runs before each response)
+  agent:
+    provider: "anthropic"
+    model: "claude-sonnet-4-20250514"
+    # Optional: customize what the memory agent focuses on
+    # instructions: "Remember user preferences, sensor baselines, and device nicknames."
+
 mcpServers:
   homeassistant:
     type: stdio

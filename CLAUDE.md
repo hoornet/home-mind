@@ -4,135 +4,138 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-LibreChat-HomeAssistant is a bridge between LibreChat and Home Assistant that provides persistent conversational memory, learning capabilities, and advanced AI features for smart home control.
+LibreChat-HomeAssistant is an MCP (Model Context Protocol) server that bridges LibreChat and Home Assistant, enabling AI models to query and control smart home devices.
+
+## Current Status
+
+**Phase 1 (Proof of Concept): COMPLETE** - MCP integration tested and working.
+
+**Verified working:**
+- Querying devices by room: "Tell me what devices are in the bedroom"
+- Querying sensor states: "What is the state of air quality in the bedroom"
+- Controlling devices: "Turn off the lights in the kitchen"
+
+**Next up (Phase 2): Persistent Memory**
+- LibreChat has a "Memory" section in the UI but it's not configured yet
+- Memory requires explicit configuration in `librechat.yaml` (disabled by default)
+- See "Enabling Memory" section below
+
+## Project Phases (from PROJECT_PLAN.md)
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Phase 0: Planning & Setup | ✅ Complete | Repo, architecture, dev environment |
+| Phase 1: Proof of Concept | ✅ Complete | Basic MCP server, device control working |
+| Phase 2: Core Features | 🔄 Next | Memory/learning, full device support, error handling |
+| Phase 3: Polish | Pending | Installation wizard, documentation, testing |
+| Phase 4: Community Release | Pending | Public release, HACS submission |
+
+## Enabling Memory (Phase 2 Priority)
+
+LibreChat's memory feature must be configured in `librechat.yaml`. See `src/librechat-config/librechat.yaml.example` for the full config.
+
+**Minimum required addition to librechat.yaml:**
+```yaml
+memory:
+  disabled: false
+  tokenLimit: 2000
+  agent:
+    provider: "anthropic"
+    model: "claude-sonnet-4-20250514"
+```
+
+**How it works:**
+- Memory agent runs before each chat response
+- Analyzes recent messages (`messageWindowSize`) to decide what to remember
+- Stores facts that persist across chat sessions
+- Users can toggle memory on/off per chat when `personalize: true`
+
+**Key gotchas:**
+- Agent provider/model must exist in your config (invalid refs break all chats)
+- Memory runs on every request when enabled (cost implications)
+- Custom endpoints require exact name matching
+
+**Documentation:**
+- [Memory Feature](https://www.librechat.ai/docs/features/memory)
+- [Memory Configuration](https://www.librechat.ai/docs/configuration/librechat_yaml/object_structure/memory)
 
 ## Architecture
 
 ```
-┌─────────────────┐         ┌──────────────────┐
-│   LibreChat     │◄───────►│   MCP Server     │
-│   (Frontend)    │         │  (HA Bridge)     │
-└─────────────────┘         └──────────────────┘
-        │                            │
-        ▼                            ▼
-┌─────────────────┐         ┌──────────────────┐
-│  Anthropic API  │         │ Home Assistant   │
-│  (or OpenAI)    │         │   REST API       │
-└─────────────────┘         └──────────────────┘
+LibreChat (chat UI) ──► MCP Server (this repo) ──► Home Assistant REST API
 ```
 
-**Key Components:**
-- **LibreChat**: User-facing chat interface with conversation history and document upload
-- **MCP Server**: Node.js/TypeScript server using MCP SDK to bridge LibreChat and Home Assistant
-- **Home Assistant Integration**: Optional HACS component for enhanced HA-side features
+The MCP server runs inside the LibreChat container via stdio transport. It receives tool calls from the LLM and translates them to Home Assistant API requests.
+
+## MCP Server Code Structure (`src/mcp-server/src/`)
+
+| File | Purpose |
+|------|---------|
+| `index.ts` | MCP server entry point, tool definitions, and request handlers |
+| `config.ts` | Environment config loading with Zod validation |
+| `ha-client.ts` | Home Assistant REST API client (fetch-based with self-signed cert support) |
 
 ## Development Commands
 
-### MCP Server (`src/mcp-server/`)
+All commands run from `src/mcp-server/`:
 
 ```bash
-cd src/mcp-server
-
-# Install dependencies
-npm install
-
-# Build TypeScript
-npm run build
-
-# Run in development mode (with watch)
-npm run dev
-
-# Type check without building
-npm run typecheck
-
-# Lint code
-npm run lint
+npm install          # Install dependencies
+npm run build        # Compile TypeScript to dist/
+npm run dev          # Run with tsx watch (hot reload)
+npm run typecheck    # Type check without emitting
+npm run lint         # ESLint
+npm start            # Run compiled dist/index.js
 ```
 
-### Running the MCP Server Standalone
+## Environment Variables
 
-The server requires environment variables:
-```bash
-export HA_URL=https://192.168.88.14:8123
-export HA_TOKEN=<your_long_lived_access_token>
-export HA_SKIP_TLS_VERIFY=true
-npm start
-```
+Create `.env` from `.env.example`:
 
-Or create a `.env` file (copy from `.env.example`).
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `HA_URL` | Yes | Home Assistant URL (e.g., `https://192.168.88.14:8123`) |
+| `HA_TOKEN` | Yes | Long-lived access token from HA |
+| `HA_SKIP_TLS_VERIFY` | No | Set `true` for self-signed certs |
+| `LOG_LEVEL` | No | `debug`, `info`, `warn`, `error` (default: `info`) |
+
+## MCP Tools Exposed
+
+| Tool | Parameters | Description |
+|------|------------|-------------|
+| `get_state` | `entity_id` | Get current state of a single entity |
+| `get_entities` | `domain?` | List entities, optionally filtered by domain |
+| `search_entities` | `query` | Search entities by name/ID substring |
+| `call_service` | `domain`, `service`, `entity_id?`, `data?` | Call any HA service |
 
 ## Deployment
 
-### Current Deployment
+**Infrastructure:**
+- LibreChat: ubuntuserver (192.168.88.12)
+- Home Assistant: haos12 (192.168.88.14)
+- MCP Server: Mounted volume in LibreChat container
 
-| Service | Host | URL |
-|---------|------|-----|
-| LibreChat | ubuntuserver (192.168.88.12) | http://100.95.208.82:3080/ (Tailscale) |
-| Home Assistant | haos12 (192.168.88.14) | https://192.168.88.14:8123 |
-| MCP Server | Inside LibreChat container | stdio transport |
-
-### LibreChat Deployment
-
-LibreChat runs via Docker Compose on ubuntuserver with our MCP server mounted as a volume:
-
+**Deploy changes from dev workstation:**
 ```bash
-# On ubuntuserver
-cd ~/LibreChat
-
-# Key files:
-# - docker-compose.override.yml  - Mounts MCP server and librechat.yaml
-# - librechat.yaml               - MCP server configuration
-# - mcp-server/                  - Our MCP server code
-
-# Restart after changes
-docker compose down && docker compose up -d
-
-# View logs
-docker logs LibreChat -f
-```
-
-### Updating MCP Server on Deployment
-
-```bash
-# From dev workstation (omarchy)
-cd /home/hoornet/projects/librechat-homeassistant
-
-# Copy updated MCP server to ubuntuserver
 scp -r src/mcp-server ubuntuserver:~/LibreChat/
-
-# Rebuild on ubuntuserver
 ssh ubuntuserver "cd ~/LibreChat && docker run --rm -v ~/LibreChat/mcp-server:/app -w /app node:20 sh -c 'npm install && npm run build'"
-
-# Restart LibreChat
 ssh ubuntuserver "cd ~/LibreChat && docker compose restart api"
 ```
 
-## Development Environment
+**View logs:**
+```bash
+ssh ubuntuserver "docker logs LibreChat -f"
+```
 
-**Infrastructure:**
-- Dev workstation: omarchy (Arch Linux, 192.168.88.29)
-- Deployment target: ubuntuserver (192.168.88.12)
-- Home Assistant: haos12 on pve-intel (192.168.88.14)
-- Network: Tailscale (tailf9add.ts.net)
+## Code Patterns
 
-**Prerequisites:**
-- Node.js >= 18.0.0
-- Home Assistant long-lived access token
-- Anthropic API key (for LibreChat)
+- **Zod schemas** for all tool parameter validation (see `*Schema` objects in index.ts)
+- **ES Modules** (`"type": "module"` in package.json, `.js` extensions in imports)
+- **undici Agent** for TLS certificate bypass when `HA_SKIP_TLS_VERIFY=true`
+- Tool handlers return `{ content: [{ type: "text", text: "..." }] }` format
 
-## MCP Server Tools
+## References
 
-The server exposes these tools to AI models:
-
-| Tool | Description |
-|------|-------------|
-| `get_state` | Get current state of a single entity |
-| `get_entities` | List all entities, optionally filtered by domain |
-| `search_entities` | Search entities by name or ID |
-| `call_service` | Call HA service (turn_on, turn_off, etc.) |
-
-## External References
-
-- [LibreChat](https://www.librechat.ai)
-- [MCP Protocol](https://modelcontextprotocol.io)
+- [MCP SDK](https://github.com/modelcontextprotocol/typescript-sdk)
 - [Home Assistant REST API](https://developers.home-assistant.io/docs/api/rest)
+- [LibreChat MCP Config](https://www.librechat.ai/docs/configuration/librechat_yaml/object_structure/mcp_servers)
