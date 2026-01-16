@@ -82,9 +82,103 @@ See [Memory Examples](docs/MEMORY_EXAMPLES.md) for detailed documentation.
 
 ---
 
-## Quick Start
+## Memory + History: Intelligence That Learns
 
-... (rest of your existing Quick Start section)
+The real power comes from combining **persistent memory** with **historical data analysis**:
+
+### Example: Contextual Temperature Monitoring
+
+**Teaching Claude What's Normal:**
+```
+User: Remember that 20-21°C is normal for the living room in the morning
+
+Claude: 🔖 Updated saved memory
+        I'll remember that 20-21°C is your normal living room temperature range
+        in the morning.
+```
+
+**Next Day (New Conversation):**
+```
+User: Is the living room temperature normal this morning?
+
+Claude: [checks current temperature: 21.1°C]
+        [recalls from memory: normal = 20-21°C]
+
+        Yes, your living room temperature is essentially normal this morning.
+        It's 21.1°C, just 0.1°C above your typical 20-21°C range - which is
+        negligible. You're right at the comfortable range you prefer.
+```
+
+**Result:** Claude provides **contextualized answers** instead of just raw numbers.
+
+### Example: Trend Analysis with Context
+
+**Query:**
+```
+How has the living room temperature changed since this morning?
+```
+
+**Response:**
+```
+Claude: [queries history API]
+        Temperature progression:
+        • 06:00 AM: 19.9°C
+        • 07:00 AM: 20.1°C
+        • 08:00 AM: 20.7°C (current)
+
+        [uses memory: normal = 20-21°C]
+
+        The temperature has been steadily increasing by 0.8°C throughout the
+        morning, now reaching the lower end of your normal comfort range.
+        This is a typical morning warm-up pattern.
+```
+
+### Example: Anomaly Detection
+
+**Query:**
+```
+Was there anything unusual about the temperature today?
+```
+
+**Response:**
+```
+Claude: [checks history for today]
+        [compares to remembered baseline: 20-21°C]
+
+        No, temperatures stayed within your normal 20-21°C morning range all day.
+        The peak was 21.4°C at 2pm, which is typical for afternoon warming.
+```
+
+### Why This Matters
+
+**Traditional HA AI:**
+- "The temperature is 21.1°C" ← Raw data, no context
+
+**LibreChat + Memory + History:**
+- "21.1°C is normal for you" ← Contextual, learned intelligence
+
+### What Gets Learned
+
+The system automatically remembers and applies:
+
+✅ **Sensor baselines** - "100 ppm NOx is normal in my home"
+✅ **Comfort ranges** - "20-21°C is comfortable morning temperature"
+✅ **Patterns** - "Temperature rises 6-9am due to morning sun"
+✅ **Anomalies** - "Spike to 25°C is unusual, investigate"
+✅ **Preferences** - "I prefer bedroom cooler than living room"
+
+### Technical Implementation
+
+- **Memory**: LibreChat's native memory system (MongoDB storage)
+- **History**: Home Assistant's `/api/history/period` endpoint
+- **Analysis**: Claude Sonnet 4's reasoning over combined data
+- **Learning**: Automatic memory updates from corrections
+
+See [MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) for more examples.
+
+---
+
+## Quick Start
 
 
 
@@ -110,8 +204,8 @@ See [Memory Examples](docs/MEMORY_EXAMPLES.md) for detailed documentation.
 - [x] MCP Server with Home Assistant integration
 - [x] LibreChat deployment with MCP integration
 - [x] Persistent memory across chat sessions
+- [x] Sensor history queries
 - [ ] Advanced device controls (climate, media, covers)
-- [ ] Sensor history queries
 
 See [PROJECT_PLAN.md](PROJECT_PLAN.md) for detailed roadmap and [ARCHITECTURE.md](ARCHITECTURE.md) for technical design.
 
@@ -197,6 +291,7 @@ Once configured, Claude can use these tools to interact with Home Assistant:
 | `get_entities` | List entities by domain |
 | `search_entities` | Search entities by name |
 | `call_service` | Control devices (turn_on, turn_off, etc.) |
+| `get_history` | Get historical state data for sensors over time |
 
 ## Documentation
 
