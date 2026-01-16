@@ -1,8 +1,8 @@
 # Integration Status
 
 **Last Updated:** January 17, 2026
-**Current Phase:** Phase 2.5 - HA Bridge with Memory (Implementation Starting)
-**Project Status:** Active Development - Building Voice Integration
+**Current Phase:** Phase 2.5 - HA Bridge with Memory (Week 1 Complete)
+**Project Status:** Active Development - HA Bridge Deployed, Building Custom Component
 
 ---
 
@@ -18,15 +18,17 @@
 | Historical Analysis | ✅ Validated | 7-day trend analysis, comparison tables |
 | Device Control | ✅ Working | Lights, sensors, service calls |
 | Anomaly Detection | ✅ Validated | Contextual alerts using learned baselines |
+| **HA Bridge API** | ✅ Deployed | Running on ubuntuserver:3100 |
+| **HA Bridge Memory** | ✅ Working | SQLite persistence, fact extraction |
 
 ### What's Being Built 🚧
 
 | Feature | Phase | Status | ETA |
 |---------|-------|--------|-----|
-| HA Bridge API | 2.5 | Starting | Week 1 |
-| Our Memory Layer | 2.5 | Starting | Week 1 |
-| HA Conversation Agent | 2.5 | Not Started | Week 2 |
-| Voice Control | 2.5 | Not Started | Week 2-3 |
+| HA Bridge API | 2.5 | ✅ Complete | Done |
+| Our Memory Layer | 2.5 | ✅ Complete | Done |
+| HA Conversation Agent | 2.5 | 🚧 In Progress | This Week |
+| Voice Control | 2.5 | Not Started | Week 3 |
 
 ---
 
@@ -47,9 +49,10 @@ User → LibreChat Web → MCP Server → Home Assistant
 │     Web (LibreChat)         │      Voice (HA Assist)        │
 │            ↓                │             ↓                 │
 │       MCP Server            │    HA Conversation Agent      │
-│            ↓                │             ↓                 │
-│     (existing flow)         │       HA Bridge API           │
-│                             │      (with own memory)        │
+│            ↓                │        (🚧 building)          │
+│     (existing flow)         │             ↓                 │
+│                             │       HA Bridge API           │
+│                             │    ✅ ubuntuserver:3100       │
 │                             │             ↓                 │
 │                             │    Claude + HA Tools          │
 └─────────────────────────────┴───────────────────────────────┘
@@ -142,32 +145,35 @@ librechat-homeassistant/
 
 ## Phase 2.5 Implementation Plan
 
-### Week 1: HA Bridge API + Memory
+### Week 1: HA Bridge API + Memory ✅ COMPLETE
 
 | Day | Task | Status |
 |-----|------|--------|
-| 1 | Create ha-bridge directory structure | 🚧 Starting |
-| 2 | HTTP API skeleton (Express + routes) | ⬜ Pending |
-| 3 | SQLite memory storage | ⬜ Pending |
-| 4 | Fact extraction with Haiku | ⬜ Pending |
-| 5 | Claude client + HA tools | ⬜ Pending |
+| 1 | Create ha-bridge directory structure | ✅ Done |
+| 2 | HTTP API skeleton (Express + routes) | ✅ Done |
+| 3 | SQLite memory storage | ✅ Done |
+| 4 | Fact extraction with Haiku | ✅ Done |
+| 5 | Claude client + HA tools | ✅ Done |
+| 5 | Deploy to ubuntuserver | ✅ Done |
 
 **Week 1 Success Criteria:**
-- [ ] `POST /api/chat` returns AI response
-- [ ] Memory persists between requests
-- [ ] HA tools work (get_state, call_service)
+- [x] `POST /api/chat` returns AI response
+- [x] Memory persists between requests
+- [x] HA tools work (get_state, search_entities, call_service, get_history)
+- [x] Deployed and accessible at ubuntuserver:3100
 
-### Week 2: HA Integration + Voice
+### Week 2: HA Integration + Voice 🚧 CURRENT
 
 | Day | Task | Status |
 |-----|------|--------|
-| 6-7 | HA custom component | ⬜ Pending |
-| 8 | End-to-end testing | ⬜ Pending |
+| 6-7 | HA custom component | 🚧 In Progress |
+| 8 | Install on HA and test | ⬜ Pending |
 | 9 | Voice testing (Wyoming) | ⬜ Pending |
 | 10 | Documentation | ⬜ Pending |
 
 **Week 2 Success Criteria:**
 - [ ] HA Assist routes to our agent
+- [ ] Text commands work via Assist
 - [ ] Voice commands work
 - [ ] Response time <3s
 
@@ -273,12 +279,12 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 
 ## Development Environment
 
-| Component | Host | IP | Status |
-|-----------|------|-----|--------|
-| LibreChat | ubuntuserver | 192.168.88.12 | ✅ Running |
-| Home Assistant | haos12 | 192.168.88.14 | ✅ Running |
+| Component | Host | IP/Port | Status |
+|-----------|------|---------|--------|
+| LibreChat | ubuntuserver | 192.168.88.12:3080 | ✅ Running |
+| Home Assistant | haos12 | 192.168.88.14:8123 | ✅ Running |
 | Dev Workstation | omarchy | 192.168.88.29 | ✅ Active |
-| HA Bridge | TBD | TBD | 🚧 To deploy |
+| **HA Bridge** | ubuntuserver | 192.168.88.12:3100 | ✅ Running |
 
 ---
 
@@ -290,9 +296,12 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 - ✅ Anomaly detection with context
 - ✅ Cross-session memory retention
 
-### Phase 2.5 (Targets)
-- [ ] HA Bridge API working
-- [ ] Memory persistence (SQLite)
+### Phase 2.5 (In Progress)
+- [x] HA Bridge API working
+- [x] Memory persistence (SQLite)
+- [x] Fact extraction working
+- [ ] HA custom component installed
+- [ ] Text Assist working
 - [ ] Voice commands <3s response time
 - [ ] End-to-end voice flow
 
@@ -329,5 +338,7 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 
 **Status Summary:**
 - ✅ **Phase 2:** 70% complete, web features working
-- 🚧 **Phase 2.5:** Implementation starting (ha-bridge + memory)
+- 🚧 **Phase 2.5:** Week 1 complete (ha-bridge deployed), Week 2 starting (HA component)
 - 🎯 **Target:** Early March 2026 for v1.0 launch
+
+**HA Bridge Endpoint:** `http://ubuntuserver:3100/api/chat`

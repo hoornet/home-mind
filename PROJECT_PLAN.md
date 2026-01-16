@@ -132,7 +132,7 @@ Integrate LibreChat with Home Assistant to provide:
 ### Phase 2.5: HA Assist Integration (NEW) 🚧
 **Duration:** 3 weeks
 **Goal:** Voice control with memory via HA's native Assist
-**Status:** Planning Complete, Implementation Starting
+**Status:** Week 1 Complete - HA Bridge Deployed
 **Added:** January 17, 2026
 
 **Overview:**
@@ -158,61 +158,42 @@ Add voice control capabilities by integrating with Home Assistant's native Assis
    - Handles user context from OIDC
    - Manages LibreChat sessions
 
-**Milestone 2.5.1: OIDC Authentication Setup**
-- [ ] Install `hass-oidc-auth` in test HA instance
-- [ ] Choose and configure OIDC provider (Keycloak vs HA native)
-- [ ] Test OIDC authentication flow
-- [ ] Verify user identity extraction from tokens
-- [ ] Test with multiple users
-- [ ] Document setup procedure
+**Milestone 2.5.1: HA Bridge API ✅ COMPLETE**
+- [x] Create ha-bridge directory structure
+- [x] Express HTTP API with routes
+- [x] SQLite memory storage (better-sqlite3)
+- [x] Fact extraction with Claude Haiku
+- [x] LLM client with Claude + HA tools
+- [x] Deploy to ubuntuserver
+- [x] Verify end-to-end functionality
 
 **Deliverables:**
-- OIDC installation guide
-- Configuration examples
-- Token structure documentation
+- ✅ Working API at `http://ubuntuserver:3100`
+- ✅ SQLite memory persistence
+- ✅ Fact extraction and recall working
+- ✅ HA tools (get_state, search_entities, call_service, get_history)
 
 ---
 
-**Milestone 2.5.2: Custom Conversation Agent**
-- [ ] Create custom component structure
+**Milestone 2.5.2: Custom Conversation Agent** 🚧 IN PROGRESS
+- [x] Create custom component structure (skeleton exists)
 - [ ] Implement `conversation.py` agent interface
-- [ ] Extract user identity from OIDC context
-- [ ] Research LibreChat API endpoints
-- [ ] Implement LibreChat API client (`api.py`)
-- [ ] Map HA user → LibreChat session
-- [ ] Handle API errors gracefully
+- [ ] Connect to ha-bridge API
+- [ ] Install on Home Assistant
 - [ ] Test via HA's text-based Assist interface
 
 **Deliverables:**
-- Working custom component
-- LibreChat API client
-- Integration tests
+- Working custom component in HA
+- Text-based Assist working
 - Configuration flow UI
 
 ---
 
-**Milestone 2.5.3: LibreChat API Integration**
-- [ ] Document LibreChat API endpoints
-- [ ] Implement authentication for API calls
-- [ ] Create/retrieve user sessions
-- [ ] Pass user context correctly
-- [ ] Verify memory isolation between users
-- [ ] Test cross-session persistence
-
-**Deliverables:**
-- API documentation
-- Session management implementation
-- Multi-user tests
-
----
-
-**Milestone 2.5.4: Voice Integration**
+**Milestone 2.5.3: Voice Integration**
 - [ ] Verify Wyoming protocol compatibility
-- [ ] Test with ESP32 voice satellite
+- [ ] Test with voice satellite
 - [ ] Measure and optimize response times (<3s target)
 - [ ] Handle voice-specific edge cases
-- [ ] Test multi-user voice sessions
-- [ ] Implement voice satellite user identification
 - [ ] Document voice setup
 
 **Deliverables:**
@@ -223,29 +204,32 @@ Add voice control capabilities by integrating with Home Assistant's native Assis
 
 ---
 
+**Milestone 2.5.4: Multi-user & Polish** (Deferred)
+- [ ] OIDC authentication (optional, for multi-user)
+- [ ] Memory sync between web and voice
+- [ ] Multi-user testing
+
+---
+
 **Phase 2.5 Success Criteria:**
-- ✅ OIDC authentication working with hass-oidc-auth
-- ✅ Text conversation via HA Assist
-- ✅ Voice conversation via Wyoming protocol
-- ✅ Multi-user memory isolation working
-- ✅ Memory persists across web and voice interfaces
-- ✅ Voice response time <3 seconds (95th percentile)
-- ✅ Comprehensive documentation
+- ✅ HA Bridge API deployed and working
+- ✅ Memory persistence via SQLite
+- ✅ Fact extraction and recall working
+- 🚧 Text conversation via HA Assist
+- ⬜ Voice conversation via Wyoming protocol
+- ⬜ Voice response time <3 seconds (95th percentile)
+- ⬜ Comprehensive documentation
 
-**External Dependencies:**
-- `hass-oidc-auth` for OIDC authentication
-- LibreChat API (to be documented)
-- Wyoming protocol (HA native)
-
-**Our New Components:**
-- `src/ha-integration/custom_components/librechat_conversation/`
+**Our Components:**
+- `src/ha-bridge/` - ✅ Complete and deployed
+- `src/ha-integration/custom_components/librechat_ha/` - 🚧 In progress
 
 **Unchanged Components:**
-- `src/mcp-server/` - No changes needed
+- `src/mcp-server/` - No changes needed (web interface)
 
 **Timeline:**
-- Week 1: OIDC setup and testing
-- Week 2: Conversation agent development
+- Week 1: HA Bridge API + Memory ✅ COMPLETE
+- Week 2: HA custom component + text Assist 🚧 CURRENT
 - Week 3: Voice integration and optimization
 
 **Detailed Architecture:** See `docs/PHASE_2.5_ARCHITECTURE.md`
@@ -516,37 +500,31 @@ Week 19+:   Phase 5 - Future Enhancements
 1. ✅ Memory system validated (Jan 16)
 2. ✅ Historical analysis validated (Jan 16)
 3. ✅ Phase 2.5 architecture designed (Jan 17)
-4. ✅ External dependencies identified (Jan 17)
-5. ✅ Documentation updated (Jan 17)
+4. ✅ HA Bridge API built with Express + SQLite (Jan 17)
+5. ✅ Memory storage and fact extraction working (Jan 17)
+6. ✅ HA Bridge deployed to ubuntuserver:3100 (Jan 17)
+7. ✅ End-to-end testing passed (Jan 17)
 
-### This Week (Week 10 - Phase 2.5 Start)
-1. **Monday-Tuesday: OIDC Research & Setup**
-   - [ ] Research OIDC provider options
-   - [ ] Install hass-oidc-auth
-   - [ ] Test authentication flow
-   - [ ] Document findings
+### This Week (Week 11 - HA Custom Component)
+1. **Build HA Conversation Agent**
+   - [ ] Implement conversation.py agent interface
+   - [ ] Connect to ha-bridge API (http://ubuntuserver:3100)
+   - [ ] Add proper error handling
 
-2. **Wednesday-Thursday: LibreChat API Research**
-   - [ ] Review LibreChat documentation
-   - [ ] Test API endpoints
-   - [ ] Document authentication method
-   - [ ] Create API client prototype
+2. **Install and Test**
+   - [ ] Install custom component on haos12
+   - [ ] Configure ha-bridge URL
+   - [ ] Test via HA's text-based Assist interface
+   - [ ] Verify memory persistence
 
-3. **Friday: Component Skeleton**
-   - [ ] Create component directory structure
-   - [ ] Set up development environment
-   - [ ] Create manifest and skeleton files
-   - [ ] Update PROJECT_PLAN.md with progress
+3. **Documentation**
+   - [ ] Update installation guide
+   - [ ] Document configuration options
 
-### Next Week (Week 11)
-1. Build conversation agent
-2. Implement LibreChat API integration
-3. Test text conversation flow
-
-### Week 12
-1. Voice integration
-2. Performance optimization
-3. Multi-user testing
+### Next Week (Week 12)
+1. Voice integration via Wyoming protocol
+2. Performance optimization (<3s response)
+3. Documentation polish
 
 ### Weeks 13-16 (Phase 3)
 1. Demo video production
@@ -589,11 +567,12 @@ See `docs/MEMORY_EXAMPLES.md` for detailed memory use cases and validated exampl
 | 1.1 | 2026-01-16 | Jure + Claude | Memory milestone validated, Phase 2 ~60% complete |
 | 1.2 | 2026-01-16 | Jure + Claude | Sensor history validated, Phase 2 ~70% complete, beta-ready |
 | 1.3 | 2026-01-17 | Jure + Claude | Added Phase 2.5 (HA Assist), external dependencies, updated timeline |
+| 1.4 | 2026-01-17 | Jure + Claude | HA Bridge deployed to ubuntuserver, Week 1 complete |
 
 ---
 
 **Last Updated:** January 17, 2026
 **Status:** Living document - evolves with project
-**Current Phase:** Phase 2.5 - HA Assist Integration (Week 10, Planning Complete)
-**Next Milestone:** Week 1 - OIDC Authentication Setup
+**Current Phase:** Phase 2.5 - HA Assist Integration (Week 1 Complete, Week 2 Starting)
+**Next Milestone:** HA Custom Component + Text Assist
 **Launch Target:** Early-Mid March 2026
