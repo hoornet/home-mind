@@ -26,6 +26,68 @@ This integration bridges LibreChat with Home Assistant to provide:
 - Multiple AI model support (Claude, GPT, local via Ollama)
 - Self-hosted and privacy-focused
 
+
+## Memory in Action
+
+Unlike stateless AI assistants, this integration **learns and remembers** across conversations:
+
+### Example: Sensor Baselines
+
+**First Conversation:**
+```
+User: What's the NOx sensor reading?
+Claude: The NOx sensor shows 100 ppm.
+
+User: Is that high?
+Claude: Typically indoor NOx is 20-40 ppm, so this seems elevated...
+
+User: Actually, 100 is normal for my home. Remember that.
+Claude: 🔖 Updated saved memory
+        I'll remember that 100 ppm is within normal parameters for your NOx levels.
+```
+
+**Next Day (New Conversation):**
+```
+User: How's the air quality?
+Claude: The NOx sensor shows 98 ppm, which is within normal parameters for your home.
+```
+
+**Result:** Claude remembers the baseline without being reminded!
+
+### Example: Personal Preferences
+
+```
+Chat 1:
+User: My name is Jure, also known as Hoornet
+Claude: 🔖 Updated saved memory
+        Great to meet you, Jure!
+
+Chat 2 (Later):
+Claude: Hi Jure! How can I help you today?
+```
+
+### What Gets Remembered
+
+✅ **Sensor baselines and thresholds**  
+✅ **Device nicknames and locations**  
+✅ **User preferences and patterns**  
+✅ **Corrections and clarifications**  
+✅ **Automation routines**
+
+### Memory Transparency
+
+You'll see "🔖 Updated saved memory" notifications when Claude learns something new. You can always ask "What do you know about X?" to see what's stored.
+
+See [Memory Examples](docs/MEMORY_EXAMPLES.md) for detailed documentation.
+
+---
+
+## Quick Start
+
+... (rest of your existing Quick Start section)
+
+
+
 ## Architecture
 
 ```
