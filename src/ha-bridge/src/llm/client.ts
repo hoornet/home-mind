@@ -55,7 +55,7 @@ export class LLMClient {
 
     // 3. Initial Claude call
     let response = await this.anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-3-5-haiku-20241022",
       max_tokens: isVoice ? 500 : 2048,
       system: systemPrompt,
       tools: HA_TOOLS,
@@ -91,7 +91,7 @@ export class LLMClient {
       messages.push({ role: "user", content: toolResults });
 
       response = await this.anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-3-5-haiku-20241022",
         max_tokens: isVoice ? 500 : 2048,
         system: systemPrompt,
         tools: HA_TOOLS,
