@@ -55,7 +55,7 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
    */
   router.get("/memory/:userId", (req: Request, res: Response) => {
     try {
-      const { userId } = req.params;
+      const userId = req.params.userId as string;
       const facts = memory.getFacts(userId);
       res.json({
         userId,
@@ -75,7 +75,7 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
    */
   router.post("/memory/:userId/facts", (req: Request, res: Response) => {
     try {
-      const { userId } = req.params;
+      const userId = req.params.userId as string;
       const parsed = AddFactSchema.safeParse(req.body);
 
       if (!parsed.success) {
@@ -106,7 +106,7 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
    */
   router.delete("/memory/:userId", (req: Request, res: Response) => {
     try {
-      const { userId } = req.params;
+      const userId = req.params.userId as string;
       const deleted = memory.clearUserFacts(userId);
       res.json({
         message: `Cleared ${deleted} facts for user ${userId}`,
@@ -127,7 +127,7 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
     "/memory/:userId/facts/:factId",
     (req: Request, res: Response) => {
       try {
-        const { factId } = req.params;
+        const factId = req.params.factId as string;
         const deleted = memory.deleteFact(factId);
 
         if (deleted) {
