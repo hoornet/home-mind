@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure LibreChat HA Bridge",
+        "description": "Enter the URL of your HA Bridge API server.",
+        "data": {
+          "api_url": "API URL",
+          "user_id": "Default User ID (optional)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the HA Bridge API. Make sure it's running and accessible.",
+      "unknown": "Unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This HA Bridge is already configured."
+    }
+  },
+  "entity": {
+    "conversation": {
+      "librechat_ha": {
+        "name": "LibreChat HA Bridge"
+      }
+    }
+  }
+}
