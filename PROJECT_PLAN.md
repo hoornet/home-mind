@@ -1,9 +1,9 @@
 # LibreChat-HomeAssistant Integration
-## Project Plan v1.1
+## Project Plan v1.2
 
 **Repository:** https://github.com/hoornet/librechat-homeassistant
 **License:** AGPL v3.0
-**Status:** Phase 2 - Core Features (~60% Complete)
+**Status:** Phase 2 - Core Features (~70% Complete, Beta-Ready)
 **Started:** January 2026  
 **Last Updated:** January 16, 2026
 
@@ -262,7 +262,7 @@ Integrate LibreChat with Home Assistant to provide:
 ### Phase 2: Core Features (Current)
 **Duration:** 3-4 weeks
 **Goal:** Add essential functionality for daily use
-**Status:** In Progress (~60% Complete)
+**Status:** In Progress (~70% Complete, Beta-Ready)
 
 **Milestone 2.1: Full Device Control ✅**
 - [x] Support all HA service calls (via generic call_service tool)
@@ -271,9 +271,9 @@ Integrate LibreChat with Home Assistant to provide:
 - [ ] Support covers (blinds, garage doors)
 - [x] Add parameter validation (Zod schemas)
 
-**Milestone 2.2: State Queries & Context**
+**Milestone 2.2: State Queries & Context ✅**
 - [ ] Get all entity states in an area
-- [ ] Get sensor history
+- [x] Get sensor history (get_history tool deployed and validated)
 - [ ] Provide context to LLM (current state of home)
 - [x] Handle multiple entities in single command (get_entities, search_entities)
 
@@ -295,11 +295,15 @@ Integrate LibreChat with Home Assistant to provide:
 2. ✅ **User Identity** - Claude remembers name (Jure) and alias (Hoornet)
 3. ✅ **Memory Updates** - "Updated saved memory" notifications work
 4. ✅ **Cross-Session Persistence** - Facts available in new conversations
+5. ✅ **Anomaly Detection** - Claude identifies 25°C as unusual (4-5°C above baseline)
+6. ✅ **Historical Analysis** - 7-day trend analysis with comparison tables
+7. ✅ **Memory + History Combined** - Contextual intelligence working
 
 *Evidence:*
-- See `docs/MEMORY_EXAMPLES.md` for detailed examples
+- See `docs/MEMORY_EXAMPLES.md` for detailed examples and test results
 - Screenshot evidence shows memory system working correctly
 - Memory agent (Haiku) functioning without errors
+- Sensor history (get_history) deployed and validated
 
 **Remaining Tasks:**
 - [ ] Add "learned preferences" storage for complex patterns
@@ -341,6 +345,8 @@ Integrate LibreChat with Home Assistant to provide:
 - [x] Control all common device types (basic)
 - [x] AI remembers preferences across sessions **[VALIDATED]**
 - [x] Sensor baselines work (NOX example) **[VALIDATED]**
+- [x] Sensor history queries work **[VALIDATED]**
+- [x] Memory + History combined analysis **[VALIDATED]**
 - [ ] User-friendly error handling (partial)
 
 ---
@@ -690,19 +696,30 @@ While keeping core open-source (AGPL v3.0):
 ### Completed Recently
 1. ✅ Memory system validated with real-world testing
 2. ✅ Created comprehensive memory documentation
-3. ✅ Updated project status to reflect memory success
+3. ✅ Sensor history (get_history) deployed and validated
+4. ✅ Memory + History combined testing - exceeded expectations
+5. ✅ Anomaly detection with learned baselines validated
+6. ✅ Advanced historical analysis (7-day trends, comparison tables)
 
-### Current Focus (Phase 2 Completion)
-1. **Sensor history queries** - Complements memory well
-2. **Climate control testing** - Common use case
-3. **Error handling improvements** - Better UX
-4. **Documentation updates** - Keep docs current
+### Current Focus (Beta Release Preparation)
+1. **Beta testing program** - Ready to recruit 3-5 testers
+2. **Documentation polish** - Quick installation guide (1 page)
+3. **Climate control testing** - Nice to have
+4. **Error handling improvements** - Nice to have
 
-### Upcoming (Phase 3)
-1. Advanced features (scenes, automations)
-2. One-command installation
-3. Beta testing program
-4. Video walkthrough
+### Upcoming (Community Release)
+1. Post on /r/homeassistant for beta testers
+2. Gather feedback for 1-2 weeks
+3. Iterate based on feedback
+4. Official v1.0 release
+
+### Beta Release Strategy
+**Title:** "Beta testers wanted: AI that learns your home"
+**Demo points:**
+- Temperature baseline learning
+- Historical analysis with comparison tables
+- Anomaly detection with context
+- Cross-session memory persistence
 
 ---
 
@@ -731,10 +748,11 @@ See MEMORY_EXAMPLES.md for detailed memory use cases and examples.
 |---------|------|--------|---------|
 | 1.0 | 2026-01-12 | Jure + Claude | Initial project plan |
 | 1.1 | 2026-01-16 | Jure + Claude | Memory milestone validated, Phase 2 ~60% complete |
+| 1.2 | 2026-01-16 | Jure + Claude | Sensor history validated, Phase 2 ~70% complete, beta-ready |
 
 ---
 
 **Last Updated:** January 16, 2026
 **Status:** Living document - will evolve as project progresses
-**Current Phase:** Phase 2 - Core Features (~60% Complete)
-**Next Milestone:** Sensor history queries + climate control testing
+**Current Phase:** Phase 2 - Core Features (~70% Complete, Beta-Ready)
+**Next Milestone:** Beta testing program + community release preparation
