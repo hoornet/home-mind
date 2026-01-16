@@ -36,6 +36,18 @@ const CallServiceSchema = z.object({
     .describe("Additional service data (e.g., brightness, temperature)"),
 });
 
+const GetHistorySchema = z.object({
+  entity_id: z.string().describe("The entity ID to get history for (e.g., sensor.temperature)"),
+  start_time: z
+    .string()
+    .optional()
+    .describe("ISO 8601 timestamp for start of history (default: 24 hours ago)"),
+  end_time: z
+    .string()
+    .optional()
+    .describe("ISO 8601 timestamp for end of history (default: now)"),
+});
+
 async function main() {
   const config = loadConfig();
   const haClient = new HomeAssistantClient(config);
@@ -138,6 +150,31 @@ async function main() {
             required: ["domain", "service"],
           },
         },
+        {
+          name: "get_history",
+          description:
+            "Get historical state data for a sensor or entity over a time period",
+          inputSchema: {
+            type: "object",
+            properties: {
+              entity_id: {
+                type: "string",
+                description: "The entity ID to get history for (e.g., sensor.temperature)",
+              },
+              start_time: {
+                type: "string",
+                description:
+                  "ISO 8601 timestamp for start of history (default: 24 hours ago). Example: 2026-01-16T08:00:00Z",
+              },
+              end_time: {
+                type: "string",
+                description:
+                  "ISO 8601 timestamp for end of history (default: now). Example: 2026-01-16T20:00:00Z",
+              },
+            },
+            required: ["entity_id"],
+          },
+        },
       ],
     };
   });
@@ -233,6 +270,52 @@ async function main() {
                 text: result.success
                   ? `Service ${domain}.${service} called successfully${entity_id ? ` on ${entity_id}` : ""}`
                   : "Service call failed",
+              },
+            ],
+          };
+        }
+
+        case "get_history": {
+          const { entity_id, start_time, end_time } = GetHistorySchema.parse(args);
+          const history = await haClient.getHistory(entity_id, start_time, end_time);
+
+          // HA returns array of arrays, we want the first array (for our entity)
+          const entityHistory = history[0] || [];
+
+          if (entityHistory.length === 0) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `No history data found for ${entity_id} in the specified time range.`,
+                },
+              ],
+            };
+          }
+
+          // Format the history for better readability
+          const formatted = entityHistory.map((entry) => ({
+            time: entry.last_changed,
+            state: entry.state,
+            // Include relevant attributes (e.g., unit_of_measurement for sensors)
+            unit: entry.attributes.unit_of_measurement,
+          }));
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    entity_id,
+                    data_points: formatted.length,
+                    start: formatted[0]?.time,
+                    end: formatted[formatted.length - 1]?.time,
+                    history: formatted,
+                  },
+                  null,
+                  2
+                ),
               },
             ],
           };

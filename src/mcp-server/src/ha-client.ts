@@ -19,6 +19,14 @@ export interface Area {
   picture: string | null;
 }
 
+export interface HistoryEntry {
+  entity_id: string;
+  state: string;
+  attributes: Record<string, unknown>;
+  last_changed: string;
+  last_updated: string;
+}
+
 export class HomeAssistantClient {
   private baseUrl: string;
   private token: string;
@@ -93,6 +101,26 @@ export class HomeAssistantClient {
       }
     );
     return { success: true, states };
+  }
+
+  async getHistory(
+    entityId: string,
+    startTime?: string,
+    endTime?: string
+  ): Promise<HistoryEntry[][]> {
+    // Default to last 24 hours if no start time provided
+    const start = startTime || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const end = endTime || new Date().toISOString();
+    
+    // HA history API returns array of arrays (one array per entity)
+    // Format: /api/history/period/<start_time>?filter_entity_id=<entity_id>&end_time=<end_time>
+    const params = new URLSearchParams({
+      filter_entity_id: entityId,
+      end_time: end,
+    });
+    
+    const path = `/api/history/period/${start}?${params.toString()}`;
+    return this.request<HistoryEntry[][]>(path);
   }
 
   async getAreas(): Promise<Area[]> {
