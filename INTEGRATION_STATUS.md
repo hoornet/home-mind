@@ -1,8 +1,8 @@
 # Integration Status
 
-**Last Updated:** January 17, 2026
+**Last Updated:** January 17, 2026 (Performance Analysis Added)
 **Current Phase:** Phase 2.5 - HA Bridge with Memory (Week 2 Complete - Text Assist Working!)
-**Project Status:** Active Development - Text Assist Working, Voice Testing Ready
+**Project Status:** Active Development - Implementing Streaming for Performance
 
 ---
 
@@ -194,12 +194,17 @@ librechat-homeassistant/
 - [ ] Voice commands work
 - [x] Response time acceptable (~5-10s)
 
-### Week 3: Polish + Beta
+### Week 3: Streaming + Voice Testing
 
-- Performance optimization (streaming responses)
-- Multi-user testing
-- Voice satellite testing
-- Beta release prep
+| Priority | Task | Status |
+|----------|------|--------|
+| 1 | **Implement streaming in HA Bridge** | 🚧 In Progress |
+| 2 | **Stream to conversation agent** | ⬜ Pending |
+| 3 | Voice satellite testing | ⬜ Ready |
+| 4 | Multi-user testing | ⬜ Pending |
+| 5 | Beta release prep | ⬜ Pending |
+
+**Why Streaming First:** Analysis shows Claude API calls are 90% of response time. Streaming gives users immediate feedback instead of waiting 5-10s.
 
 ---
 
@@ -214,9 +219,10 @@ librechat-homeassistant/
 
 ### Planned 🚧
 
-1. **Streaming Responses** - Start TTS before full response
+1. **Streaming Responses** - Start TTS before full response (HIGHEST PRIORITY)
 2. **Hybrid Routing** - Simple commands to HA built-in, complex to Claude
 3. **Local LLM Fallback** - Ollama for simple queries
+4. **Prompt Caching** - Anthropic cache feature for system prompts
 
 ### Response Time Breakdown
 
@@ -228,6 +234,39 @@ librechat-homeassistant/
 | Tool execution (cached) | ~10ms |
 | Tool execution (uncached) | ~500ms |
 | **Total (typical)** | **5-10s** |
+
+### Why HA Assist is Slower Than LibreChat Direct (January 17, 2026)
+
+**Key Finding:** Entity caching provides minimal improvement because the bottleneck is NOT the HA API calls.
+
+**Root Cause Analysis:**
+
+1. **Non-Streaming API Calls**
+   - `llm/client.ts` uses `anthropic.messages.create()` which blocks until full response
+   - LibreChat uses streaming - users see tokens as they arrive, feels instant
+   - HA Bridge waits for ENTIRE response before returning anything
+
+2. **Multiple Serial Claude Calls for Tool Use**
+   ```
+   Request → Claude call #1 (2-4s) → tool_use → execute tool → Claude call #2 (2-4s) → Response
+   ```
+   - Each tool use triggers ANOTHER full Claude API round-trip
+   - A simple "turn on the light" requires 2 Claude calls = 4-8s total
+   - Multiple tools = even more calls
+
+3. **Where Time Goes:**
+   | Component | % of Total | Caching Helps? |
+   |-----------|------------|----------------|
+   | Claude API calls | ~90% | No |
+   | Tool execution | ~5% | Yes (500ms → 10ms) |
+   | Network overhead | ~5% | No |
+
+**Conclusion:** Entity caching reduces tool execution from 500ms to 10ms, saving ~490ms. But when Claude calls take 4-8s total, that's only a ~6% improvement. The real solution is streaming.
+
+**Solution Priority:**
+1. **Streaming** - Biggest perceived improvement, users see response forming
+2. **Prompt caching** - Reduce time-to-first-token for system prompt
+3. **Hybrid routing** - Skip Claude entirely for simple commands
 
 ---
 
@@ -295,6 +334,28 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 
 ---
 
+### January 17, 2026: Streaming is Critical, Caching is Not
+
+**Finding:** Entity caching provides only ~6% improvement. The real bottleneck is serial, non-streaming Claude API calls.
+
+**Evidence:**
+- LibreChat direct (streaming): Response feels fast, tokens appear immediately
+- HA Assist (non-streaming): Must wait 5-10s for full response
+
+**Technical Details:**
+- `ha-bridge/src/llm/client.ts` uses blocking `messages.create()`
+- Tool use requires multiple serial Claude calls (2-4s each)
+- Entity caching only affects the ~5% of time spent on tool execution
+
+**Decision:** Prioritize streaming implementation over further caching optimizations.
+
+**Implementation Plan:**
+1. Add streaming to HA Bridge (`messages.stream()`)
+2. Stream partial responses to conversation agent
+3. HA can start TTS before full response arrives
+
+---
+
 ## Development Environment
 
 | Component | Host | IP/Port | Status |
@@ -355,9 +416,16 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 - Ensure "Prefer handling commands locally" is DISABLED in HA Voice Assistant settings
 - This setting intercepts queries before they reach LibreChat
 
+**Slow responses (5-10s) via HA Assist but fast via LibreChat**
+- This is expected with current non-streaming implementation
+- LibreChat streams tokens; HA Bridge waits for full response
+- Solution: Implement streaming (Week 3 priority)
+- Entity caching won't help - bottleneck is Claude API, not HA API
+
 **Slow responses (>30s)**
 - Check if using correct model (should be `claude-haiku-4-5-20251001`)
-- Ensure entity caching is working (check ha-bridge logs)
+- Verify tool calls aren't failing (check ha-bridge logs)
+- Each failed tool = retry = more Claude calls
 
 **500 errors from conversation agent**
 - Verify ha-bridge is running: `curl http://192.168.88.12:3100/api/health`
@@ -383,6 +451,7 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 - Custom Component: Installed on haos12 (192.168.88.14) ✅
 
 **Next Steps:**
-1. Test voice commands with Wyoming satellite
-2. Implement streaming responses for faster perceived speed
-3. Beta release preparation
+1. **Implement streaming responses** - Critical for acceptable response times
+2. Test voice commands with Wyoming satellite
+3. Consider prompt caching for further TTFT improvement
+4. Beta release preparation
