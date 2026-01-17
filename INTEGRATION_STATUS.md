@@ -107,12 +107,12 @@ librechat-homeassistant/
 │   │       ├── config.ts
 │   │       └── ha-client.ts
 │   │
-│   ├── ha-bridge/               ✅ WORKING - Voice integration API
+│   ├── ha-bridge/               ✅ WORKING - Voice integration API (with streaming)
 │   │   └── src/
 │   │       ├── index.ts         # Express server
-│   │       ├── api/             # HTTP routes
+│   │       ├── api/routes.ts    # HTTP routes + SSE streaming endpoint
 │   │       ├── memory/          # SQLite storage + extraction
-│   │       ├── llm/             # Claude client + prompts
+│   │       ├── llm/client.ts    # Claude client with streaming
 │   │       └── ha/              # HA client with caching
 │   │
 │   └── ha-integration/          ✅ WORKING - HA custom component
@@ -198,13 +198,20 @@ librechat-homeassistant/
 
 | Priority | Task | Status |
 |----------|------|--------|
-| 1 | **Implement streaming in HA Bridge** | 🚧 In Progress |
-| 2 | **Stream to conversation agent** | ⬜ Pending |
-| 3 | Voice satellite testing | ⬜ Ready |
-| 4 | Multi-user testing | ⬜ Pending |
-| 5 | Beta release prep | ⬜ Pending |
+| 1 | **Implement streaming in HA Bridge** | ✅ Done |
+| 2 | **SSE endpoint for web clients** | ✅ Done |
+| 3 | **Stream to conversation agent** | ⬜ Pending (HA API limitation) |
+| 4 | Voice satellite testing | ⬜ Ready |
+| 5 | Multi-user testing | ⬜ Pending |
+| 6 | Beta release prep | ⬜ Pending |
 
-**Why Streaming First:** Analysis shows Claude API calls are 90% of response time. Streaming gives users immediate feedback instead of waiting 5-10s.
+**Streaming Implementation (January 17, 2026):**
+- `llm/client.ts` now uses `messages.stream()` instead of `messages.create()`
+- Tool calls executed in parallel with `Promise.all()` for better performance
+- New SSE endpoint: `POST /api/chat/stream` for web clients
+- Regular `/api/chat` still works for HA Assist (uses streaming internally)
+
+**Note:** HA conversation API requires complete response before TTS, so streaming to voice is limited. But internal streaming still reduces time-to-first-token.
 
 ---
 
@@ -217,12 +224,17 @@ librechat-homeassistant/
    - Subsequent queries within 10s use cached data
    - Cache invalidated after service calls
 
+2. **Streaming Responses (January 17, 2026)**
+   - Uses `anthropic.messages.stream()` for faster time-to-first-token
+   - Tool calls executed in parallel with `Promise.all()`
+   - SSE endpoint (`/api/chat/stream`) for web clients that want chunks
+   - Regular endpoint uses streaming internally for faster processing
+
 ### Planned 🚧
 
-1. **Streaming Responses** - Start TTS before full response (HIGHEST PRIORITY)
-2. **Hybrid Routing** - Simple commands to HA built-in, complex to Claude
-3. **Local LLM Fallback** - Ollama for simple queries
-4. **Prompt Caching** - Anthropic cache feature for system prompts
+1. **Hybrid Routing** - Simple commands to HA built-in, complex to Claude
+2. **Local LLM Fallback** - Ollama for simple queries
+3. **Prompt Caching** - Anthropic cache feature for system prompts
 
 ### Response Time Breakdown
 

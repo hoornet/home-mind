@@ -28,7 +28,8 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
 
   /**
    * POST /api/chat
-   * Main chat endpoint - send a message, get an AI response
+   * Main chat endpoint - send a message, get an AI response.
+   * Uses streaming internally for faster processing, returns complete response.
    */
   router.post("/chat", async (req: Request, res: Response) => {
     try {
@@ -40,12 +41,50 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
         });
       }
 
+      // Use streaming internally (no callback = just faster processing)
       const response = await llm.chat(parsed.data);
       res.json(response);
     } catch (error) {
       console.error("Chat error:", error);
       const message = error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({ error: message });
+    }
+  });
+
+  /**
+   * POST /api/chat/stream
+   * Streaming chat endpoint using Server-Sent Events (SSE).
+   * Sends text chunks as they arrive, then final response.
+   */
+  router.post("/chat/stream", async (req: Request, res: Response) => {
+    try {
+      const parsed = ChatRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          error: "Invalid request",
+          details: parsed.error.errors,
+        });
+      }
+
+      // Set up SSE headers
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.flushHeaders();
+
+      // Stream chunks to client
+      const response = await llm.chat(parsed.data, (chunk: string) => {
+        res.write(`event: chunk\ndata: ${JSON.stringify({ text: chunk })}\n\n`);
+      });
+
+      // Send final complete response
+      res.write(`event: done\ndata: ${JSON.stringify(response)}\n\n`);
+      res.end();
+    } catch (error) {
+      console.error("Chat stream error:", error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      res.write(`event: error\ndata: ${JSON.stringify({ error: message })}\n\n`);
+      res.end();
     }
   });
 

@@ -19,6 +19,9 @@ export interface ChatResponse {
   factsLearned: number;
 }
 
+// Callback for streaming text chunks
+export type StreamCallback = (chunk: string) => void;
+
 export class LLMClient {
   private anthropic: Anthropic;
   private memory: MemoryStore;
@@ -39,7 +42,14 @@ export class LLMClient {
     this.ha = ha;
   }
 
-  async chat(request: ChatRequest): Promise<ChatResponse> {
+  /**
+   * Chat with streaming - uses Anthropic's streaming API for faster time-to-first-token.
+   * Optional onChunk callback receives text chunks as they arrive.
+   */
+  async chat(
+    request: ChatRequest,
+    onChunk?: StreamCallback
+  ): Promise<ChatResponse> {
     const { message, userId, isVoice = false } = request;
     const toolsUsed: string[] = [];
 
@@ -53,50 +63,55 @@ export class LLMClient {
     // 2. Build system prompt with memory
     const systemPrompt = buildSystemPrompt(factContents, isVoice);
 
-    // 3. Initial Claude call - using Haiku for speed
-    let response = await this.anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: isVoice ? 500 : 2048,
-      system: systemPrompt,
-      tools: HA_TOOLS,
-      messages: [{ role: "user", content: message }],
-    });
-
-    // 4. Handle tool calls in a loop
+    // 3. Initial streaming Claude call - using Haiku for speed
     const messages: Anthropic.MessageParam[] = [
       { role: "user", content: message },
     ];
 
+    let response = await this.streamMessage(
+      systemPrompt,
+      messages,
+      isVoice,
+      onChunk
+    );
+
+    // 4. Handle tool calls in a loop
     while (response.stop_reason === "tool_use") {
       const assistantContent = response.content;
       messages.push({ role: "assistant", content: assistantContent });
 
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
 
-      for (const block of assistantContent) {
-        if (block.type === "tool_use") {
-          toolsUsed.push(block.name);
-          const result = await this.handleToolCall(
-            block.name,
-            block.input as Record<string, unknown>
-          );
-          toolResults.push({
-            type: "tool_result",
-            tool_use_id: block.id,
-            content: JSON.stringify(result, null, 2),
-          });
-        }
-      }
+      // Execute tools in parallel for better performance
+      const toolBlocks = assistantContent.filter(
+        (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
+      );
+
+      const toolPromises = toolBlocks.map(async (block) => {
+        toolsUsed.push(block.name);
+        const result = await this.handleToolCall(
+          block.name,
+          block.input as Record<string, unknown>
+        );
+        return {
+          type: "tool_result" as const,
+          tool_use_id: block.id,
+          content: JSON.stringify(result, null, 2),
+        };
+      });
+
+      const results = await Promise.all(toolPromises);
+      toolResults.push(...results);
 
       messages.push({ role: "user", content: toolResults });
 
-      response = await this.anthropic.messages.create({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: isVoice ? 500 : 2048,
-        system: systemPrompt,
-        tools: HA_TOOLS,
+      // Continue with streaming for the follow-up response
+      response = await this.streamMessage(
+        systemPrompt,
         messages,
-      });
+        isVoice,
+        onChunk
+      );
     }
 
     // 5. Extract final text response
@@ -114,6 +129,35 @@ export class LLMClient {
       toolsUsed,
       factsLearned: 0,
     };
+  }
+
+  /**
+   * Stream a message and return the final message object.
+   * Calls onChunk with text deltas as they arrive.
+   */
+  private async streamMessage(
+    systemPrompt: string,
+    messages: Anthropic.MessageParam[],
+    isVoice: boolean,
+    onChunk?: StreamCallback
+  ): Promise<Anthropic.Message> {
+    const stream = this.anthropic.messages.stream({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: isVoice ? 500 : 2048,
+      system: systemPrompt,
+      tools: HA_TOOLS,
+      messages,
+    });
+
+    // Stream text chunks to callback if provided
+    if (onChunk) {
+      stream.on("text", (textDelta) => {
+        onChunk(textDelta);
+      });
+    }
+
+    // Wait for the complete message
+    return await stream.finalMessage();
   }
 
   private async handleToolCall(
