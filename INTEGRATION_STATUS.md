@@ -166,14 +166,23 @@ librechat-homeassistant/
 
 | Day | Task | Status |
 |-----|------|--------|
-| 6-7 | HA custom component | 🚧 In Progress |
-| 8 | Install on HA and test | ⬜ Pending |
+| 6-7 | HA custom component | ✅ Done |
+| 7 | Install on HA | ✅ Done |
+| 7 | Configure integration | ✅ Done |
+| 8 | Debug conversation processing | 🚧 In Progress |
 | 9 | Voice testing (Wyoming) | ⬜ Pending |
 | 10 | Documentation | ⬜ Pending |
 
+**Current Issue (Jan 17):**
+- Integration loads successfully (state: "loaded")
+- Entity `conversation.librechat_ha_bridge` registered
+- `/api/conversation/process` returns 500 error
+- Needs HA debug logging to diagnose root cause
+
 **Week 2 Success Criteria:**
-- [ ] HA Assist routes to our agent
-- [ ] Text commands work via Assist
+- [x] HA custom component installed
+- [x] Config flow working
+- [ ] Text commands work via Assist (debugging)
 - [ ] Voice commands work
 - [ ] Response time <3s
 
@@ -338,7 +347,14 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 
 **Status Summary:**
 - ✅ **Phase 2:** 70% complete, web features working
-- 🚧 **Phase 2.5:** Week 1 complete (ha-bridge deployed), Week 2 starting (HA component)
+- 🚧 **Phase 2.5:** Week 1 complete, Week 2 in progress (debugging conversation agent)
 - 🎯 **Target:** Early March 2026 for v1.0 launch
 
-**HA Bridge Endpoint:** `http://ubuntuserver:3100/api/chat`
+**Deployed Services:**
+- HA Bridge: `http://192.168.88.12:3100` (ubuntuserver) ✅
+- Custom Component: Installed on haos12 (192.168.88.14) ✅
+
+**Next Steps:**
+1. Enable HA debug logging for `custom_components.librechat_ha`
+2. Diagnose 500 error in conversation processing
+3. Test text Assist, then voice
