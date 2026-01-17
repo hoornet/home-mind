@@ -6,7 +6,6 @@ from typing import Literal
 
 import aiohttp
 
-from homeassistant.components import conversation
 from homeassistant.components.conversation import (
     ConversationEntity,
     ConversationEntityFeature,
@@ -16,7 +15,7 @@ from homeassistant.components.conversation import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import MATCH_ALL
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import device_registry as dr, intent
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import ulid
@@ -43,9 +42,7 @@ async def async_setup_entry(
     async_add_entities([agent])
 
 
-class LibreChatConversationAgent(
-    ConversationEntity, conversation.AbstractConversationAgent
-):
+class LibreChatConversationAgent(ConversationEntity):
     """LibreChat HA Bridge conversation agent."""
 
     _attr_has_entity_name = True
@@ -78,6 +75,8 @@ class LibreChatConversationAgent(
         self, user_input: ConversationInput
     ) -> ConversationResult:
         """Process a conversation input and return a response."""
+        _LOGGER.debug("Processing conversation input: %s", user_input.text)
+
         # Get user ID from context if available, otherwise use default
         user_id = self._default_user_id
         if user_input.context and user_input.context.user_id:
@@ -96,8 +95,9 @@ class LibreChatConversationAgent(
                 conversation_id=conversation_id,
                 is_voice=is_voice,
             )
+            _LOGGER.debug("Got response: %s", response_text[:100] if response_text else "None")
 
-            intent_response = conversation.IntentResponse(language=user_input.language)
+            intent_response = intent.IntentResponse(language=user_input.language)
             intent_response.async_set_speech(response_text)
 
             return ConversationResult(
@@ -106,11 +106,11 @@ class LibreChatConversationAgent(
             )
 
         except Exception as err:
-            _LOGGER.error("Error calling HA Bridge API: %s", err)
+            _LOGGER.error("Error calling HA Bridge API: %s", err, exc_info=True)
 
-            intent_response = conversation.IntentResponse(language=user_input.language)
+            intent_response = intent.IntentResponse(language=user_input.language)
             intent_response.async_set_error(
-                conversation.IntentResponseErrorCode.UNKNOWN,
+                intent.IntentResponseErrorCode.UNKNOWN,
                 f"Sorry, I couldn't process that request: {err}",
             )
 

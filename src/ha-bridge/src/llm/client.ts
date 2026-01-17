@@ -53,9 +53,9 @@ export class LLMClient {
     // 2. Build system prompt with memory
     const systemPrompt = buildSystemPrompt(factContents, isVoice);
 
-    // 3. Initial Claude call
+    // 3. Initial Claude call - using Haiku for speed
     let response = await this.anthropic.messages.create({
-      model: "claude-3-5-haiku-20241022",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: isVoice ? 500 : 2048,
       system: systemPrompt,
       tools: HA_TOOLS,
@@ -91,7 +91,7 @@ export class LLMClient {
       messages.push({ role: "user", content: toolResults });
 
       response = await this.anthropic.messages.create({
-        model: "claude-3-5-haiku-20241022",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: isVoice ? 500 : 2048,
         system: systemPrompt,
         tools: HA_TOOLS,

@@ -16,15 +16,41 @@ export interface HistoryEntry {
   last_updated: string;
 }
 
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
 export class HomeAssistantClient {
   private baseUrl: string;
   private token: string;
   private skipTlsVerify: boolean;
 
+  // Cache settings
+  private cacheTTL: number = 10000; // 10 seconds default
+  private allStatesCache: CacheEntry<EntityState[]> | null = null;
+  private entityCache: Map<string, CacheEntry<EntityState>> = new Map();
+
   constructor(config: Config) {
     this.baseUrl = config.haUrl.replace(/\/$/, "");
     this.token = config.haToken;
     this.skipTlsVerify = config.haSkipTlsVerify;
+  }
+
+  /**
+   * Check if cache entry is still valid
+   */
+  private isCacheValid<T>(entry: CacheEntry<T> | null | undefined): entry is CacheEntry<T> {
+    if (!entry) return false;
+    return Date.now() - entry.timestamp < this.cacheTTL;
+  }
+
+  /**
+   * Invalidate all caches (call after service calls)
+   */
+  private invalidateCache(): void {
+    this.allStatesCache = null;
+    this.entityCache.clear();
   }
 
   private async fetch<T>(
@@ -61,17 +87,51 @@ export class HomeAssistantClient {
   }
 
   /**
-   * Get state of a single entity
+   * Get all states (cached)
    */
-  async getState(entityId: string): Promise<EntityState> {
-    return this.fetch<EntityState>(`/api/states/${entityId}`);
+  private async getAllStatesCached(): Promise<EntityState[]> {
+    if (this.isCacheValid(this.allStatesCache)) {
+      return this.allStatesCache.data;
+    }
+
+    const states = await this.fetch<EntityState[]>("/api/states");
+    this.allStatesCache = { data: states, timestamp: Date.now() };
+
+    // Also populate individual entity cache
+    for (const state of states) {
+      this.entityCache.set(state.entity_id, { data: state, timestamp: Date.now() });
+    }
+
+    return states;
   }
 
   /**
-   * Get all entities, optionally filtered by domain
+   * Get state of a single entity (cached)
+   */
+  async getState(entityId: string): Promise<EntityState> {
+    // Check individual cache first
+    const cached = this.entityCache.get(entityId);
+    if (this.isCacheValid(cached)) {
+      return cached.data;
+    }
+
+    // Check if we have a recent all-states cache
+    if (this.isCacheValid(this.allStatesCache)) {
+      const state = this.allStatesCache.data.find(s => s.entity_id === entityId);
+      if (state) return state;
+    }
+
+    // Fetch individual entity
+    const state = await this.fetch<EntityState>(`/api/states/${entityId}`);
+    this.entityCache.set(entityId, { data: state, timestamp: Date.now() });
+    return state;
+  }
+
+  /**
+   * Get all entities, optionally filtered by domain (cached)
    */
   async getEntities(domain?: string): Promise<EntityState[]> {
-    const states = await this.fetch<EntityState[]>("/api/states");
+    const states = await this.getAllStatesCached();
 
     if (domain) {
       return states.filter((s) => s.entity_id.startsWith(`${domain}.`));
@@ -81,10 +141,10 @@ export class HomeAssistantClient {
   }
 
   /**
-   * Search entities by name or ID substring
+   * Search entities by name or ID substring (cached)
    */
   async searchEntities(query: string): Promise<EntityState[]> {
-    const states = await this.fetch<EntityState[]>("/api/states");
+    const states = await this.getAllStatesCached();
     const lowerQuery = query.toLowerCase();
 
     return states.filter((s) => {
@@ -97,7 +157,7 @@ export class HomeAssistantClient {
   }
 
   /**
-   * Call a Home Assistant service
+   * Call a Home Assistant service (invalidates cache)
    */
   async callService(
     domain: string,
@@ -110,14 +170,19 @@ export class HomeAssistantClient {
       payload.entity_id = entityId;
     }
 
-    return this.fetch<EntityState[]>(`/api/services/${domain}/${service}`, {
+    const result = await this.fetch<EntityState[]>(`/api/services/${domain}/${service}`, {
       method: "POST",
       body: JSON.stringify(payload),
     });
+
+    // Invalidate cache after service call since states may have changed
+    this.invalidateCache();
+
+    return result;
   }
 
   /**
-   * Get historical states for an entity
+   * Get historical states for an entity (not cached - historical data)
    */
   async getHistory(
     entityId: string,
