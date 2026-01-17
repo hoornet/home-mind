@@ -8,12 +8,15 @@ import aiohttp
 
 from homeassistant.components import conversation
 from homeassistant.components.conversation import (
-    AbstractConversationAgent,
+    ConversationEntity,
+    ConversationEntityFeature,
     ConversationInput,
     ConversationResult,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import MATCH_ALL
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import ulid
@@ -40,11 +43,14 @@ async def async_setup_entry(
     async_add_entities([agent])
 
 
-class LibreChatConversationAgent(AbstractConversationAgent, conversation.ConversationEntity):
+class LibreChatConversationAgent(
+    ConversationEntity, conversation.AbstractConversationAgent
+):
     """LibreChat HA Bridge conversation agent."""
 
     _attr_has_entity_name = True
     _attr_name = None
+    _attr_supported_features = ConversationEntityFeature.CONTROL
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize the agent."""
@@ -55,18 +61,18 @@ class LibreChatConversationAgent(AbstractConversationAgent, conversation.Convers
         self._session = async_get_clientsession(hass)
 
         self._attr_unique_id = entry.entry_id
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "LibreChat HA Bridge",
-            "manufacturer": "LibreChat",
-            "model": "HA Bridge",
-            "sw_version": "0.1.0",
-        }
+        self._attr_device_info = dr.DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name="LibreChat HA Bridge",
+            manufacturer="LibreChat",
+            model="HA Bridge",
+            entry_type=dr.DeviceEntryType.SERVICE,
+        )
 
     @property
     def supported_languages(self) -> list[str] | Literal["*"]:
         """Return supported languages."""
-        return "*"  # Support all languages
+        return MATCH_ALL
 
     async def async_process(
         self, user_input: ConversationInput
