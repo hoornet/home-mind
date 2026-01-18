@@ -1,7 +1,7 @@
 {
-  "name": "@librechat-homeassistant/mcp-server",
-  "version": "0.2.0",
-  "description": "MCP server bridging LibreChat to Home Assistant",
+  "name": "@home-mind/mcp-server",
+  "version": "0.3.0",
+  "description": "MCP server for Home Mind - bridges LibreChat to Home Assistant",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
@@ -14,7 +14,7 @@
   "keywords": [
     "mcp",
     "home-assistant",
-    "librechat",
+    "home-mind",
     "ai"
   ],
   "license": "AGPL-3.0",

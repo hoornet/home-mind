@@ -1,4 +1,4 @@
-"""LibreChat HA Bridge integration for Home Assistant."""
+"""Home Mind integration for Home Assistant."""
 from __future__ import annotations
 
 import logging
@@ -19,19 +19,19 @@ PLATFORMS: list[Platform] = [Platform.CONVERSATION]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the LibreChat HA Bridge component."""
+    """Set up the Home Mind component."""
     hass.data.setdefault(DOMAIN, {})
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up LibreChat HA Bridge from a config entry."""
+    """Set up Home Mind from a config entry."""
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    _LOGGER.info("LibreChat HA Bridge integration loaded")
+    _LOGGER.info("Home Mind integration loaded")
     return True
 
 

@@ -1,12 +1,12 @@
-"""Constants for LibreChat HA Bridge integration."""
+"""Constants for Home Mind integration."""
 
-DOMAIN = "librechat_ha"
+DOMAIN = "home_mind"
 CONF_API_URL = "api_url"
 CONF_USER_ID = "user_id"
 
 DEFAULT_API_URL = "http://localhost:3100"
 DEFAULT_USER_ID = "default"
-DEFAULT_TIMEOUT = 120  # Sonnet with tool use can take 60+ seconds
+DEFAULT_TIMEOUT = 120  # Claude with tool use can take 60+ seconds
 
 API_CHAT_ENDPOINT = "/api/chat"
 API_HEALTH_ENDPOINT = "/api/health"

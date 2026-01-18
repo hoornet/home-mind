@@ -1,7 +1,7 @@
 {
-  "name": "ha-bridge",
-  "version": "0.2.0",
-  "description": "Home Assistant Bridge API with memory for voice integration",
+  "name": "@home-mind/ha-bridge",
+  "version": "0.3.0",
+  "description": "Home Mind API server - AI assistant with memory for Home Assistant",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {

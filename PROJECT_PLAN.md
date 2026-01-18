@@ -1,7 +1,7 @@
-# LibreChat-HomeAssistant Integration
-## Project Plan v1.3
+# Home Mind
+## Project Plan v1.4
 
-**Repository:** https://github.com/hoornet/librechat-homeassistant
+**Repository:** https://github.com/hoornet/home-mind
 **License:** AGPL v3.0
 **Status:** Phase 2.5 Complete - v0.2.0 Released (Voice + Text Working!)
 **Started:** January 2026
@@ -153,7 +153,7 @@ Add voice control capabilities by integrating with Home Assistant's native Assis
    - Can collaborate upstream later
 
 3. **Conversation Agent: Build Custom Component**
-   - New: `src/ha-integration/custom_components/librechat_conversation/`
+   - New: `src/ha-integration/custom_components/home_mind/`
    - Bridges HA Assist ↔ LibreChat API
    - Handles user context from OIDC
    - Manages LibreChat sessions
@@ -222,7 +222,7 @@ Add voice control capabilities by integrating with Home Assistant's native Assis
 
 **Our Components:**
 - `src/ha-bridge/` - ✅ Complete and deployed (v0.2.0)
-- `src/ha-integration/custom_components/librechat_ha/` - ✅ Complete (v0.2.0)
+- `src/ha-integration/custom_components/home_mind/` - ✅ Complete (v0.2.0)
 
 **Unchanged Components:**
 - `src/mcp-server/` - No changes needed (web interface)

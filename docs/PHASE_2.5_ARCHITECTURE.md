@@ -2,13 +2,13 @@
 
 **Duration:** 3 weeks  
 **Status:** Planning  
-**Goal:** Enable voice control through HA's native Assist with LibreChat's memory and intelligence
+**Goal:** Enable voice control through HA's native Assist with Home Mind's memory and intelligence
 
 ---
 
 ## Overview
 
-Phase 2.5 adds voice control capabilities by integrating with Home Assistant's native Assist feature. Users will be able to use voice commands (via Wyoming protocol satellites like ESP32) while maintaining all the memory and contextual intelligence of LibreChat.
+Phase 2.5 adds voice control capabilities by integrating with Home Assistant's native Assist feature. Users will be able to use voice commands (via Wyoming protocol satellites like ESP32) while maintaining all the memory and contextual intelligence of Home Mind.
 
 ### Key Innovation
 
@@ -312,12 +312,12 @@ auth_providers:
 #### `manifest.json`
 ```json
 {
-  "domain": "librechat_conversation",
-  "name": "LibreChat Conversation",
+  "domain": "home_mind",
+  "name": "Home Mind",
   "codeowners": ["@hoornet"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/hoornet/librechat-homeassistant",
+  "documentation": "https://github.com/hoornet/home-mind",
   "iot_class": "cloud_polling",
   "requirements": ["aiohttp>=3.8.0"],
   "version": "1.0.0"
@@ -330,7 +330,7 @@ auth_providers:
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-DOMAIN = "librechat_conversation"
+DOMAIN = "home_mind"
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up LibreChat conversation from a config entry."""
@@ -455,7 +455,7 @@ class LibreChatAPI:
 ```python
 """Constants for LibreChat conversation."""
 
-DOMAIN = "librechat_conversation"
+DOMAIN = "home_mind"
 CONF_LIBRECHAT_URL = "librechat_url"
 
 # Default values

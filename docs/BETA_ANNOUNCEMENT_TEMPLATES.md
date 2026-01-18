@@ -4,8 +4,8 @@
 
 ### Title Options:
 1. "I built an AI assistant for Home Assistant that actually remembers things"
-2. "LibreChat + Home Assistant: AI with persistent memory and learning"
-3. "[Beta] Home Assistant AI that learns your sensor baselines and remembers preferences"
+2. "Home Mind: AI assistant for Home Assistant with persistent memory"
+3. "[Beta] Home Mind - AI that learns your sensor baselines and remembers preferences"
 
 ### Post Body:
 
@@ -13,7 +13,7 @@
 
 ## What I Built
 
-I've been working on integrating LibreChat with Home Assistant to solve a problem that's frustrated me for years: **AI assistants that forget everything between conversations.**
+I've built Home Mind - an AI assistant for Home Assistant that solves a problem that's frustrated me for years: **AI assistants that forget everything between conversations.**
 
 This integration adds:
 - ✅ **Persistent memory** - Remembers corrections and preferences across sessions
@@ -106,7 +106,7 @@ Comment below or DM if interested!
 ## For Home Assistant Community Forums
 
 ### Title:
-"LibreChat-HomeAssistant: AI Assistant with Persistent Memory (Beta Testers Wanted)"
+"Home Mind: AI Assistant with Persistent Memory (Beta Testers Wanted)"
 
 ### Post:
 [Similar content to above, but with more technical detail]
@@ -123,8 +123,8 @@ LibreChat (UI) → MCP Server → Home Assistant REST API
 ### Installation Preview
 ```bash
 # Quick setup (detailed guide in repo)
-git clone https://github.com/your-username/librechat-homeassistant
-cd librechat-homeassistant
+git clone https://github.com/hoornet/home-mind
+cd home-mind
 # [Follow setup guide]
 ```
 
@@ -187,7 +187,7 @@ GitHub: [link]
 
 ## DM Template for Interested Beta Testers
 
-### Subject: LibreChat-HomeAssistant Beta Testing
+### Subject: Home Mind Beta Testing
 
 Hi [name],
 

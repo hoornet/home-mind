@@ -1,10 +1,10 @@
-# LibreChat-HomeAssistant
+# Home Mind
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/Version-0.2.0-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.3.0-brightgreen.svg)]()
 [![Status](https://img.shields.io/badge/Status-Voice%20Working-success.svg)]()
 
-Persistent AI assistant for Home Assistant using LibreChat. Adds conversation memory, learning capabilities, and advanced AI features to your smart home.
+AI assistant for Home Assistant with persistent memory. Adds conversation memory, learning capabilities, and voice control to your smart home.
 
 ## The Problem
 
@@ -18,66 +18,60 @@ Current Home Assistant AI integrations suffer from:
 
 ## The Solution
 
-This integration bridges LibreChat with Home Assistant to provide:
+Home Mind provides:
 
 - Persistent conversation memory across sessions
 - Learning from corrections and user preferences
-- Document upload and analysis (floor plans, manuals)
-- Searchable conversation history
+- Voice control via HA Assist (Wyoming protocol)
+- Web interface via LibreChat (optional)
 - Multiple AI model support (Claude, GPT, local via Ollama)
 - Self-hosted and privacy-focused
 
 
 ## Memory in Action
 
-Unlike stateless AI assistants, this integration **learns and remembers** across conversations:
+Unlike stateless AI assistants, Home Mind **learns and remembers** across conversations:
 
 ### Example: Sensor Baselines
 
 **First Conversation:**
 ```
 User: What's the NOx sensor reading?
-Claude: The NOx sensor shows 100 ppm.
+AI: The NOx sensor shows 100 ppm.
 
 User: Is that high?
-Claude: Typically indoor NOx is 20-40 ppm, so this seems elevated...
+AI: Typically indoor NOx is 20-40 ppm, so this seems elevated...
 
 User: Actually, 100 is normal for my home. Remember that.
-Claude: 🔖 Updated saved memory
-        I'll remember that 100 ppm is within normal parameters for your NOx levels.
+AI: I'll remember that 100 ppm is within normal parameters for your NOx levels.
 ```
 
 **Next Day (New Conversation):**
 ```
 User: How's the air quality?
-Claude: The NOx sensor shows 98 ppm, which is within normal parameters for your home.
+AI: The NOx sensor shows 98 ppm, which is within normal parameters for your home.
 ```
 
-**Result:** Claude remembers the baseline without being reminded!
+**Result:** Home Mind remembers the baseline without being reminded!
 
 ### Example: Personal Preferences
 
 ```
 Chat 1:
 User: My name is Jure, also known as Hoornet
-Claude: 🔖 Updated saved memory
-        Great to meet you, Jure!
+AI: Great to meet you, Jure!
 
 Chat 2 (Later):
-Claude: Hi Jure! How can I help you today?
+AI: Hi Jure! How can I help you today?
 ```
 
 ### What Gets Remembered
 
-✅ **Sensor baselines and thresholds**  
-✅ **Device nicknames and locations**  
-✅ **User preferences and patterns**  
-✅ **Corrections and clarifications**  
-✅ **Automation routines**
-
-### Memory Transparency
-
-You'll see "🔖 Updated saved memory" notifications when Claude learns something new. You can always ask "What do you know about X?" to see what's stored.
+- **Sensor baselines and thresholds**
+- **Device nicknames and locations**
+- **User preferences and patterns**
+- **Corrections and clarifications**
+- **Automation routines**
 
 See [Memory Examples](docs/MEMORY_EXAMPLES.md) for detailed documentation.
 
@@ -89,50 +83,27 @@ The real power comes from combining **persistent memory** with **historical data
 
 ### Example: Contextual Temperature Monitoring
 
-**Teaching Claude What's Normal:**
+**Teaching Home Mind What's Normal:**
 ```
 User: Remember that 20-21°C is normal for the living room in the morning
 
-Claude: 🔖 Updated saved memory
-        I'll remember that 20-21°C is your normal living room temperature range
-        in the morning.
+AI: I'll remember that 20-21°C is your normal living room temperature range
+    in the morning.
 ```
 
 **Next Day (New Conversation):**
 ```
 User: Is the living room temperature normal this morning?
 
-Claude: [checks current temperature: 21.1°C]
-        [recalls from memory: normal = 20-21°C]
+AI: [checks current temperature: 21.1°C]
+    [recalls from memory: normal = 20-21°C]
 
-        Yes, your living room temperature is essentially normal this morning.
-        It's 21.1°C, just 0.1°C above your typical 20-21°C range - which is
-        negligible. You're right at the comfortable range you prefer.
+    Yes, your living room temperature is essentially normal this morning.
+    It's 21.1°C, just 0.1°C above your typical 20-21°C range - which is
+    negligible. You're right at the comfortable range you prefer.
 ```
 
-**Result:** Claude provides **contextualized answers** instead of just raw numbers.
-
-### Example: Trend Analysis with Context
-
-**Query:**
-```
-How has the living room temperature changed since this morning?
-```
-
-**Response:**
-```
-Claude: [queries history API]
-        Temperature progression:
-        • 06:00 AM: 19.9°C
-        • 07:00 AM: 20.1°C
-        • 08:00 AM: 20.7°C (current)
-
-        [uses memory: normal = 20-21°C]
-
-        The temperature has been steadily increasing by 0.8°C throughout the
-        morning, now reaching the lower end of your normal comfort range.
-        This is a typical morning warm-up pattern.
-```
+**Result:** Home Mind provides **contextualized answers** instead of just raw numbers.
 
 ### Example: Anomaly Detection
 
@@ -143,11 +114,11 @@ Was there anything unusual about the temperature today?
 
 **Response:**
 ```
-Claude: [checks history for today]
-        [compares to remembered baseline: 20-21°C]
+AI: [checks history for today]
+    [compares to remembered baseline: 20-21°C]
 
-        No, temperatures stayed within your normal 20-21°C morning range all day.
-        The peak was 21.4°C at 2pm, which is typical for afternoon warming.
+    No, temperatures stayed within your normal 20-21°C morning range all day.
+    The peak was 21.4°C at 2pm, which is typical for afternoon warming.
 ```
 
 ### Why This Matters
@@ -155,52 +126,32 @@ Claude: [checks history for today]
 **Traditional HA AI:**
 - "The temperature is 21.1°C" ← Raw data, no context
 
-**LibreChat + Memory + History:**
+**Home Mind:**
 - "21.1°C is normal for you" ← Contextual, learned intelligence
 
-### What Gets Learned
-
-The system automatically remembers and applies:
-
-✅ **Sensor baselines** - "100 ppm NOx is normal in my home"
-✅ **Comfort ranges** - "20-21°C is comfortable morning temperature"
-✅ **Patterns** - "Temperature rises 6-9am due to morning sun"
-✅ **Anomalies** - "Spike to 25°C is unusual, investigate"
-✅ **Preferences** - "I prefer bedroom cooler than living room"
-
-### Technical Implementation
-
-- **Memory**: LibreChat's native memory system (MongoDB storage)
-- **History**: Home Assistant's `/api/history/period` endpoint
-- **Analysis**: Claude Sonnet 4's reasoning over combined data
-- **Learning**: Automatic memory updates from corrections
-
-See [MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) for more examples.
-
 ---
-
-## Quick Start
-
-
 
 ## Architecture
 
 ```
-┌─────────────────┐         ┌──────────────────┐
-│   LibreChat     │◄───────►│   MCP Server     │
-│   (Frontend)    │         │  (HA Bridge)     │
-└─────────────────┘         └──────────────────┘
-        │                            │
-        ▼                            ▼
-┌─────────────────┐         ┌──────────────────┐
-│  Anthropic API  │         │ Home Assistant   │
-│  (or OpenAI)    │         │   REST API       │
-└─────────────────┘         └──────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      Two Interfaces                          │
+├─────────────────────────────┬───────────────────────────────┤
+│     Web (LibreChat)         │      Voice (HA Assist)        │
+│            ↓                │             ↓                 │
+│       MCP Server            │    HA Conversation Agent      │
+│            ↓                │             ↓                 │
+│     (existing flow)         │       Home Mind API           │
+│                             │             ↓                 │
+│                             │    Claude + HA Tools          │
+└─────────────────────────────┴───────────────────────────────┘
+                              ↓
+                    Home Assistant REST API
 ```
 
 ## Project Status
 
-**Current Version:** v0.2.0 (January 18, 2026)
+**Current Version:** v0.3.0 (January 18, 2026)
 **Current Phase:** Phase 2.5 Complete - Voice + Text Assist
 
 - [x] MCP Server with Home Assistant integration
@@ -210,7 +161,8 @@ See [MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) for more examples.
 - [x] Voice control via HA Assist (Wyoming protocol)
 - [x] Streaming responses for faster voice
 - [ ] Multi-user support (OIDC)
-- [ ] Advanced device controls (climate, media, covers)
+- [ ] HACS integration (one-click install)
+- [ ] HA Add-on packaging
 
 See [PROJECT_PLAN.md](PROJECT_PLAN.md) for detailed roadmap and [ARCHITECTURE.md](ARCHITECTURE.md) for technical design.
 
@@ -222,35 +174,50 @@ See [PROJECT_PLAN.md](PROJECT_PLAN.md) for detailed roadmap and [ARCHITECTURE.md
 - Home Assistant instance with API access
 - Anthropic API key (or other AI provider)
 
-### 1. Clone LibreChat
+### Option A: Voice Control via HA Assist
 
+1. **Deploy Home Mind API:**
+```bash
+git clone https://github.com/hoornet/home-mind.git
+cd home-mind/src/ha-bridge
+cp .env.example .env
+# Edit .env with your settings
+docker compose up -d
+```
+
+2. **Install HA Custom Component:**
+```bash
+cp -r src/ha-integration/custom_components/home_mind ~/.homeassistant/custom_components/
+```
+
+3. **Configure in HA:**
+   - Settings → Devices & Services → Add Integration → Home Mind
+   - Enter your Home Mind API URL
+   - Set as conversation agent in Voice Assistants
+
+### Option B: Web Interface via LibreChat
+
+1. **Clone LibreChat:**
 ```bash
 git clone https://github.com/danny-avila/LibreChat.git
 cd LibreChat
 cp .env.example .env
 ```
 
-### 2. Configure Environment
-
+2. **Configure Environment:**
 Edit `.env` and set your Anthropic API key:
 ```bash
 ANTHROPIC_API_KEY=your_api_key_here
 ```
 
-### 3. Add MCP Server
-
-Clone this repository and copy the MCP server:
+3. **Add MCP Server:**
 ```bash
-git clone https://github.com/hoornet/librechat-homeassistant.git
-cp -r librechat-homeassistant/src/mcp-server ./mcp-server
-```
-
-Build the MCP server:
-```bash
+git clone https://github.com/hoornet/home-mind.git
+cp -r home-mind/src/mcp-server ./mcp-server
 docker run --rm -v $(pwd)/mcp-server:/app -w /app node:20 sh -c 'npm install && npm run build'
 ```
 
-### 4. Configure LibreChat for MCP
+4. **Configure LibreChat for MCP:**
 
 Create `librechat.yaml`:
 ```yaml
@@ -278,17 +245,16 @@ services:
       - ./librechat.yaml:/app/librechat.yaml
 ```
 
-### 5. Start LibreChat
-
+5. **Start LibreChat:**
 ```bash
 docker compose up -d
 ```
 
 Access LibreChat at http://localhost:3080
 
-## Available MCP Tools
+## Available Tools
 
-Once configured, Claude can use these tools to interact with Home Assistant:
+Home Mind can use these tools to interact with Home Assistant:
 
 | Tool | Description |
 |------|-------------|
@@ -302,6 +268,7 @@ Once configured, Claude can use these tools to interact with Home Assistant:
 
 - [PROJECT_PLAN.md](PROJECT_PLAN.md) - Project roadmap and milestones
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Technical architecture and design decisions
+- [docs/MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) - Memory system examples
 - [src/librechat-config/](src/librechat-config/) - Example configuration files
 
 ## Contributing

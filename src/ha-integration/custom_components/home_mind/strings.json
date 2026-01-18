@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Home Mind",
+        "description": "Enter the URL of your Home Mind API server.",
+        "data": {
+          "api_url": "API URL",
+          "user_id": "Default User ID (optional)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the Home Mind API. Make sure it's running and accessible.",
+      "unknown": "Unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "Home Mind is already configured."
+    }
+  },
+  "entity": {
+    "conversation": {
+      "home_mind": {
+        "name": "Home Mind"
+      }
+    }
+  }
+}

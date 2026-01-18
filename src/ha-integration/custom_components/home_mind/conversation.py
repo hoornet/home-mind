@@ -1,4 +1,4 @@
-"""Conversation agent for LibreChat HA Bridge."""
+"""Conversation agent for Home Mind."""
 from __future__ import annotations
 
 import logging
@@ -38,12 +38,12 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up conversation agent from a config entry."""
-    agent = LibreChatConversationAgent(hass, config_entry)
+    agent = HomeMindConversationAgent(hass, config_entry)
     async_add_entities([agent])
 
 
-class LibreChatConversationAgent(ConversationEntity):
-    """LibreChat HA Bridge conversation agent."""
+class HomeMindConversationAgent(ConversationEntity):
+    """Home Mind conversation agent."""
 
     _attr_has_entity_name = True
     _attr_name = None
@@ -60,9 +60,9 @@ class LibreChatConversationAgent(ConversationEntity):
         self._attr_unique_id = entry.entry_id
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
-            name="LibreChat HA Bridge",
-            manufacturer="LibreChat",
-            model="HA Bridge",
+            name="Home Mind",
+            manufacturer="Home Mind",
+            model="AI Assistant",
             entry_type=dr.DeviceEntryType.SERVICE,
         )
 
@@ -106,7 +106,7 @@ class LibreChatConversationAgent(ConversationEntity):
             )
 
         except Exception as err:
-            _LOGGER.error("Error calling HA Bridge API: %s", err, exc_info=True)
+            _LOGGER.error("Error calling Home Mind API: %s", err, exc_info=True)
 
             intent_response = intent.IntentResponse(language=user_input.language)
             intent_response.async_set_error(
@@ -126,7 +126,7 @@ class LibreChatConversationAgent(ConversationEntity):
         conversation_id: str,
         is_voice: bool = False,
     ) -> str:
-        """Call the HA Bridge API."""
+        """Call the Home Mind API."""
         url = f"{self._api_url}{API_CHAT_ENDPOINT}"
 
         payload = {
@@ -136,7 +136,7 @@ class LibreChatConversationAgent(ConversationEntity):
             "isVoice": is_voice,
         }
 
-        _LOGGER.debug("Calling HA Bridge: %s with payload: %s", url, payload)
+        _LOGGER.debug("Calling Home Mind API: %s with payload: %s", url, payload)
 
         async with self._session.post(
             url,

@@ -43,9 +43,9 @@ Phase 2.5 adds voice control capabilities by integrating with Home Assistant's n
 │                        │                                              │
 │                        ▼                                              │
 │  ┌─────────────────────────────────────────────────────────────┐    │
-│  │      LibreChat Conversation Agent (OUR COMPONENT)            │    │
+│  │      Home Mind Conversation Agent (OUR COMPONENT)            │    │
 │  │                                                               │    │
-│  │  custom_components/librechat_conversation/                   │    │
+│  │  custom_components/home_mind/                   │    │
 │  │                                                               │    │
 │  │  Flow:                                                        │    │
 │  │  1. Receives text: "is the temperature normal"              │    │
@@ -160,7 +160,7 @@ Phase 2.5 adds voice control capabilities by integrating with Home Assistant's n
 4. HA Assist Pipeline:
    - Speech-to-Text: "is the temperature normal"
    - Intent recognition: Conversation query
-   - Routes to LibreChat Conversation Agent
+   - Routes to Home Mind Conversation Agent
 
 5. Our Conversation Agent:
    user_input = {
@@ -354,7 +354,7 @@ Claude: "It's 21°C, which is below your preferred 22-23°C range.
 │                          │                                     │
 │                          ▼                                     │
 │  ┌─────────────────────────────────────────────────────┐      │
-│  │  LibreChat Conversation Agent (OUR CODE)            │      │
+│  │  Home Mind Conversation Agent (OUR CODE)            │      │
 │  │  Responsibility: Bridge HA ↔ LibreChat              │      │
 │  │  - Extract user from OIDC                           │      │
 │  │  - Map to LibreChat session                         │      │
@@ -395,13 +395,13 @@ Claude: "It's 21°C, which is below your preferred 22-23°C range.
 
 ### New Components (Phase 2.5)
 
-#### 1. LibreChat Conversation Agent
+#### 1. Home Mind Conversation Agent
 
-**Location:** `src/ha-integration/custom_components/librechat_conversation/`
+**Location:** `src/ha-integration/custom_components/home_mind/`
 
 **Files:**
 ```
-librechat_conversation/
+home_mind/
 ├── __init__.py              # Component initialization
 ├── manifest.json            # Component metadata
 ├── conversation.py          # Main agent logic
@@ -420,7 +420,7 @@ librechat_conversation/
 **Key Code:**
 ```python
 # conversation.py
-class LibreChatConversationAgent(AbstractConversationAgent):
+class HomeMindConversationAgent(AbstractConversationAgent):
     async def async_process(self, user_input: ConversationInput):
         # 1. Extract user from OIDC
         user_id = self._get_user_from_oidc(user_input.context)
@@ -627,7 +627,7 @@ HA Assist → Our Agent → LibreChat → MCP Server → HA API
 │  haos12 (192.168.88.14):                            │
 │  ├─ Home Assistant                                  │
 │  ├─ hass-oidc-auth (custom component)               │
-│  └─ librechat_conversation (our component)          │
+│  └─ home_mind (our component)          │
 │                                                      │
 │  ubuntuserver (192.168.88.12):                      │
 │  ├─ LibreChat container                             │

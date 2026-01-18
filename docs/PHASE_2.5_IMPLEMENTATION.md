@@ -176,7 +176,7 @@ MEMORY_TOKEN_LIMIT=1500
 ```
 src/ha-integration/
 └── custom_components/
-    └── librechat_ha/
+    └── home_mind/
         ├── __init__.py           # Component setup
         ├── manifest.json         # Component metadata
         ├── conversation.py       # Conversation agent
@@ -447,7 +447,7 @@ All steps completed on January 18, 2026:
 4. ✅ **Implemented memory storage** with SQLite
 5. ✅ **Added fact extraction** with Haiku
 6. ✅ **Integrated LLM client** with tools + streaming
-7. ✅ **Built HA component** (librechat_ha)
+7. ✅ **Built HA component** (home_mind)
 8. ✅ **Tested end-to-end** - Voice + Text working
 9. ✅ **Released v0.2.0**
 

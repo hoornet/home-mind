@@ -11,7 +11,7 @@ This directory contains example configuration files for integrating the Home Ass
 
 1. Copy the MCP server to your LibreChat directory:
    ```bash
-   cp -r /path/to/librechat-homeassistant/src/mcp-server /path/to/LibreChat/
+   cp -r /path/to/home-mind/src/mcp-server /path/to/LibreChat/
    ```
 
 2. Build the MCP server:

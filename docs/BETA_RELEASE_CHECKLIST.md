@@ -36,7 +36,7 @@
 - [ ] License file present (AGPL v3.0)
 - [ ] GitHub Topics added:
   - [ ] `home-assistant`
-  - [ ] `librechat`
+  - [ ] `home-mind`
   - [ ] `ai`
   - [ ] `smart-home`
   - [ ] `mcp`

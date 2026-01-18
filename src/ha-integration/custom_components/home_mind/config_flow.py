@@ -1,4 +1,4 @@
-"""Config flow for LibreChat HA Bridge integration."""
+"""Config flow for Home Mind integration."""
 from __future__ import annotations
 
 import logging
@@ -48,14 +48,14 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
             if result.get("status") != "ok":
                 raise CannotConnect("API health check failed")
     except aiohttp.ClientError as err:
-        _LOGGER.error("Error connecting to HA Bridge: %s", err)
+        _LOGGER.error("Error connecting to Home Mind API: %s", err)
         raise CannotConnect from err
 
-    return {"title": "LibreChat HA Bridge"}
+    return {"title": "Home Mind"}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for LibreChat HA Bridge."""
+    """Handle a config flow for Home Mind."""
 
     VERSION = 1
 

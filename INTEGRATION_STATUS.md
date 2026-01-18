@@ -1,7 +1,7 @@
-# Integration Status
+# Home Mind - Integration Status
 
 **Last Updated:** January 18, 2026 (v0.2.0 Release)
-**Current Phase:** Phase 2.5 - HA Bridge with Memory (Voice Assistant Working!)
+**Current Phase:** Phase 2.5 - Voice Assistant Working!
 **Project Status:** v0.2.0 Released - Voice + Text Assist with Streaming
 
 ---
@@ -18,8 +18,8 @@
 | Historical Analysis | ✅ Validated | 7-day trend analysis, comparison tables |
 | Device Control | ✅ Working | Lights, sensors, service calls |
 | Anomaly Detection | ✅ Validated | Contextual alerts using learned baselines |
-| **HA Bridge API** | ✅ Deployed | Running on ubuntuserver:3100 |
-| **HA Bridge Memory** | ✅ Working | SQLite persistence, fact extraction |
+| **Home Mind API** | ✅ Deployed | Running on ubuntuserver:3100 |
+| **Home Mind Memory** | ✅ Working | SQLite persistence, fact extraction |
 | **HA Text Assist** | ✅ Working | Entity search, device control, live sensor data |
 | **Entity Caching** | ✅ Working | 10-second TTL, faster repeat queries |
 | **Voice Control** | ✅ Working | Wyoming protocol, ESP32 satellites |
@@ -29,7 +29,7 @@
 
 | Feature | Phase | Status | Notes |
 |---------|-------|--------|-------|
-| HA Bridge API | 2.5 | ✅ Complete | ubuntuserver:3100 |
+| Home Mind API | 2.5 | ✅ Complete | ubuntuserver:3100 |
 | Our Memory Layer | 2.5 | ✅ Complete | SQLite persistence |
 | HA Conversation Agent | 2.5 | ✅ Complete | Custom component |
 | Text Assist | 2.5 | ✅ Complete | Live sensor data |
@@ -102,7 +102,7 @@ See `docs/PHASE_2.5_IMPLEMENTATION.md` for full details.
 ### Our Code (This Repository)
 
 ```
-librechat-homeassistant/
+home-mind/
 ├── src/
 │   ├── mcp-server/              ✅ WORKING - LibreChat web integration
 │   │   └── src/
@@ -120,7 +120,7 @@ librechat-homeassistant/
 │   │
 │   └── ha-integration/          ✅ WORKING - HA custom component
 │       └── custom_components/
-│           └── librechat_ha/
+│           └── home_mind/
 │               ├── __init__.py
 │               ├── conversation.py  # Uses intent.IntentResponse
 │               ├── config_flow.py
@@ -466,7 +466,7 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 
 ## Contact & Links
 
-- **Repository:** https://github.com/hoornet/librechat-homeassistant
+- **Repository:** https://github.com/hoornet/home-mind
 - **License:** AGPL v3.0
 - **Project Lead:** Jure (hoornet)
 
@@ -482,7 +482,7 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 - Custom Component: Installed on haos12 (192.168.88.14) ✅
 - Voice Assistant: Working with Wyoming satellites ✅
 
-**Current Version:** v0.2.0 (January 18, 2026)
+**Current Version:** v0.3.0 (January 18, 2026)
 
 **Next Steps:**
 1. Multi-user support (OIDC integration)

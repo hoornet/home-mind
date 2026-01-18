@@ -7,7 +7,7 @@ If you prefer to deploy step-by-step instead of using the script:
 From your dev machine (omarchy):
 
 ```bash
-cd ~/projects/librechat-homeassistant
+cd ~/projects/home-mind
 
 # Copy updated MCP server source
 scp -r src/mcp-server/src/ ubuntuserver:~/LibreChat/mcp-server/
@@ -28,7 +28,7 @@ docker run --rm -v ~/LibreChat/mcp-server:/app -w /app node:20 sh -c 'npm instal
 
 Expected output:
 ```
-> @librechat-homeassistant/mcp-server@0.1.0 build
+> @home-mind/mcp-server@0.1.0 build
 > tsc
 
 [no errors = success]

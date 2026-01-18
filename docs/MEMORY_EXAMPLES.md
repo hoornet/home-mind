@@ -1,6 +1,6 @@
 # Memory Examples
 
-This document demonstrates the memory capabilities of the LibreChat-HomeAssistant integration.
+This document demonstrates the memory capabilities of the Home Mind integration.
 
 ## Overview
 
