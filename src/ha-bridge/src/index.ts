@@ -55,7 +55,7 @@ app.use("/api", createRouter(llm, memory));
 app.get("/", (_req, res) => {
   res.json({
     name: "HA Bridge",
-    version: "0.1.0",
+    version: "0.2.0",
     description:
       "Home Assistant Bridge API with memory for voice integration",
     endpoints: {
