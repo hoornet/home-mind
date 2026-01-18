@@ -1,7 +1,8 @@
 # LibreChat-HomeAssistant
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Status: Development](https://img.shields.io/badge/Status-Phase%202-green.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.2.0-brightgreen.svg)]()
+[![Status](https://img.shields.io/badge/Status-Voice%20Working-success.svg)]()
 
 Persistent AI assistant for Home Assistant using LibreChat. Adds conversation memory, learning capabilities, and advanced AI features to your smart home.
 
@@ -199,12 +200,16 @@ See [MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) for more examples.
 
 ## Project Status
 
-**Current Phase:** Phase 2 - Core Features
+**Current Version:** v0.2.0 (January 18, 2026)
+**Current Phase:** Phase 2.5 Complete - Voice + Text Assist
 
 - [x] MCP Server with Home Assistant integration
 - [x] LibreChat deployment with MCP integration
 - [x] Persistent memory across chat sessions
 - [x] Sensor history queries
+- [x] Voice control via HA Assist (Wyoming protocol)
+- [x] Streaming responses for faster voice
+- [ ] Multi-user support (OIDC)
 - [ ] Advanced device controls (climate, media, covers)
 
 See [PROJECT_PLAN.md](PROJECT_PLAN.md) for detailed roadmap and [ARCHITECTURE.md](ARCHITECTURE.md) for technical design.

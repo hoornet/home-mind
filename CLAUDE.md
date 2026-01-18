@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🚨 READ THIS FIRST 🚨
 
-**Current Phase:** Phase 2.5 - Home Assistant Assist Integration (Planning)  
-**Last Major Update:** January 17, 2026  
+**Current Phase:** Phase 2.5 Complete - v0.2.0 Released (Voice + Text Assist Working!)
+**Last Major Update:** January 18, 2026
 **Quick Status:** [Read INTEGRATION_STATUS.md](INTEGRATION_STATUS.md)
 
 ---
@@ -84,12 +84,11 @@ LibreChat (web UI) → MCP Server → Home Assistant REST API
     Memory System (MongoDB)
 ```
 
-### Future (Phase 2.5 - In Development)
+### Current (Phase 2.5 - Working!)
 ```
-User → HA Assist (Voice/Text) → Custom Agent → LibreChat API → MCP Server → HA
-                                      ↑
-                                 OIDC Auth
-                            (hass-oidc-auth)
+User → HA Assist (Voice/Text) → Custom Agent → HA Bridge API → Claude + HA Tools
+                                                     ↓
+                                              SQLite Memory
 ```
 
 **Complete flow:**
@@ -124,9 +123,9 @@ User → HA Assist (Voice/Text) → Custom Agent → LibreChat API → MCP Serve
 
 ---
 
-## HA Integration Code (`src/ha-integration/`) 
+## HA Integration Code (`src/ha-integration/`)
 
-**Status:** 🚧 To be built in Phase 2.5
+**Status:** ✅ Complete and working (v0.2.0)
 
 **Directory Structure:**
 ```
@@ -518,9 +517,10 @@ This ensures you have full context on:
 | 2026-01-12 | Initial version | Jure + Claude |
 | 2026-01-16 | Updated for memory validation | Jure + Claude |
 | 2026-01-17 | Added Phase 2.5 architecture changes | Jure + Claude |
+| 2026-01-18 | v0.2.0 release - Voice assistant working | Jure + Claude |
 
 ---
 
-**Last Updated:** January 17, 2026  
-**Current Phase:** Phase 2.5 - HA Assist Integration (Planning)  
-**Next Milestone:** Week 1 - OIDC Authentication Setup
+**Last Updated:** January 18, 2026
+**Current Phase:** Phase 2.5 Complete - v0.2.0 Released
+**Next Milestone:** v1.0 - Multi-user support, documentation polish

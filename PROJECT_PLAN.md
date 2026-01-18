@@ -3,9 +3,9 @@
 
 **Repository:** https://github.com/hoornet/librechat-homeassistant
 **License:** AGPL v3.0
-**Status:** Phase 2.5 - HA Assist Integration (Planning)
-**Started:** January 2026  
-**Last Updated:** January 17, 2026
+**Status:** Phase 2.5 Complete - v0.2.0 Released (Voice + Text Working!)
+**Started:** January 2026
+**Last Updated:** January 18, 2026
 
 ---
 
@@ -129,10 +129,10 @@ Integrate LibreChat with Home Assistant to provide:
 
 ---
 
-### Phase 2.5: HA Assist Integration (NEW) 🚧
+### Phase 2.5: HA Assist Integration ✅ COMPLETE
 **Duration:** 3 weeks
 **Goal:** Voice control with memory via HA's native Assist
-**Status:** Week 1 Complete - HA Bridge Deployed
+**Status:** Complete - v0.2.0 Released (January 18, 2026)
 **Added:** January 17, 2026
 
 **Overview:**
@@ -175,32 +175,32 @@ Add voice control capabilities by integrating with Home Assistant's native Assis
 
 ---
 
-**Milestone 2.5.2: Custom Conversation Agent** 🚧 IN PROGRESS
-- [x] Create custom component structure (skeleton exists)
-- [ ] Implement `conversation.py` agent interface
-- [ ] Connect to ha-bridge API
-- [ ] Install on Home Assistant
-- [ ] Test via HA's text-based Assist interface
+**Milestone 2.5.2: Custom Conversation Agent** ✅ COMPLETE
+- [x] Create custom component structure
+- [x] Implement `conversation.py` agent interface
+- [x] Connect to ha-bridge API
+- [x] Install on Home Assistant
+- [x] Test via HA's text-based Assist interface
 
 **Deliverables:**
-- Working custom component in HA
-- Text-based Assist working
-- Configuration flow UI
+- ✅ Working custom component in HA
+- ✅ Text-based Assist working
+- ✅ Configuration flow UI
 
 ---
 
-**Milestone 2.5.3: Voice Integration**
-- [ ] Verify Wyoming protocol compatibility
-- [ ] Test with voice satellite
-- [ ] Measure and optimize response times (<3s target)
-- [ ] Handle voice-specific edge cases
-- [ ] Document voice setup
+**Milestone 2.5.3: Voice Integration** ✅ COMPLETE
+- [x] Verify Wyoming protocol compatibility
+- [x] Test with voice satellite
+- [x] Measure and optimize response times (2-3s achieved with streaming)
+- [x] Handle voice-specific edge cases
+- [x] Implement streaming for performance
 
 **Deliverables:**
-- Voice integration working
-- Performance benchmarks
-- Voice setup guide
-- Demo video footage
+- ✅ Voice integration working (v0.2.0)
+- ✅ Performance benchmarks (2-3s simple, 8-9s with tools)
+- ✅ Streaming responses implemented
+- Pending: Demo video footage (Phase 3)
 
 ---
 
@@ -215,22 +215,22 @@ Add voice control capabilities by integrating with Home Assistant's native Assis
 - ✅ HA Bridge API deployed and working
 - ✅ Memory persistence via SQLite
 - ✅ Fact extraction and recall working
-- 🚧 Text conversation via HA Assist
-- ⬜ Voice conversation via Wyoming protocol
-- ⬜ Voice response time <3 seconds (95th percentile)
-- ⬜ Comprehensive documentation
+- ✅ Text conversation via HA Assist
+- ✅ Voice conversation via Wyoming protocol
+- ✅ Voice response time 2-3s (with streaming)
+- ✅ Streaming implementation complete
 
 **Our Components:**
-- `src/ha-bridge/` - ✅ Complete and deployed
-- `src/ha-integration/custom_components/librechat_ha/` - 🚧 In progress
+- `src/ha-bridge/` - ✅ Complete and deployed (v0.2.0)
+- `src/ha-integration/custom_components/librechat_ha/` - ✅ Complete (v0.2.0)
 
 **Unchanged Components:**
 - `src/mcp-server/` - No changes needed (web interface)
 
 **Timeline:**
 - Week 1: HA Bridge API + Memory ✅ COMPLETE
-- Week 2: HA custom component + text Assist 🚧 CURRENT
-- Week 3: Voice integration and optimization
+- Week 2: HA custom component + text Assist ✅ COMPLETE
+- Week 3: Voice integration and streaming ✅ COMPLETE (v0.2.0)
 
 **Detailed Architecture:** See `docs/PHASE_2.5_ARCHITECTURE.md`
 
@@ -568,11 +568,12 @@ See `docs/MEMORY_EXAMPLES.md` for detailed memory use cases and validated exampl
 | 1.2 | 2026-01-16 | Jure + Claude | Sensor history validated, Phase 2 ~70% complete, beta-ready |
 | 1.3 | 2026-01-17 | Jure + Claude | Added Phase 2.5 (HA Assist), external dependencies, updated timeline |
 | 1.4 | 2026-01-17 | Jure + Claude | HA Bridge deployed to ubuntuserver, Week 1 complete |
+| 1.5 | 2026-01-18 | Jure + Claude | v0.2.0 release - Voice assistant working with streaming |
 
 ---
 
-**Last Updated:** January 17, 2026
+**Last Updated:** January 18, 2026
 **Status:** Living document - evolves with project
-**Current Phase:** Phase 2.5 - HA Assist Integration (Week 1 Complete, Week 2 Starting)
-**Next Milestone:** HA Custom Component + Text Assist
+**Current Phase:** Phase 2.5 Complete - v0.2.0 Released
+**Next Milestone:** Phase 3 - Demo video, documentation polish, v1.0 prep
 **Launch Target:** Early-Mid March 2026

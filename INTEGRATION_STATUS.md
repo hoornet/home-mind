@@ -1,8 +1,8 @@
 # Integration Status
 
-**Last Updated:** January 17, 2026 (Performance Analysis Added)
-**Current Phase:** Phase 2.5 - HA Bridge with Memory (Week 2 Complete - Text Assist Working!)
-**Project Status:** Active Development - Implementing Streaming for Performance
+**Last Updated:** January 18, 2026 (v0.2.0 Release)
+**Current Phase:** Phase 2.5 - HA Bridge with Memory (Voice Assistant Working!)
+**Project Status:** v0.2.0 Released - Voice + Text Assist with Streaming
 
 ---
 
@@ -22,16 +22,19 @@
 | **HA Bridge Memory** | ✅ Working | SQLite persistence, fact extraction |
 | **HA Text Assist** | ✅ Working | Entity search, device control, live sensor data |
 | **Entity Caching** | ✅ Working | 10-second TTL, faster repeat queries |
+| **Voice Control** | ✅ Working | Wyoming protocol, ESP32 satellites |
+| **Streaming Responses** | ✅ Working | 60-80% faster simple queries |
 
-### What's Being Built 🚧
+### What's Complete ✅
 
-| Feature | Phase | Status | ETA |
-|---------|-------|--------|-----|
-| HA Bridge API | 2.5 | ✅ Complete | Done |
-| Our Memory Layer | 2.5 | ✅ Complete | Done |
-| HA Conversation Agent | 2.5 | ✅ Complete | Done |
-| Text Assist | 2.5 | ✅ Complete | Done |
-| Voice Control | 2.5 | 🚧 Ready to Test | This Week |
+| Feature | Phase | Status | Notes |
+|---------|-------|--------|-------|
+| HA Bridge API | 2.5 | ✅ Complete | ubuntuserver:3100 |
+| Our Memory Layer | 2.5 | ✅ Complete | SQLite persistence |
+| HA Conversation Agent | 2.5 | ✅ Complete | Custom component |
+| Text Assist | 2.5 | ✅ Complete | Live sensor data |
+| Voice Control | 2.5 | ✅ Complete | v0.2.0 release |
+| Streaming | 2.5 | ✅ Complete | SSE endpoint available |
 
 ---
 
@@ -191,19 +194,19 @@ librechat-homeassistant/
 - [x] Config flow working
 - [x] Text commands work via Assist
 - [x] Live sensor data (not just memory recall)
-- [ ] Voice commands work
-- [x] Response time acceptable (~5-10s)
+- [x] Voice commands work (v0.2.0!)
+- [x] Response time acceptable (2-3s with streaming)
 
-### Week 3: Streaming + Voice Testing
+### Week 3: Streaming + Voice Testing ✅ COMPLETE
 
 | Priority | Task | Status |
 |----------|------|--------|
 | 1 | **Implement streaming in HA Bridge** | ✅ Done |
 | 2 | **SSE endpoint for web clients** | ✅ Done |
-| 3 | **Stream to conversation agent** | ⬜ Pending (HA API limitation) |
-| 4 | Voice satellite testing | ⬜ Ready |
-| 5 | Multi-user testing | ⬜ Pending |
-| 6 | Beta release prep | ⬜ Pending |
+| 3 | **Stream to conversation agent** | ✅ Done (uses streaming internally) |
+| 4 | Voice satellite testing | ✅ Done (v0.2.0) |
+| 5 | Multi-user testing | ⬜ Deferred to v1.0 |
+| 6 | Beta release prep | ✅ Done (v0.2.0 released) |
 
 **Streaming Implementation (January 17, 2026):**
 - `llm/client.ts` now uses `messages.stream()` instead of `messages.create()`
@@ -403,15 +406,15 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 - ✅ Anomaly detection with context
 - ✅ Cross-session memory retention
 
-### Phase 2.5 (In Progress)
+### Phase 2.5 (Complete - v0.2.0!)
 - [x] HA Bridge API working
 - [x] Memory persistence (SQLite)
 - [x] Fact extraction working
 - [x] HA custom component installed
 - [x] Text Assist working with live data
 - [x] Entity caching implemented
-- [ ] Voice commands working
-- [ ] Response time <3s for voice
+- [x] Voice commands working (v0.2.0)
+- [x] Response time 2-3s for voice (with streaming)
 
 ### v1.0 Launch (Targets)
 - [ ] 500+ GitHub stars in week 1
@@ -471,15 +474,18 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 
 **Status Summary:**
 - ✅ **Phase 2:** Complete, web features working
-- ✅ **Phase 2.5:** Week 2 complete, text Assist working!
+- ✅ **Phase 2.5:** Complete! Voice + Text Assist with streaming (v0.2.0)
 - 🎯 **Target:** Early March 2026 for v1.0 launch
 
 **Deployed Services:**
 - HA Bridge: `http://192.168.88.12:3100` (ubuntuserver) ✅
 - Custom Component: Installed on haos12 (192.168.88.14) ✅
+- Voice Assistant: Working with Wyoming satellites ✅
+
+**Current Version:** v0.2.0 (January 18, 2026)
 
 **Next Steps:**
-1. **Implement streaming responses** - Critical for acceptable response times
-2. Test voice commands with Wyoming satellite
-3. Consider prompt caching for further TTFT improvement
-4. Beta release preparation
+1. Multi-user support (OIDC integration)
+2. Prompt caching for further TTFT improvement
+3. Documentation polish for v1.0
+4. Demo video production
