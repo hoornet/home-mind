@@ -1,8 +1,8 @@
 # Home Mind - Integration Status
 
-**Last Updated:** January 18, 2026 (v0.2.0 Release)
-**Current Phase:** Phase 2.5 - Voice Assistant Working!
-**Project Status:** v0.2.0 Released - Voice + Text Assist with Streaming
+**Last Updated:** January 18, 2026
+**Current Phase:** Phase 2.5 Complete - v0.3.0 (Project Rename)
+**Project Status:** v0.3.0 - Voice + Text Assist with Streaming
 
 ---
 
@@ -132,9 +132,9 @@ home-mind/
 │   ├── PHASE_2.5_IMPLEMENTATION.md  ✅ Complete
 │   └── BETA_RELEASE_CHECKLIST.md    ✅ Complete
 │
-├── CLAUDE.md                        ✅ Updated
-├── PROJECT_PLAN.md                  🔄 Needs update
-├── ARCHITECTURE.md                  🔄 Needs update
+├── CLAUDE.md                        ✅ Updated (v0.3.0)
+├── PROJECT_PLAN.md                  ✅ Updated (v0.3.0)
+├── ARCHITECTURE.md                  ✅ Updated (v0.3.0)
 └── README.md                        ✅ Updated
 ```
 
@@ -482,7 +482,7 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 - Custom Component: Installed on haos12 (192.168.88.14) ✅
 - Voice Assistant: Working with Wyoming satellites ✅
 
-**Current Version:** v0.3.0 (January 18, 2026)
+**Current Version:** v0.3.0
 
 **Next Steps:**
 1. Multi-user support (OIDC integration)

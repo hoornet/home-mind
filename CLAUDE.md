@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## READ THIS FIRST
 
 **Project Name:** Home Mind
-**Current Phase:** Phase 2.5 Complete - v0.2.0 Released (Voice + Text Assist Working!)
+**Current Phase:** Phase 2.5 Complete - v0.3.0
 **Last Major Update:** January 18, 2026
 **Quick Status:** [Read INTEGRATION_STATUS.md](INTEGRATION_STATUS.md)
 
@@ -112,7 +112,7 @@ User → HA Assist (Voice/Text) → Custom Agent → Home Mind API → Claude + 
 
 ## HA Bridge Code (`src/ha-bridge/src/`)
 
-**Status:** Complete and working (v0.2.0)
+**Status:** Complete and working (v0.3.0)
 
 | Directory | Purpose |
 |-----------|---------|
@@ -130,7 +130,7 @@ User → HA Assist (Voice/Text) → Custom Agent → Home Mind API → Claude + 
 
 ## HA Integration Code (`src/ha-integration/`)
 
-**Status:** Complete and working (v0.2.0)
+**Status:** Complete and working (v0.3.0)
 
 **Directory Structure:**
 ```
@@ -274,7 +274,7 @@ class HomeMindConversationAgent(ConversationEntity):
 
 ## Known Limitations
 
-### Current (v0.2.0)
+### Current (v0.3.0)
 - Single-user only (multi-user via OIDC in v1.0)
 - Web and voice have separate memory stores
 - Voice response time ~2-3s for simple queries, longer with tools
@@ -326,10 +326,10 @@ When starting a new session:
 | 2026-01-16 | Updated for memory validation | Jure + Claude |
 | 2026-01-17 | Added Phase 2.5 architecture changes | Jure + Claude |
 | 2026-01-18 | v0.2.0 release - Voice assistant working | Jure + Claude |
-| 2026-01-18 | Renamed project to Home Mind | Jure + Claude |
+| 2026-01-18 | v0.3.0 - Renamed project to Home Mind | Jure + Claude |
 
 ---
 
 **Last Updated:** January 18, 2026
-**Current Phase:** Phase 2.5 Complete - v0.2.0 Released
+**Current Phase:** Phase 2.5 Complete - v0.3.0
 **Next Milestone:** v1.0 - HACS/Add-on packaging, multi-user support

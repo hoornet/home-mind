@@ -1,9 +1,9 @@
 # Home Mind
-## Project Plan v1.4
+## Project Plan v1.6
 
 **Repository:** https://github.com/hoornet/home-mind
 **License:** AGPL v3.0
-**Status:** Phase 2.5 Complete - v0.2.0 Released (Voice + Text Working!)
+**Status:** Phase 2.5 Complete - v0.3.0 (Project Rename to Home Mind)
 **Started:** January 2026
 **Last Updated:** January 18, 2026
 
@@ -31,7 +31,7 @@ Integrate LibreChat with Home Assistant to provide:
 - ✅ Historical data analysis and trend detection **[VALIDATED - WORKING]**
 - ✅ Document upload and analysis (floor plans, manuals, etc.)
 - ✅ Searchable conversation history
-- 🚧 Voice control via HA Assist (Phase 2.5 - in planning)
+- ✅ Voice control via HA Assist (Phase 2.5 complete)
 - ✅ Multiple AI model support (Claude, GPT, local via Ollama)
 - ✅ Self-hosted and privacy-focused
 - ✅ Better context understanding over time
@@ -44,7 +44,7 @@ Integrate LibreChat with Home Assistant to provide:
 1. **Enable persistent memory** - AI remembers context across conversations ✅ **ACHIEVED**
 2. **Device control** - Full Home Assistant device control from LibreChat ✅ **ACHIEVED**
 3. **Learning capability** - AI learns user preferences and sensor baselines ✅ **ACHIEVED**
-4. **Voice integration** - Voice control with same intelligence 🚧 **IN PROGRESS**
+4. **Voice integration** - Voice control with same intelligence ✅ **ACHIEVED**
 5. **Easy deployment** - One-command Docker setup for end users
 6. **Community contribution** - Release as open-source for HA community
 
@@ -54,7 +54,7 @@ Integrate LibreChat with Home Assistant to provide:
 - ✅ Can query device states and sensor values
 - ✅ Historical data analysis with trend detection **[VALIDATED]**
 - ✅ Users can upload documents for context
-- 🚧 Voice commands work through HA Assist
+- ✅ Voice commands work through HA Assist **[ACHIEVED]**
 - ✅ Installation takes <30 minutes
 - ✅ Works with multiple AI providers (Claude, OpenAI, Ollama)
 
@@ -398,7 +398,7 @@ Features:
 Week 1-2:   Phase 0 - Planning & Setup ✅
 Week 3-5:   Phase 1 - Proof of Concept ✅
 Week 6-9:   Phase 2 - Core Features ✅ (70% - paused for voice)
-Week 10-12: Phase 2.5 - HA Assist Integration 🚧 (CURRENT)
+Week 10-12: Phase 2.5 - HA Assist Integration ✅ COMPLETE
 Week 13-16: Phase 3 - Polish & Documentation
 Week 17-18: Phase 4 - Launch (The BANG)
 Week 19+:   Phase 5 - Future Enhancements
@@ -569,11 +569,12 @@ See `docs/MEMORY_EXAMPLES.md` for detailed memory use cases and validated exampl
 | 1.3 | 2026-01-17 | Jure + Claude | Added Phase 2.5 (HA Assist), external dependencies, updated timeline |
 | 1.4 | 2026-01-17 | Jure + Claude | HA Bridge deployed to ubuntuserver, Week 1 complete |
 | 1.5 | 2026-01-18 | Jure + Claude | v0.2.0 release - Voice assistant working with streaming |
+| 1.6 | 2026-01-18 | Jure + Claude | v0.3.0 - Project renamed to Home Mind |
 
 ---
 
 **Last Updated:** January 18, 2026
 **Status:** Living document - evolves with project
-**Current Phase:** Phase 2.5 Complete - v0.2.0 Released
+**Current Phase:** Phase 2.5 Complete - v0.3.0
 **Next Milestone:** Phase 3 - Demo video, documentation polish, v1.0 prep
 **Launch Target:** Early-Mid March 2026

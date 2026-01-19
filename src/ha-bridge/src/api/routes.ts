@@ -190,7 +190,7 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
     res.json({
       status: "ok",
       timestamp: new Date().toISOString(),
-      version: "0.2.0",
+      version: "0.3.0",
     });
   });
 
