@@ -20,6 +20,7 @@ export interface Fact {
 export interface ExtractedFact {
   content: string;
   category: FactCategory;
+  replaces?: string[]; // IDs of existing facts this one supersedes
 }
 
 export interface ConversationMessage {

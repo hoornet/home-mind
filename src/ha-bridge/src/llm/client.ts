@@ -222,18 +222,31 @@ export class LLMClient {
     userMessage: string,
     assistantResponse: string
   ): Promise<number> {
+    // Get existing facts to check for conflicts
+    const existingFacts = this.memory.getFacts(userId);
+
     const extractedFacts = await this.extractor.extract(
       userMessage,
-      assistantResponse
+      assistantResponse,
+      existingFacts
     );
 
     let storedCount = 0;
     for (const fact of extractedFacts) {
-      const id = this.memory.addFactIfNew(userId, fact.content, fact.category);
-      if (id) {
-        storedCount++;
-        console.log(`Stored new fact for ${userId}: ${fact.content}`);
+      // Delete any facts that this new fact replaces
+      if (fact.replaces && fact.replaces.length > 0) {
+        for (const oldFactId of fact.replaces) {
+          const deleted = this.memory.deleteFact(oldFactId);
+          if (deleted) {
+            console.log(`Replaced old fact ${oldFactId} for ${userId}`);
+          }
+        }
       }
+
+      // Add the new fact
+      const id = this.memory.addFact(userId, fact.content, fact.category);
+      storedCount++;
+      console.log(`Stored new fact for ${userId}: ${fact.content}`);
     }
 
     return storedCount;
