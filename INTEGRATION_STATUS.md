@@ -1,8 +1,8 @@
 # Home Mind - Integration Status
 
 **Last Updated:** January 21, 2026
-**Current Phase:** Phase 2.5 Complete - v0.3.1 (Conversation History)
-**Project Status:** v0.3.1 - Voice + Text Assist with Multi-Turn Conversations
+**Current Phase:** Phase 2.5 Complete - v0.3.2 (Memory Improvements)
+**Project Status:** v0.3.2 - Smart Memory + Prompt Caching
 
 ---
 
@@ -25,6 +25,8 @@
 | **Voice Control** | ✅ Working | Wyoming protocol, ESP32 satellites |
 | **Streaming Responses** | ✅ Working | 60-80% faster simple queries |
 | **Conversation History** | ✅ Working | Multi-turn context, follow-up questions |
+| **Smart Fact Replacement** | ✅ Working | New facts supersede conflicting old ones |
+| **Prompt Caching** | ✅ Working | Faster TTFT via Anthropic cache |
 
 ### What's Complete ✅
 
@@ -37,6 +39,8 @@
 | Voice Control | 2.5 | ✅ Complete | v0.2.0 release |
 | Streaming | 2.5 | ✅ Complete | SSE endpoint available |
 | Conversation History | 2.5 | ✅ Complete | Multi-turn follow-ups (v0.3.1) |
+| Smart Fact Replacement | 2.5 | ✅ Complete | Conflicting facts replaced (v0.3.2) |
+| Prompt Caching | 2.5 | ✅ Complete | Anthropic cache for TTFT (v0.3.2) |
 
 ---
 
@@ -361,6 +365,42 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 
 ---
 
+### January 21, 2026: Smart Fact Replacement
+
+**Problem:** When users changed preferences (e.g., bedroom temp from 16-18°C to 20°C), both old and new facts were stored, confusing the AI over time.
+
+**Root Cause:** `addFactIfNew()` only checked for exact string matches. Different wording = new fact added.
+
+**Solution:** Modified fact extraction to detect conflicts:
+1. Existing facts are passed to the extraction prompt
+2. Haiku identifies which old facts the new one supersedes
+3. Old facts are deleted before adding the replacement
+
+**Files Changed:**
+- `src/ha-bridge/src/memory/types.ts` - Added `replaces` field to ExtractedFact
+- `src/ha-bridge/src/memory/extractor.ts` - Updated prompt to identify conflicts
+- `src/ha-bridge/src/llm/client.ts` - Delete old facts before adding new
+
+**Result:** "My comfort temp is now 20°C" replaces the old "16-18°C" fact instead of duplicating.
+
+---
+
+### January 21, 2026: Prompt Caching for TTFT
+
+**Goal:** Reduce time-to-first-token using Anthropic's prompt caching.
+
+**Implementation:** Split system prompt into:
+1. **Static part** (~1500 tokens) - instructions, guidelines, examples → cached with `cache_control: { type: "ephemeral" }`
+2. **Dynamic part** - date/time, user facts → not cached
+
+**Files Changed:**
+- `src/ha-bridge/src/llm/prompts.ts` - Restructured to return content blocks with cache_control
+- `src/ha-bridge/src/llm/client.ts` - Updated to accept cached prompt type
+
+**Result:** Subsequent requests within 5 minutes get cache hits on the static portion, reducing TTFT.
+
+---
+
 ### January 17, 2026: Use Claude Haiku 4.5
 
 **Decision:** Use `claude-haiku-4-5-20251001` for chat responses.
@@ -514,10 +554,10 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 - Custom Component: Installed on haos12 (192.168.88.14) ✅
 - Voice Assistant: Working with Wyoming satellites ✅
 
-**Current Version:** v0.3.1
+**Current Version:** v0.3.2
 
 **Next Steps:**
 1. Multi-user support (OIDC integration)
-2. Prompt caching for further TTFT improvement
+2. Area/room control ("turn off the bedroom")
 3. Documentation polish for v1.0
 4. Demo video production
