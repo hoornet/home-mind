@@ -1,7 +1,7 @@
-export const SYSTEM_PROMPT = `You are a helpful smart home assistant with persistent memory. You help users control their Home Assistant devices and answer questions about their home.
+import Anthropic from "@anthropic-ai/sdk";
 
-## What You Remember About This User:
-{memory_facts}
+// Static part of system prompt - this gets cached
+export const STATIC_SYSTEM_PROMPT = `You are a helpful smart home assistant with persistent memory. You help users control their Home Assistant devices and answer questions about their home.
 
 ## WHEN TO USE TOOLS vs ANSWER DIRECTLY
 
@@ -62,10 +62,7 @@ When the user says "remember...", "save this...", "don't forget...", or teaches 
 - For factual queries: Give the data first, then context
 - For anomalies: Alert clearly with suggested actions`;
 
-export const VOICE_SYSTEM_PROMPT = `You are a helpful smart home voice assistant with persistent memory. Keep responses brief but smart.
-
-## What You Remember About This User:
-{memory_facts}
+export const STATIC_VOICE_PROMPT = `You are a helpful smart home voice assistant with persistent memory. Keep responses brief but smart.
 
 ## WHEN TO USE TOOLS vs ANSWER DIRECTLY
 
@@ -102,10 +99,17 @@ When the user says "remember...", "save this...", "don't forget...", or teaches 
 - When something isn't found, try different search terms (English AND Slovenian room names)
 - If user mentions a room, search for it before saying you don't know`;
 
+// Type for system prompt with caching
+export type CachedSystemPrompt = Anthropic.MessageCreateParams["system"];
+
+/**
+ * Build system prompt with caching support.
+ * Returns an array of content blocks where the static part is marked for caching.
+ */
 export function buildSystemPrompt(
   facts: string[],
   isVoice: boolean = false
-): string {
+): CachedSystemPrompt {
   const factsText =
     facts.length > 0 ? facts.map((f) => `- ${f}`).join("\n") : "No memories yet.";
 
@@ -121,9 +125,26 @@ export function buildSystemPrompt(
     timeZoneName: "short",
   });
 
-  const template = isVoice ? VOICE_SYSTEM_PROMPT : SYSTEM_PROMPT;
-  return (
-    `Current date and time: ${dateTimeStr}\n\n` +
-    template.replace("{memory_facts}", factsText)
-  );
+  const staticPrompt = isVoice ? STATIC_VOICE_PROMPT : STATIC_SYSTEM_PROMPT;
+
+  // Dynamic content that changes per request
+  const dynamicContent = `
+## Current Context:
+- Date/Time: ${dateTimeStr}
+
+## What You Remember About This User:
+${factsText}`;
+
+  // Return as array with cache_control on the static part
+  return [
+    {
+      type: "text" as const,
+      text: staticPrompt,
+      cache_control: { type: "ephemeral" as const },
+    },
+    {
+      type: "text" as const,
+      text: dynamicContent,
+    },
+  ];
 }

@@ -3,7 +3,7 @@ import type { Config } from "../config.js";
 import { MemoryStore } from "../memory/store.js";
 import { FactExtractor } from "../memory/extractor.js";
 import { HomeAssistantClient } from "../ha/client.js";
-import { buildSystemPrompt } from "./prompts.js";
+import { buildSystemPrompt, type CachedSystemPrompt } from "./prompts.js";
 import { HA_TOOLS } from "./tools.js";
 
 export interface ChatRequest {
@@ -152,9 +152,10 @@ export class LLMClient {
   /**
    * Stream a message and return the final message object.
    * Calls onChunk with text deltas as they arrive.
+   * Uses prompt caching for the static system prompt.
    */
   private async streamMessage(
-    systemPrompt: string,
+    systemPrompt: CachedSystemPrompt,
     messages: Anthropic.MessageParam[],
     isVoice: boolean,
     onChunk?: StreamCallback
