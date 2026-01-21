@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Quick Status
 
-**Current:** v0.3.0 - Voice + Web assistant working with persistent memory
+**Current:** v0.3.2 - Smart Memory + Prompt Caching
 **Read:** INTEGRATION_STATUS.md for current project status
 
 ## Architecture
@@ -136,6 +136,29 @@ ssh haos12 "ha core restart"
 ssh ubuntuserver "docker logs ha-bridge -f"       # Home Mind API logs
 ssh haos12 "tail -f /config/home-assistant.log | grep home_mind"  # HA logs
 ```
+
+## Release Process
+
+After completing a feature or set of features, always create a tagged release for traceability:
+
+1. **Update version** in `src/ha-bridge/package.json`
+2. **Update documentation** in `INTEGRATION_STATUS.md`:
+   - Add to "What's Working" table
+   - Add to "What's Complete" table
+   - Add entry to "Critical Decisions Log" with problem/solution/files changed
+   - Update version number at bottom
+3. **Commit** with descriptive message
+4. **Create annotated tag:**
+   ```bash
+   git tag -a v0.X.Y -m "v0.X.Y - Brief description
+
+   Features:
+   - Feature 1
+   - Feature 2"
+   ```
+5. **Push tag:** `git push origin v0.X.Y`
+
+This ensures code and documentation changes are traceable by version name (e.g., "conversation history was added in v0.3.1").
 
 ## Key Technical Decisions
 
