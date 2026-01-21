@@ -21,3 +21,12 @@ export interface ExtractedFact {
   content: string;
   category: FactCategory;
 }
+
+export interface ConversationMessage {
+  id: string;
+  conversationId: string;
+  userId: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: Date;
+}

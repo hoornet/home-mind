@@ -50,7 +50,7 @@ export class LLMClient {
     request: ChatRequest,
     onChunk?: StreamCallback
   ): Promise<ChatResponse> {
-    const { message, userId, isVoice = false } = request;
+    const { message, userId, conversationId, isVoice = false } = request;
     const toolsUsed: string[] = [];
 
     // 1. Load user's memory
@@ -63,10 +63,23 @@ export class LLMClient {
     // 2. Build system prompt with memory
     const systemPrompt = buildSystemPrompt(factContents, isVoice);
 
-    // 3. Initial streaming Claude call - using Haiku for speed
-    const messages: Anthropic.MessageParam[] = [
-      { role: "user", content: message },
-    ];
+    // 3. Load conversation history if we have a conversationId
+    const messages: Anthropic.MessageParam[] = [];
+
+    if (conversationId) {
+      const history = this.memory.getConversationHistory(conversationId, 10);
+      for (const msg of history) {
+        messages.push({ role: msg.role, content: msg.content });
+      }
+    }
+
+    // 4. Add current user message
+    messages.push({ role: "user", content: message });
+
+    // Store user message in conversation history
+    if (conversationId) {
+      this.memory.storeMessage(conversationId, userId, "user", message);
+    }
 
     let response = await this.streamMessage(
       systemPrompt,
@@ -118,7 +131,12 @@ export class LLMClient {
     const textContent = response.content.find((c) => c.type === "text");
     const responseText = textContent?.type === "text" ? textContent.text : "";
 
-    // 6. Extract and store new facts (async, don't block response)
+    // 6. Store assistant response in conversation history
+    if (conversationId && responseText) {
+      this.memory.storeMessage(conversationId, userId, "assistant", responseText);
+    }
+
+    // 7. Extract and store new facts (async, don't block response)
     this.extractAndStoreFacts(userId, message, responseText).catch((err) =>
       console.error("Fact extraction failed:", err)
     );

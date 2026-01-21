@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import { v4 as uuidv4 } from "uuid";
-import type { Fact, FactCategory } from "./types.js";
+import type { Fact, FactCategory, ConversationMessage } from "./types.js";
 
 export class MemoryStore {
   private db: Database.Database;
@@ -24,6 +24,16 @@ export class MemoryStore {
       );
       CREATE INDEX IF NOT EXISTS idx_facts_user_id ON facts(user_id);
       CREATE INDEX IF NOT EXISTS idx_facts_category ON facts(user_id, category);
+
+      CREATE TABLE IF NOT EXISTS conversation_messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_conv_messages_conv_id ON conversation_messages(conversation_id, created_at);
     `);
   }
 
@@ -164,6 +174,74 @@ export class MemoryStore {
       .prepare("SELECT COUNT(*) as count FROM facts WHERE user_id = ?")
       .get(userId) as { count: number };
     return row.count;
+  }
+
+  // ============== Conversation History Methods ==============
+
+  /**
+   * Store a message in conversation history
+   */
+  storeMessage(
+    conversationId: string,
+    userId: string,
+    role: "user" | "assistant",
+    content: string
+  ): string {
+    const id = uuidv4();
+    this.db
+      .prepare(
+        `
+        INSERT INTO conversation_messages (id, conversation_id, user_id, role, content)
+        VALUES (?, ?, ?, ?, ?)
+      `
+      )
+      .run(id, conversationId, userId, role, content);
+    return id;
+  }
+
+  /**
+   * Get conversation history for a conversation, limited to last N messages
+   */
+  getConversationHistory(
+    conversationId: string,
+    limit: number = 10
+  ): ConversationMessage[] {
+    const rows = this.db
+      .prepare(
+        `
+        SELECT * FROM conversation_messages
+        WHERE conversation_id = ?
+        ORDER BY created_at DESC
+        LIMIT ?
+      `
+      )
+      .all(conversationId, limit) as any[];
+
+    // Reverse to get chronological order (oldest first)
+    return rows.reverse().map((row) => ({
+      id: row.id,
+      conversationId: row.conversation_id,
+      userId: row.user_id,
+      role: row.role as "user" | "assistant",
+      content: row.content,
+      createdAt: new Date(row.created_at),
+    }));
+  }
+
+  /**
+   * Delete old conversations (older than specified hours)
+   * Run periodically to clean up stale conversations
+   */
+  cleanupOldConversations(hoursOld: number = 24): number {
+    const result = this.db
+      .prepare(
+        `
+        DELETE FROM conversation_messages
+        WHERE created_at < datetime('now', '-' || ? || ' hours')
+      `
+      )
+      .run(hoursOld);
+    return result.changes;
   }
 
   /**

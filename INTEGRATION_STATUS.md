@@ -1,8 +1,8 @@
 # Home Mind - Integration Status
 
-**Last Updated:** January 18, 2026
-**Current Phase:** Phase 2.5 Complete - v0.3.0 (Project Rename)
-**Project Status:** v0.3.0 - Voice + Text Assist with Streaming
+**Last Updated:** January 21, 2026
+**Current Phase:** Phase 2.5 Complete - v0.3.1 (Conversation History)
+**Project Status:** v0.3.1 - Voice + Text Assist with Multi-Turn Conversations
 
 ---
 
@@ -24,6 +24,7 @@
 | **Entity Caching** | ✅ Working | 10-second TTL, faster repeat queries |
 | **Voice Control** | ✅ Working | Wyoming protocol, ESP32 satellites |
 | **Streaming Responses** | ✅ Working | 60-80% faster simple queries |
+| **Conversation History** | ✅ Working | Multi-turn context, follow-up questions |
 
 ### What's Complete ✅
 
@@ -35,6 +36,7 @@
 | Text Assist | 2.5 | ✅ Complete | Live sensor data |
 | Voice Control | 2.5 | ✅ Complete | v0.2.0 release |
 | Streaming | 2.5 | ✅ Complete | SSE endpoint available |
+| Conversation History | 2.5 | ✅ Complete | Multi-turn follow-ups (v0.3.1) |
 
 ---
 
@@ -307,19 +309,29 @@ home-mind/
 
 **Storage:** SQLite (simple, portable, no extra services)
 
-**Fact Categories:**
-- `baseline` - Sensor normal values ("NOx 100ppm is normal")
-- `preference` - User preferences ("prefers 22°C")
-- `identity` - User info ("name is Jure")
-- `device` - Device nicknames
-- `pattern` - Routines and habits
+**Two Types of Memory:**
+
+1. **Long-term Facts** (persistent across sessions)
+   - `baseline` - Sensor normal values ("NOx 100ppm is normal")
+   - `preference` - User preferences ("prefers 22°C")
+   - `identity` - User info ("name is Jure")
+   - `device` - Device nicknames
+   - `pattern` - Routines and habits
+
+2. **Conversation History** (per-session context) - v0.3.1
+   - Stores last 10 messages per conversation
+   - Enables follow-up questions ("Yes", "Make it warmer")
+   - Auto-cleanup after 24 hours
+   - Uses HA's `conversation_id` for session tracking
 
 **Operations:**
 1. Load facts for user (on each request)
-2. Inject into system prompt
-3. Call Claude with HA tools
-4. Extract new facts from response (Haiku)
-5. Store new facts
+2. Load conversation history (if conversation_id provided)
+3. Inject facts into system prompt
+4. Include history in messages array
+5. Call Claude with HA tools
+6. Store user message and assistant response
+7. Extract new facts from response (Haiku)
 
 ### Existing Implementation (LibreChat)
 
@@ -328,6 +340,26 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 ---
 
 ## Critical Decisions Log
+
+### January 21, 2026: Implement Conversation History
+
+**Problem:** Follow-up responses like "Yes" were met with generic greetings because Claude had no context about the previous turn.
+
+**Root Cause:** The `conversationId` was passed through the system but never used. Each message was processed in isolation - only long-term facts were loaded, not conversation history.
+
+**Solution:** Added `conversation_messages` table to SQLite and modified `LLMClient.chat()` to:
+1. Load previous messages for the conversation
+2. Include them in the messages array sent to Claude
+3. Store each turn (user + assistant) for future reference
+
+**Files Changed:**
+- `src/ha-bridge/src/memory/types.ts` - Added `ConversationMessage` type
+- `src/ha-bridge/src/memory/store.ts` - Added table + methods
+- `src/ha-bridge/src/llm/client.ts` - Load/store conversation history
+
+**Result:** Multi-turn conversations now work. "Would you like me to warm it up?" → "Yes" → Actually warms it up.
+
+---
 
 ### January 17, 2026: Use Claude Haiku 4.5
 
@@ -482,7 +514,7 @@ Still works for web interface. Uses MongoDB via LibreChat's memory system.
 - Custom Component: Installed on haos12 (192.168.88.14) ✅
 - Voice Assistant: Working with Wyoming satellites ✅
 
-**Current Version:** v0.3.0
+**Current Version:** v0.3.1
 
 **Next Steps:**
 1. Multi-user support (OIDC integration)
