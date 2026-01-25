@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Config } from "../config.js";
-import { MemoryStore } from "../memory/store.js";
+import type { IMemoryStore } from "../memory/interface.js";
 import { FactExtractor } from "../memory/extractor.js";
 import { HomeAssistantClient } from "../ha/client.js";
 import { buildSystemPrompt, type CachedSystemPrompt } from "./prompts.js";
@@ -24,14 +24,14 @@ export type StreamCallback = (chunk: string) => void;
 
 export class LLMClient {
   private anthropic: Anthropic;
-  private memory: MemoryStore;
+  private memory: IMemoryStore;
   private extractor: FactExtractor;
   private ha: HomeAssistantClient;
   private config: Config;
 
   constructor(
     config: Config,
-    memory: MemoryStore,
+    memory: IMemoryStore,
     extractor: FactExtractor,
     ha: HomeAssistantClient
   ) {
@@ -53,10 +53,11 @@ export class LLMClient {
     const { message, userId, conversationId, isVoice = false } = request;
     const toolsUsed: string[] = [];
 
-    // 1. Load user's memory
-    const facts = this.memory.getFactsWithinTokenLimit(
+    // 1. Load user's memory (pass current message as context for Shodh's proactive retrieval)
+    const facts = await this.memory.getFactsWithinTokenLimit(
       userId,
-      this.config.memoryTokenLimit
+      this.config.memoryTokenLimit,
+      message
     );
     const factContents = facts.map((f) => f.content);
 
@@ -224,7 +225,7 @@ export class LLMClient {
     assistantResponse: string
   ): Promise<number> {
     // Get existing facts to check for conflicts
-    const existingFacts = this.memory.getFacts(userId);
+    const existingFacts = await this.memory.getFacts(userId);
 
     const extractedFacts = await this.extractor.extract(
       userMessage,
@@ -237,7 +238,7 @@ export class LLMClient {
       // Delete any facts that this new fact replaces
       if (fact.replaces && fact.replaces.length > 0) {
         for (const oldFactId of fact.replaces) {
-          const deleted = this.memory.deleteFact(oldFactId);
+          const deleted = await this.memory.deleteFact(oldFactId);
           if (deleted) {
             console.log(`Replaced old fact ${oldFactId} for ${userId}`);
           }
@@ -245,7 +246,7 @@ export class LLMClient {
       }
 
       // Add the new fact
-      const id = this.memory.addFact(userId, fact.content, fact.category);
+      const id = await this.memory.addFact(userId, fact.content, fact.category);
       storedCount++;
       console.log(`Stored new fact for ${userId}: ${fact.content}`);
     }

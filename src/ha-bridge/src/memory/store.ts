@@ -1,8 +1,9 @@
 import Database from "better-sqlite3";
 import { v4 as uuidv4 } from "uuid";
 import type { Fact, FactCategory, ConversationMessage } from "./types.js";
+import type { IMemoryStore } from "./interface.js";
 
-export class MemoryStore {
+export class MemoryStore implements IMemoryStore {
   private db: Database.Database;
 
   constructor(dbPath: string) {
@@ -40,7 +41,7 @@ export class MemoryStore {
   /**
    * Get all facts for a user, ordered by relevance (use count, recency)
    */
-  getFacts(userId: string): Fact[] {
+  async getFacts(userId: string): Promise<Fact[]> {
     const rows = this.db
       .prepare(
         `
@@ -67,8 +68,12 @@ export class MemoryStore {
    * Get facts for a user, limited to approximately maxTokens
    * Rough estimate: 1 token ≈ 4 characters
    */
-  getFactsWithinTokenLimit(userId: string, maxTokens: number): Fact[] {
-    const facts = this.getFacts(userId);
+  async getFactsWithinTokenLimit(
+    userId: string,
+    maxTokens: number,
+    _currentContext?: string // Unused in SQLite backend, used by Shodh
+  ): Promise<Fact[]> {
+    const facts = await this.getFacts(userId);
     const result: Fact[] = [];
     let tokenCount = 0;
     const charsPerToken = 4;
@@ -100,12 +105,12 @@ export class MemoryStore {
   /**
    * Add a new fact for a user
    */
-  addFact(
+  async addFact(
     userId: string,
     content: string,
     category: FactCategory,
     confidence: number = 0.8
-  ): string {
+  ): Promise<string> {
     const id = uuidv4();
     this.db
       .prepare(
@@ -121,7 +126,7 @@ export class MemoryStore {
   /**
    * Check if a similar fact already exists (simple exact match for now)
    */
-  factExists(userId: string, content: string): boolean {
+  async factExists(userId: string, content: string): Promise<boolean> {
     const row = this.db
       .prepare(
         `
@@ -136,13 +141,13 @@ export class MemoryStore {
   /**
    * Add fact only if it doesn't already exist
    */
-  addFactIfNew(
+  async addFactIfNew(
     userId: string,
     content: string,
     category: FactCategory,
     confidence: number = 0.8
-  ): string | null {
-    if (this.factExists(userId, content)) {
+  ): Promise<string | null> {
+    if (await this.factExists(userId, content)) {
       return null;
     }
     return this.addFact(userId, content, category, confidence);
@@ -151,7 +156,7 @@ export class MemoryStore {
   /**
    * Delete a specific fact
    */
-  deleteFact(factId: string): boolean {
+  async deleteFact(factId: string): Promise<boolean> {
     const result = this.db.prepare("DELETE FROM facts WHERE id = ?").run(factId);
     return result.changes > 0;
   }
@@ -159,7 +164,7 @@ export class MemoryStore {
   /**
    * Clear all facts for a user
    */
-  clearUserFacts(userId: string): number {
+  async clearUserFacts(userId: string): Promise<number> {
     const result = this.db
       .prepare("DELETE FROM facts WHERE user_id = ?")
       .run(userId);
@@ -169,7 +174,7 @@ export class MemoryStore {
   /**
    * Get fact count for a user
    */
-  getFactCount(userId: string): number {
+  async getFactCount(userId: string): Promise<number> {
     const row = this.db
       .prepare("SELECT COUNT(*) as count FROM facts WHERE user_id = ?")
       .get(userId) as { count: number };

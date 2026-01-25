@@ -16,10 +16,18 @@ const ConfigSchema = z.object({
     .transform((v) => v === "true")
     .default("false"),
 
-  // Memory
+  // Memory - SQLite (fallback)
   dbPath: z.string().default("./data/memory.db"),
   maxFactsPerUser: z.coerce.number().default(1000),
   memoryTokenLimit: z.coerce.number().default(1500),
+
+  // Memory - Shodh (preferred when available)
+  shodhUrl: z.string().url().optional(),
+  shodhApiKey: z.string().optional(),
+  shodhEnabled: z
+    .string()
+    .transform((v) => v === "true")
+    .default("false"),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -35,6 +43,9 @@ export function loadConfig(): Config {
     dbPath: process.env.DB_PATH,
     maxFactsPerUser: process.env.MAX_FACTS_PER_USER,
     memoryTokenLimit: process.env.MEMORY_TOKEN_LIMIT,
+    shodhUrl: process.env.SHODH_URL,
+    shodhApiKey: process.env.SHODH_API_KEY,
+    shodhEnabled: process.env.SHODH_ENABLED,
   });
 
   if (!result.success) {

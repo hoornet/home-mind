@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import type { LLMClient } from "../llm/client.js";
-import type { MemoryStore } from "../memory/store.js";
+import type { IMemoryStore } from "../memory/interface.js";
 
 // Request validation schemas
 const ChatRequestSchema = z.object({
@@ -23,7 +23,11 @@ const AddFactSchema = z.object({
   ]),
 });
 
-export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
+export function createRouter(
+  llm: LLMClient,
+  memory: IMemoryStore,
+  memoryBackend: "sqlite" | "shodh" = "sqlite"
+): Router {
   const router = Router();
 
   /**
@@ -92,10 +96,10 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
    * GET /api/memory/:userId
    * Get all facts stored for a user
    */
-  router.get("/memory/:userId", (req: Request, res: Response) => {
+  router.get("/memory/:userId", async (req: Request, res: Response) => {
     try {
       const userId = req.params.userId as string;
-      const facts = memory.getFacts(userId);
+      const facts = await memory.getFacts(userId);
       res.json({
         userId,
         factCount: facts.length,
@@ -112,7 +116,7 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
    * POST /api/memory/:userId/facts
    * Manually add a fact for a user
    */
-  router.post("/memory/:userId/facts", (req: Request, res: Response) => {
+  router.post("/memory/:userId/facts", async (req: Request, res: Response) => {
     try {
       const userId = req.params.userId as string;
       const parsed = AddFactSchema.safeParse(req.body);
@@ -125,7 +129,7 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
       }
 
       const { content, category } = parsed.data;
-      const id = memory.addFactIfNew(userId, content, category);
+      const id = await memory.addFactIfNew(userId, content, category);
 
       if (id) {
         res.status(201).json({ id, message: "Fact added" });
@@ -143,10 +147,10 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
    * DELETE /api/memory/:userId
    * Clear all facts for a user
    */
-  router.delete("/memory/:userId", (req: Request, res: Response) => {
+  router.delete("/memory/:userId", async (req: Request, res: Response) => {
     try {
       const userId = req.params.userId as string;
-      const deleted = memory.clearUserFacts(userId);
+      const deleted = await memory.clearUserFacts(userId);
       res.json({
         message: `Cleared ${deleted} facts for user ${userId}`,
         deleted,
@@ -164,10 +168,10 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
    */
   router.delete(
     "/memory/:userId/facts/:factId",
-    (req: Request, res: Response) => {
+    async (req: Request, res: Response) => {
       try {
         const factId = req.params.factId as string;
-        const deleted = memory.deleteFact(factId);
+        const deleted = await memory.deleteFact(factId);
 
         if (deleted) {
           res.json({ message: "Fact deleted" });
@@ -190,7 +194,8 @@ export function createRouter(llm: LLMClient, memory: MemoryStore): Router {
     res.json({
       status: "ok",
       timestamp: new Date().toISOString(),
-      version: "0.3.0",
+      version: "0.4.0",
+      memoryBackend,
     });
   });
 

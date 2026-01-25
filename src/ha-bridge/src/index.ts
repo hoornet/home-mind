@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import { loadConfig } from "./config.js";
 import { MemoryStore } from "./memory/store.js";
+import { ShodhMemoryStore } from "./memory/shodh-client.js";
+import type { IMemoryStore } from "./memory/interface.js";
 import { FactExtractor } from "./memory/extractor.js";
 import { HomeAssistantClient } from "./ha/client.js";
 import { LLMClient } from "./llm/client.js";
@@ -12,7 +14,7 @@ import { dirname } from "path";
 // Load configuration
 const config = loadConfig();
 
-// Ensure data directory exists
+// Ensure data directory exists (for SQLite fallback)
 try {
   mkdirSync(dirname(config.dbPath), { recursive: true });
 } catch {
@@ -20,19 +22,45 @@ try {
 }
 
 // Initialize components
-console.log("Initializing HA Bridge...");
+console.log("Initializing Home Mind API...");
 
-const memory = new MemoryStore(config.dbPath);
-console.log(`  Memory store: ${config.dbPath}`);
+// Initialize memory store - try Shodh first if configured, fall back to SQLite
+let memory: IMemoryStore;
+let usingShodh = false;
+
+if (config.shodhEnabled && config.shodhUrl && config.shodhApiKey) {
+  console.log(`  Attempting Shodh Memory: ${config.shodhUrl}`);
+  const shodhMemory = new ShodhMemoryStore({
+    baseUrl: config.shodhUrl,
+    apiKey: config.shodhApiKey,
+  });
+
+  // Check if Shodh is healthy
+  const healthy = await shodhMemory.isHealthy();
+  if (healthy) {
+    memory = shodhMemory;
+    usingShodh = true;
+    console.log("  ✓ Memory store: Shodh Memory (cognitive, semantic search)");
+  } else {
+    console.log("  ✗ Shodh not available, falling back to SQLite");
+    memory = new MemoryStore(config.dbPath);
+    console.log(`  Memory store: SQLite (${config.dbPath})`);
+  }
+} else {
+  memory = new MemoryStore(config.dbPath);
+  console.log(`  Memory store: SQLite (${config.dbPath})`);
+}
 
 const extractor = new FactExtractor(config.anthropicApiKey);
+// Note: With Shodh, we could potentially skip Haiku extraction since Shodh
+// has built-in entity extraction. For now, we keep Haiku for compatibility.
 console.log("  Fact extractor: Claude Haiku");
 
 const ha = new HomeAssistantClient(config);
 console.log(`  Home Assistant: ${config.haUrl}`);
 
 const llm = new LLMClient(config, memory, extractor, ha);
-console.log("  LLM client: Claude Sonnet 4");
+console.log("  LLM client: Claude Haiku 4.5");
 
 // Create Express app
 const app = express();
@@ -49,17 +77,19 @@ app.use((req, res, next) => {
 });
 
 // Mount API routes
-app.use("/api", createRouter(llm, memory));
+app.use("/api", createRouter(llm, memory, usingShodh ? "shodh" : "sqlite"));
 
 // Root endpoint
 app.get("/", (_req, res) => {
   res.json({
-    name: "HA Bridge",
-    version: "0.3.0",
+    name: "Home Mind API",
+    version: "0.4.0",
     description:
-      "Home Assistant Bridge API with memory for voice integration",
+      "Home Assistant AI with cognitive memory for voice integration",
+    memoryBackend: usingShodh ? "shodh" : "sqlite",
     endpoints: {
       chat: "POST /api/chat",
+      chatStream: "POST /api/chat/stream",
       memory: "GET /api/memory/:userId",
       health: "GET /api/health",
     },
@@ -67,12 +97,14 @@ app.get("/", (_req, res) => {
 });
 
 // Start server
+const memoryType = usingShodh ? "Shodh (cognitive)" : "SQLite";
 app.listen(config.port, () => {
   console.log(`
 ┌─────────────────────────────────────────┐
-│          HA Bridge Started              │
+│        Home Mind API Started            │
 ├─────────────────────────────────────────┤
 │  Port: ${config.port.toString().padEnd(33)}│
+│  Memory: ${memoryType.padEnd(31)}│
 │  HA URL: ${config.haUrl.substring(0, 30).padEnd(30)}│
 │  Log Level: ${config.logLevel.padEnd(27)}│
 └─────────────────────────────────────────┘
