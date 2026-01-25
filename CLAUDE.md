@@ -157,6 +157,14 @@ curl -X POST http://localhost:3100/api/chat \
   -d '{"message": "what lights are on?", "userId": "test"}'
 ```
 
+**Start Shodh Memory (optional):**
+```bash
+# On ubuntuserver - generate API key and start
+export SHODH_API_KEY=$(openssl rand -hex 32)
+SHODH_DEV_API_KEY=$SHODH_API_KEY SHODH_HOST=0.0.0.0 nohup ~/shodh-memory > ~/shodh.log 2>&1 &
+# Then add to ha-bridge .env: SHODH_ENABLED=true, SHODH_URL, SHODH_API_KEY
+```
+
 ## Release Process
 
 After completing a feature or set of features, always create a tagged release for traceability:
@@ -182,15 +190,17 @@ This ensures code and documentation changes are traceable by version name (e.g.,
 
 ## Key Technical Decisions
 
-1. **Separate memory stores** - Web (LibreChat/MongoDB) and Voice (SQLite) have separate memories. Sync planned for v1.0.
+1. **Shodh Memory** (v0.4.0) - Cognitive memory backend with semantic search, Hebbian learning, and natural decay. Falls back to SQLite if unavailable. Set `SHODH_ENABLED=true` in .env.
 
-2. **Claude Haiku 4.5** for chat - Better instruction following than older Haiku, faster than Sonnet.
+2. **Separate memory stores** - Web (LibreChat/MongoDB) and Voice (Shodh/SQLite) have separate memories. Sync planned for v1.0.
 
-3. **Streaming responses** - `messages.stream()` reduces time-to-first-token. Simple queries: 2-3s. Tool queries: 8-15s (multiple API round-trips).
+3. **Claude Haiku 4.5** for chat - Better instruction following than older Haiku, faster than Sonnet.
 
-4. **Entity caching** - 10-second TTL in HA Bridge. Minimal impact (~6%) since bottleneck is Claude API calls, not HA API.
+4. **Streaming responses** - `messages.stream()` reduces time-to-first-token. Simple queries: 2-3s. Tool queries: 8-15s (multiple API round-trips).
 
-5. **120s timeout** in HA integration - Claude with tool use can take 60s+.
+5. **Entity caching** - 10-second TTL in HA Bridge. Minimal impact (~6%) since bottleneck is Claude API calls, not HA API.
+
+6. **120s timeout** in HA integration - Claude with tool use can take 60s+.
 
 ## Known Limitations
 
