@@ -4,8 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Quick Status
 
-**Current:** v0.3.2 - Smart Memory + Prompt Caching
-**Read:** INTEGRATION_STATUS.md for current project status
+**Version:** See `src/ha-bridge/package.json` for current version
+**Status:** INTEGRATION_STATUS.md for project status
 
 ## Architecture
 
@@ -27,16 +27,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-Both TypeScript packages require Node.js 18+. Run from each package directory:
+Both TypeScript packages require Node.js 18+. Run from each package directory (`src/mcp-server/` or `src/ha-bridge/`):
 
 ```bash
 npm install          # Install dependencies
 npm run build        # Compile TypeScript to dist/
 npm run dev          # Run with tsx watch (hot reload)
 npm run typecheck    # Type check only
-npm run lint         # ESLint (mcp-server only currently)
+npm run lint         # ESLint
 npm start            # Run compiled dist/index.js
 ```
+
+**Local Development (HA Bridge):**
+```bash
+cd src/ha-bridge
+cp .env.example .env  # Create and edit with your credentials
+npm install
+npm run dev           # Starts server at localhost:3100 with hot reload
+```
+
+**API Endpoints (HA Bridge):**
+- `POST /api/chat` - Send message, get full response
+- `POST /api/chat/stream` - SSE streaming response
+- `GET /api/health` - Health check
 
 ## Source Structure
 
@@ -137,6 +150,13 @@ ssh ubuntuserver "docker logs ha-bridge -f"       # Home Mind API logs
 ssh haos12 "tail -f /config/home-assistant.log | grep home_mind"  # HA logs
 ```
 
+**Test API locally:**
+```bash
+curl -X POST http://localhost:3100/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "what lights are on?", "userId": "test"}'
+```
+
 ## Release Process
 
 After completing a feature or set of features, always create a tagged release for traceability:
@@ -177,6 +197,7 @@ This ensures code and documentation changes are traceable by version name (e.g.,
 - Single-user only (multi-user via OIDC planned for v1.0)
 - Web and voice have separate memory stores
 - Voice response time: ~2-3s simple, ~8-15s with tools (architectural limit from Claude API round-trips)
+- No automated tests yet
 
 ## Documentation
 
@@ -185,3 +206,19 @@ This ensures code and documentation changes are traceable by version name (e.g.,
 - `ARCHITECTURE.md` - Technical architecture
 - `docs/MEMORY_EXAMPLES.md` - Memory system examples
 - `docs/PHASE_2.5_ARCHITECTURE.md` - Voice integration details
+
+## Common Debugging
+
+**HA Bridge not responding:**
+1. Check health: `curl http://localhost:3100/api/health`
+2. Check env vars are set (ANTHROPIC_API_KEY, HA_URL, HA_TOKEN)
+3. Check HA is accessible from the bridge host
+
+**Claude returns generic responses (no HA data):**
+- Verify HA_URL and HA_TOKEN in .env
+- Check HA Bridge logs for tool call errors
+- System prompt requires tools - if Claude ignores tools, check `llm/prompts.ts`
+
+**Memory not persisting:**
+- Check SQLite DB exists: `src/ha-bridge/data/memory.db`
+- Check fact extraction in logs (Haiku extracts facts from responses)
