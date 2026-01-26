@@ -1,0 +1,31 @@
+services:
+  home-mind:
+    build: .
+    container_name: home-mind
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./data:/app/data
+    environment:
+      # Required: Get your API key from https://console.anthropic.com/
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+
+      # Required: Your Home Assistant URL (use internal IP, not localhost)
+      - HA_URL=${HA_URL}
+
+      # Required: Long-lived access token from HA
+      # Create at: Your Profile > Security > Long-Lived Access Tokens
+      - HA_TOKEN=${HA_TOKEN}
+
+      # Optional: Set to true if using self-signed certificates
+      - HA_SKIP_TLS_VERIFY=${HA_SKIP_TLS_VERIFY:-false}
+
+      # Optional: Logging level (debug, info, warn, error)
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3100/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
