@@ -6,6 +6,7 @@
 1. ✅ HACS repository created: https://github.com/hoornet/home-mind-hacs
 2. ✅ Release v0.4.0 published with HACS structure
 3. ✅ Main repo docs updated to reference HACS
+4. ✅ HACS installation tested on HA 2026.1.3 - works great!
 
 ### Previous Session (January 25)
 1. ✅ Shodh Memory integration - cognitive memory with semantic search
