@@ -141,7 +141,12 @@ ssh ubuntuserver "docker restart ha-bridge"
 
 Note: Don't copy node_modules - they must be built inside the container due to native dependencies (better-sqlite3).
 
-**Deploy HA custom component:**
+**Deploy HA custom component (HACS - Recommended):**
+1. Add `https://github.com/hoornet/home-mind-hacs` as a custom repository in HACS
+2. Install "Home Mind" from HACS
+3. Restart Home Assistant
+
+**Deploy HA custom component (Manual):**
 ```bash
 scp -r src/ha-integration/custom_components/home_mind haos12:/config/custom_components/
 ssh haos12 "ha core restart"

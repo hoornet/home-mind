@@ -27,6 +27,7 @@
 | **Conversation History** | ✅ Working | Multi-turn context, follow-up questions |
 | **Smart Fact Replacement** | ✅ Working | New facts supersede conflicting old ones |
 | **Prompt Caching** | ✅ Working | Faster TTFT via Anthropic cache |
+| **HACS Distribution** | ✅ Available | [home-mind-hacs](https://github.com/hoornet/home-mind-hacs) |
 
 ### What's Complete ✅
 
@@ -41,6 +42,7 @@
 | Conversation History | 2.5 | ✅ Complete | Multi-turn follow-ups (v0.3.1) |
 | Smart Fact Replacement | 2.5 | ✅ Complete | Conflicting facts replaced (v0.3.2) |
 | Prompt Caching | 2.5 | ✅ Complete | Anthropic cache for TTFT (v0.3.2) |
+| HACS Distribution | 2.5 | ✅ Complete | Separate repo for easy installation (v0.4.0) |
 
 ---
 

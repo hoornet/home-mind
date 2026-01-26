@@ -1,8 +1,13 @@
-# Session Notes - January 25, 2026
+# Session Notes - January 26, 2026
 
 ## Current State (v0.4.0)
 
 ### Completed This Session
+1. ✅ HACS repository created: https://github.com/hoornet/home-mind-hacs
+2. ✅ Release v0.4.0 published with HACS structure
+3. ✅ Main repo docs updated to reference HACS
+
+### Previous Session (January 25)
 1. ✅ Shodh Memory integration - cognitive memory with semantic search
 2. ✅ Deployed to ubuntuserver (ha-bridge using Shodh)
 3. ✅ HA component updated to v0.4.0
@@ -14,25 +19,11 @@
 - **Shodh Memory**: port 3030 (native binary, not Docker)
 - **Shodh API Key**: `400c8961dd58a3838e66efa5aeb60080c21e656ed1f24fdf199fb7908e2934d8`
 
-### Next Task: HACS Packaging (Separate Repo)
-
-**Decision**: Create separate repo for HA component (cleaner for HACS)
-
-**Steps to do**:
-1. Create new repo: `home-mind-hacs` or `home-mind-ha`
-2. Move `src/ha-integration/custom_components/home_mind/` to new repo
-3. Add HACS structure:
-   - `hacs.json` manifest
-   - `info.md` for HACS display
-   - GitHub releases for versioning
-4. Submit to HACS default repos (or use custom repo initially)
-5. Update main repo docs to reference HACS repo
-
-**HACS Requirements**:
-- Repository must be public
-- Must have releases with version tags
-- `hacs.json` in root
-- `custom_components/<domain>/` structure
+### HACS Installation
+Users can now install via HACS:
+1. Add `https://github.com/hoornet/home-mind-hacs` as custom repository
+2. Install "Home Mind"
+3. Restart Home Assistant
 
 ### Future Tasks (from roadmap)
 - Blog post on user's blog
