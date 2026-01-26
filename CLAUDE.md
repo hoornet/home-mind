@@ -36,6 +36,9 @@ npm run dev          # Run with tsx watch (hot reload)
 npm run typecheck    # Type check only
 npm run lint         # ESLint
 npm start            # Run compiled dist/index.js
+npm test             # Run tests (vitest)
+npm run test:watch   # Run tests in watch mode
+npm run test:coverage # Run tests with coverage report
 ```
 
 **Local Development (HA Bridge):**
@@ -207,7 +210,6 @@ This ensures code and documentation changes are traceable by version name (e.g.,
 - Single-user only (multi-user via OIDC planned for v1.0)
 - Web and voice have separate memory stores
 - Voice response time: ~2-3s simple, ~8-15s with tools (architectural limit from Claude API round-trips)
-- No automated tests yet
 
 ## Documentation
 
