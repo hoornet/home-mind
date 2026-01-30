@@ -1,271 +1,210 @@
 # Home Mind Architecture
 
-**Version:** 0.3.0
-**Last Updated:** January 18, 2026
-**Status:** Phase 2.5 Complete - Voice + Text Assist Working
+**Version:** 0.6.0
+**Last Updated:** January 30, 2026
+**Status:** Phase 1 Complete - Voice + Text + Memory Working
 
 ---
 
 ## Overview
 
-Home Mind is an AI assistant for Home Assistant with persistent memory and voice control. It consists of two independent interfaces that share the same intelligence but currently have separate memory stores.
+Home Mind is an AI assistant for Home Assistant with cognitive memory. It provides voice and text control through HA Assist with persistent, semantic memory via Shodh Memory.
 
-## Current Architecture (v0.3.0)
-
-### Two Interface Model
+## Architecture (v0.6.0)
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                      Home Mind Architecture                          │
-├─────────────────────────────┬───────────────────────────────────────┤
-│     Web Interface           │      Voice/Text Interface             │
-│     (LibreChat)             │      (HA Assist)                      │
-│                             │                                        │
-│  User → LibreChat Web UI    │  User → Voice Satellite / HA Text     │
-│           ↓                 │              ↓                         │
-│       MCP Server            │    HA Conversation Agent               │
-│           ↓                 │              ↓                         │
-│    Home Assistant API       │       Home Mind API                    │
-│           ↓                 │    (ha-bridge @ :3100)                 │
-│    MongoDB (memory)         │              ↓                         │
-│                             │    Claude Haiku + HA Tools             │
-│                             │              ↓                         │
-│                             │       SQLite (memory)                  │
-└─────────────────────────────┴───────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                         Home Mind                                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   User (Voice/Text)                                             │
+│          ↓                                                       │
+│   HA Assist (Wyoming protocol / Text input)                     │
+│          ↓                                                       │
+│   Home Mind Conversation Agent (HA custom component)            │
+│          ↓                                                       │
+│   Home Mind Server (Express API @ :3100)                        │
+│          ↓                         ↓                            │
+│   Claude Haiku 4.5          Shodh Memory (@ :3030)              │
+│          ↓                         ↓                            │
+│   HA REST API              Cognitive Memory                     │
+│   (device control)         (semantic search, Hebbian learning)  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
-
-**Key Point:** Web and Voice have separate memory stores currently. Memory sync planned for v1.0.
 
 ---
 
-## Voice/Text Interface (HA Assist)
+## Components
 
-This is the primary interface for Home Mind, providing voice and text control through Home Assistant's native Assist feature.
+### 1. Home Mind Server
 
-### Flow Diagram
+**Location:** `src/home-mind-server/`
+**Runtime:** Node.js/Express
+**Port:** 3100
+
+The API server that processes chat requests:
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                      Home Assistant                                  │
-│                                                                      │
-│  ┌────────────────────┐                                             │
-│  │  Voice Satellite   │  ESP32 with microphone/speaker              │
-│  │  (Wyoming)         │  Example: M5Stack Atom Echo                 │
-│  └────────┬───────────┘                                             │
-│           │                                                          │
-│           │ Audio Stream (Wake word → Speech)                        │
-│           ▼                                                          │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │              Wyoming Protocol Handler                        │   │
-│  │          (HA's native voice pipeline)                        │   │
-│  │  - Handles audio streaming                                   │   │
-│  │  - Wake word detection                                       │   │
-│  └─────────────────────┬───────────────────────────────────────┘   │
-│                        │                                             │
-│                        ▼                                             │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │                  Assist Pipeline                             │   │
-│  │  1. Wake word detected                                       │   │
-│  │  2. Audio → Speech-to-Text (Whisper)                         │   │
-│  │  3. Route to conversation agent                              │   │
-│  └─────────────────────┬───────────────────────────────────────┘   │
-│                        │                                             │
-│                        ▼                                             │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │      Home Mind Conversation Agent (OUR COMPONENT)            │   │
-│  │                                                              │   │
-│  │  custom_components/home_mind/conversation.py                 │   │
-│  │                                                              │   │
-│  │  1. Receives text from Assist                                │   │
-│  │  2. Calls Home Mind API                                      │   │
-│  │  3. Returns AI response to HA                                │   │
-│  └─────────────────────┬───────────────────────────────────────┘   │
-│                        │                                             │
-└────────────────────────┼────────────────────────────────────────────┘
-                         │
-                         │ HTTP POST to Home Mind API
-                         │
-                         ▼
-          ┌──────────────────────────────────────┐
-          │      Home Mind API (HA Bridge)       │
-          │  (http://ubuntuserver:3100/api)      │
-          │                                      │
-          │  Processing:                         │
-          │  1. Load user memory from SQLite     │
-          │  2. Build prompt with context        │
-          │  3. Stream to Claude Haiku           │
-          │  4. Execute HA tools as needed       │
-          │  5. Extract facts, update memory     │
-          │  6. Return response                  │
-          └──────────────┬───────────────────────┘
-                         │
-                         │ HA REST API calls
-                         │
-                         ▼
-          ┌──────────────────────────────────────┐
-          │     Home Assistant REST API          │
-          │  (https://192.168.88.14:8123/api)    │
-          │                                      │
-          │  - Entity states                     │
-          │  - Service calls                     │
-          │  - Historical data                   │
-          └──────────────────────────────────────┘
+src/home-mind-server/
+├── src/
+│   ├── index.ts           # Entry point
+│   ├── config.ts          # Zod-validated config
+│   ├── api/routes.ts      # HTTP endpoints
+│   ├── llm/
+│   │   ├── client.ts      # Claude client with streaming
+│   │   ├── tools.ts       # HA tool definitions
+│   │   └── prompts.ts     # System prompt builder
+│   ├── memory/
+│   │   ├── shodh-client.ts  # Shodh Memory API client
+│   │   ├── extractor.ts     # Fact extraction with Haiku
+│   │   └── types.ts         # Memory types
+│   └── ha/
+│       └── client.ts      # HA REST API client
+└── Dockerfile
 ```
 
-### Home Mind API Components
+**Endpoints:**
+- `POST /api/chat` - Send message, get response
+- `POST /api/chat/stream` - SSE streaming response
+- `GET /api/health` - Health check
 
-The HA Bridge (`src/ha-bridge/`) is a Node.js/Express server with:
+### 2. Shodh Memory
 
-| Directory | Purpose |
-|-----------|---------|
-| `api/` | Express routes (`/api/chat`, `/api/chat/stream`, `/api/health`) |
-| `llm/` | Claude client with streaming support |
-| `memory/` | SQLite storage + Haiku-based fact extraction |
-| `ha/` | Home Assistant client with 10-second entity caching |
+**Binary:** `docker/shodh/shodh-memory-server`
+**Version:** 0.1.75
+**Port:** 3030
 
-**Key Features:**
-- Streaming responses (60-80% faster for simple queries)
-- Parallel tool execution
-- Automatic fact extraction and memory persistence
-- Entity caching for performance
+Cognitive memory backend with:
+- Semantic search (MiniLM embeddings)
+- Hebbian learning (connections strengthen with use)
+- Natural decay (unused memories fade)
+- Knowledge graph relationships
 
-### HA Custom Component
+**Data Location:** `/data` (mounted from host or Docker volume)
 
-The conversation agent (`src/ha-integration/custom_components/home_mind/`) registers with HA Assist:
+### 3. HA Custom Component
+
+**Location:** `src/ha-integration/custom_components/home_mind/`
+
+Registers as a conversation agent in Home Assistant:
 
 ```python
 class HomeMindConversationAgent(ConversationEntity):
-    async def async_process(self, user_input: ConversationInput) -> ConversationResult:
-        response = await self._call_api(user_input.text, user_id)
-        intent_response = intent.IntentResponse(language=user_input.language)
-        intent_response.async_set_speech(response)
+    async def async_process(self, user_input):
+        response = await self._call_api(user_input.text)
         return ConversationResult(response=intent_response)
 ```
 
 ---
 
-## Web Interface (LibreChat)
-
-The original interface using LibreChat's web UI with MCP integration.
-
-### Flow Diagram
+## Request Flow
 
 ```
-User → LibreChat Web UI (port 3080)
-              ↓
-        LibreChat API
-              ↓
-         MCP Server (stdio)
-              ↓
-    Home Assistant REST API
-              ↓
-        MongoDB (memory via LibreChat)
+1. User speaks "Turn off the kitchen light"
+        ↓
+2. HA Assist (Wyoming STT) → Text
+        ↓
+3. Home Mind Agent receives text
+        ↓
+4. HTTP POST to Home Mind Server
+        ↓
+5. Server loads relevant memories from Shodh
+        ↓
+6. Claude Haiku generates response (may call HA tools)
+        ↓
+7. Tools execute: search_entities → call_service
+        ↓
+8. Response returned: "Done, kitchen light is off"
+        ↓
+9. Haiku extracts any new facts → stored in Shodh
+        ↓
+10. TTS speaks response to user
 ```
-
-### MCP Server
-
-The MCP server (`src/mcp-server/`) provides tools to LibreChat:
-
-| Tool | Purpose |
-|------|---------|
-| `get_state` | Get current state of an entity |
-| `get_entities` | List entities by domain |
-| `search_entities` | Search entities by name |
-| `call_service` | Control devices |
-| `get_history` | Query historical data |
 
 ---
 
-## Memory Systems
+## Memory System
 
-### Voice Memory (SQLite)
+### Fact Categories
 
-**Location:** `src/ha-bridge/data/memory.db`
+| Category | Purpose | Example |
+|----------|---------|---------|
+| `baseline` | Normal sensor values | "NOx 100ppm is normal for this home" |
+| `preference` | User preferences | "Prefers bedroom at 21°C" |
+| `identity` | User info | "User's name is Jure" |
+| `device` | Device nicknames | "The main light is the living room LED" |
+| `pattern` | Routines and habits | "Usually turns off lights at 11pm" |
+| `correction` | Learned corrections | "Don't lower blinds when sunny" |
 
-**Fact Categories:**
-- `baseline` - Sensor normal values ("NOx 100ppm is normal")
-- `preference` - User preferences ("prefers 22°C")
-- `identity` - User info ("name is Jure")
-- `device` - Device nicknames
-- `pattern` - Routines and habits
+### Memory Operations
 
-**Operations:**
-1. Load facts for user on each request
-2. Inject into system prompt
-3. Call Claude with HA tools
-4. Extract new facts from response (via Haiku)
-5. Store new facts
-
-### Web Memory (MongoDB)
-
-Managed by LibreChat's built-in memory system. Separate from voice memory.
-
----
-
-## Performance
-
-### Response Time Breakdown
-
-| Component | Time | Notes |
-|-----------|------|-------|
-| HA Assist → Conversation Agent | ~100ms | |
-| Conversation Agent → HA Bridge | ~100ms | |
-| Claude API (per round-trip) | ~2-3s | With streaming |
-| Tool execution (cached) | ~10ms | Parallel execution |
-| Tool execution (uncached) | ~500ms | |
-| **Simple query (no tools)** | **2-3s** | Voice mode |
-| **Query with 2 tools** | **8-9s** | 2 Claude round-trips |
-| **Query with 4+ tools** | **12-15s** | Multiple round-trips |
-
-### Optimizations Implemented
-
-1. **Streaming** - `messages.stream()` for faster time-to-first-token
-2. **Parallel tool execution** - `Promise.all()` for concurrent tools
-3. **Entity caching** - 10-second TTL for HA state queries
-4. **SSE endpoint** - `/api/chat/stream` for web clients
+1. **Recall** - On each request, retrieve relevant memories using semantic search
+2. **Reinforce** - Retrieved memories get Hebbian boost
+3. **Store** - New facts extracted from conversations via Claude Haiku
+4. **Replace** - Conflicting facts are superseded by new ones
+5. **Decay** - Unused memories naturally fade over time
 
 ---
 
 ## Deployment
 
+### Docker Compose
+
+```yaml
+services:
+  shodh:
+    build: ./docker/shodh
+    ports: ["3030:3030"]
+    volumes:
+      - ${SHODH_DATA_PATH:-shodh_data}:/data
+      - shodh_cache:/root/.cache/shodh-memory
+
+  server:
+    build: ./src/home-mind-server
+    ports: ["${PORT:-3100}:3100"]
+    depends_on:
+      shodh: { condition: service_healthy }
+    environment:
+      - SHODH_URL=http://shodh:3030
+```
+
 ### Infrastructure
 
-| Component | Host | IP/Port |
-|-----------|------|---------|
-| Home Assistant | haos12 | 192.168.88.14:8123 |
-| LibreChat | ubuntuserver | 192.168.88.12:3080 |
-| Home Mind API | ubuntuserver | 192.168.88.12:3100 |
-| Dev Workstation | omarchy | 192.168.88.29 |
+| Component | Host | Port |
+|-----------|------|------|
+| Home Assistant | haos12 | 8123 |
+| Home Mind Server | ubuntuserver | 3100 |
+| Shodh Memory | ubuntuserver | 3030 |
 
-### Network
+---
 
-```
-┌─────────────────────────────────────────────────────┐
-│  Physical Deployment                                 │
-├─────────────────────────────────────────────────────┤
-│                                                      │
-│  haos12 (192.168.88.14):                            │
-│  ├─ Home Assistant                                  │
-│  └─ home_mind custom component                      │
-│                                                      │
-│  ubuntuserver (192.168.88.12):                      │
-│  ├─ LibreChat container (:3080)                     │
-│  │  ├─ Web UI                                       │
-│  │  ├─ Memory system (MongoDB)                      │
-│  │  └─ MCP Server (mounted volume)                  │
-│  ├─ Home Mind API (:3100)                           │
-│  │  └─ SQLite memory                                │
-│  └─ MongoDB container                               │
-│                                                      │
-│  Voice Satellites (WiFi):                           │
-│  ├─ ESP32 devices                                   │
-│  └─ Wyoming protocol to HA                          │
-│                                                      │
-│  Network:                                            │
-│  └─ Tailscale VPN (all devices)                     │
-│                                                      │
-└─────────────────────────────────────────────────────┘
-```
+## Performance
+
+| Query Type | Response Time | Notes |
+|------------|---------------|-------|
+| Simple (no tools) | 2-3s | Streaming helps |
+| With 1-2 tools | 5-8s | Tool execution + Claude |
+| Complex (4+ tools) | 10-15s | Multiple Claude round-trips |
+
+### Optimizations
+
+- **Streaming** - `messages.stream()` for faster time-to-first-token
+- **Parallel tools** - `Promise.all()` for concurrent tool execution
+- **Retry logic** - 3 retries with exponential backoff for Shodh
+- **Keep-alive** - Connection reuse for Shodh requests
+
+---
+
+## Tools Available
+
+| Tool | Description |
+|------|-------------|
+| `get_state` | Get current state of an entity |
+| `get_entities` | List entities by domain |
+| `search_entities` | Search entities by name |
+| `call_service` | Control devices (turn_on, turn_off, etc.) |
+| `get_history` | Get historical state data |
 
 ---
 
@@ -273,39 +212,39 @@ Managed by LibreChat's built-in memory system. Separate from voice memory.
 
 | Layer | Implementation |
 |-------|----------------|
-| Network | Tailscale VPN, no internet exposure |
-| HA Auth | Long-lived access token (scoped) |
-| API Auth | Single-user mode (OIDC deferred to v1.0) |
-| Memory | User-keyed SQLite/MongoDB |
+| Network | Docker internal network, optional Tailscale |
+| HA Auth | Long-lived access token |
+| Shodh Auth | API key (SHODH_API_KEY) |
+| Multi-user | Single user (OIDC planned for v1.0) |
 
 ---
 
-## Future Enhancements (v1.0+)
+## Future Plans
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Multi-user (OIDC) | Planned | hass-oidc-auth integration |
-| Memory sync | Planned | Unified web + voice memory |
-| HACS integration | Planned | One-click install |
-| HA Add-on | Planned | Simplified deployment |
-| Prompt caching | Planned | Anthropic cache feature |
-| Hybrid routing | Planned | Skip Claude for simple commands |
-| Local LLM | Planned | Ollama fallback |
+| Feature | Status |
+|---------|--------|
+| SaaS hosted option | Phase 3 planned |
+| Multi-user (OIDC) | v1.0 planned |
+| HA Add-on packaging | v1.0 planned |
+| Hybrid routing | Planned (skip Claude for simple commands) |
 
 ---
 
 ## Related Documentation
 
-- **INTEGRATION_STATUS.md** - Current project status
-- **PROJECT_PLAN.md** - Full roadmap
+- **README.md** - Quick start guide
 - **CLAUDE.md** - Development guide
-- **docs/PHASE_2.5_ARCHITECTURE.md** - Original voice integration design
+- **ROADMAP.md** - Task tracking
 - **docs/MEMORY_EXAMPLES.md** - Memory system examples
+- **docs/SAAS_ARCHITECTURE.md** - SaaS plans
 
 ---
 
-**Version History:**
+## Version History
+
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.1.0 | 2026-01-17 | Initial Phase 2.5 architecture planning |
-| 0.3.0 | 2026-01-18 | Updated to reflect actual implementation |
+| 0.1.0 | 2026-01-17 | Initial architecture |
+| 0.3.0 | 2026-01-18 | Voice integration, SQLite memory |
+| 0.5.0 | 2026-01-29 | Shodh Memory, consolidated architecture |
+| 0.6.0 | 2026-01-30 | Shodh v0.1.75, bundled ONNX, documentation cleanup |
