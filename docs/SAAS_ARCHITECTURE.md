@@ -250,6 +250,22 @@ At 1000 users: $7,000-9,000/mo revenue
 
 ---
 
+## HA Connectivity Challenge
+
+**Problem:** Our hosted server needs to reach the user's Home Assistant instance.
+
+| Method | Description | Pros | Cons |
+|--------|-------------|------|------|
+| **Nabu Casa** | User already has remote URL | Works immediately | Only for NC subscribers |
+| **User-exposed HA** | User forwards port / reverse proxy | Works for anyone | Security risk, technical setup |
+| **Tunnel agent** | We provide agent (like cloudflared) | Secure, works anywhere | Extra component to maintain |
+
+**MVP Decision:** Target users with Nabu Casa or already-exposed HA. This covers most "serious" HA users and avoids tunnel complexity.
+
+**Future:** Consider tunnel agent for users who want SaaS but don't have remote access.
+
+---
+
 ## Open Questions
 
 1. **Self-hosted still free?**
@@ -266,3 +282,19 @@ At 1000 users: $7,000-9,000/mo revenue
 4. **Trial period?**
    - 14-day free trial of Managed tier?
    - Or just generous free tier?
+
+---
+
+## Phase 2 Fresh Install Test Results (2026-01-30)
+
+**Test Environment:** Ubuntu Server 24.04 VM (KVM), 4GB RAM, 4 CPUs
+
+**Installation Time:** ~6 minutes (after Docker installed)
+
+**Friction Points Found:**
+1. GitHub repo not public (blocker for real users)
+2. Docker install instructions were missing (fixed)
+3. Shodh download instructions unclear (fixed)
+4. Version was hardcoded (fixed - now reads from package.json)
+
+**Conclusion:** Self-hosted works but requires terminal comfort. SaaS path is essential for mainstream adoption.
