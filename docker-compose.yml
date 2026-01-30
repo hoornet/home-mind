@@ -17,6 +17,8 @@ services:
       - ${SHODH_DATA_PATH:-shodh_data}:/data
       # Persist model cache to avoid re-downloading ONNX Runtime
       - shodh_cache:/root/.cache/shodh-memory
+    ports:
+      - "3030:3030"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3030/health"]
       interval: 30s
