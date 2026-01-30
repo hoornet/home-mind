@@ -1,51 +1,33 @@
-FROM node:20-alpine AS builder
+# Home Mind API - HA Bridge
+FROM node:20-slim
 
 WORKDIR /app
 
-# Install build dependencies for better-sqlite3
-RUN apk add --no-cache python3 make g++
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
 
-# Install all dependencies (including dev for build)
-RUN npm ci
+# Install dependencies
+RUN npm ci --only=production
 
 # Copy source
 COPY tsconfig.json ./
 COPY src/ ./src/
 
 # Build TypeScript
-RUN npm run build
+RUN npm install typescript && npm run build && rm -rf node_modules/.cache
 
-# Production stage
-FROM node:20-alpine
+# Clean up dev dependencies and source
+RUN npm prune --production && rm -rf src/ tsconfig.json
 
-WORKDIR /app
-
-# Install runtime dependencies for better-sqlite3
-RUN apk add --no-cache python3 make g++
-
-# Copy package files
-COPY package*.json ./
-
-# Install production dependencies only
-RUN npm ci --omit=dev && \
-    # Clean up build tools after native module compilation
-    apk del python3 make g++ && \
-    rm -rf /root/.npm /tmp/*
-
-# Copy built files
-COPY --from=builder /app/dist ./dist
-
-# Create data directory for SQLite
-RUN mkdir -p /app/data
-
-# Set environment defaults
-ENV PORT=3100
-ENV NODE_ENV=production
-ENV DB_PATH=/app/data/memory.db
-
+# Expose port
 EXPOSE 3100
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3100/api/health || exit 1
+
+# Start server
 CMD ["node", "dist/index.js"]

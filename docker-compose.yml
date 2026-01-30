@@ -1,0 +1,64 @@
+# Home Mind - Docker Compose
+# AI assistant for Home Assistant with cognitive memory
+
+version: '3.8'
+
+services:
+  # Shodh Memory - Cognitive memory backend
+  shodh:
+    build:
+      context: ./docker/shodh
+    container_name: home-mind-shodh
+    restart: unless-stopped
+    environment:
+      - SHODH_HOST=0.0.0.0
+      - SHODH_PORT=3030
+      - SHODH_DEV_API_KEY=${SHODH_API_KEY}
+    volumes:
+      - shodh_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3030/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - home-mind
+
+  # HA Bridge - API server
+  ha-bridge:
+    build:
+      context: ./src/ha-bridge
+    container_name: home-mind-api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3100}:3100"
+    environment:
+      - PORT=3100
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - HA_URL=${HA_URL}
+      - HA_TOKEN=${HA_TOKEN}
+      - HA_SKIP_TLS_VERIFY=${HA_SKIP_TLS_VERIFY:-false}
+      - SHODH_URL=http://shodh:3030
+      - SHODH_API_KEY=${SHODH_API_KEY}
+      - MEMORY_TOKEN_LIMIT=${MEMORY_TOKEN_LIMIT:-1500}
+    depends_on:
+      shodh:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - home-mind
+
+volumes:
+  shodh_data:
+    driver: local
+
+networks:
+  home-mind:
+    driver: bridge
