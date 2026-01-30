@@ -194,7 +194,7 @@ export function createRouter(
     res.json({
       status: "ok",
       timestamp: new Date().toISOString(),
-      version: "0.4.0",
+      version: "0.5.0",
       memoryBackend,
     });
   });
