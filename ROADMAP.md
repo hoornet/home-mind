@@ -1,0 +1,74 @@
+# Home Mind - Launch Roadmap
+
+## Phase 1: Cleanup & Testing (Current)
+
+### 1.1 Update ubuntuserver
+- [ ] Stop old ha-bridge container
+- [ ] Remove old ~/home-mind/ directory
+- [ ] Clone fresh repo
+- [ ] Set up docker-compose (shodh + server)
+- [ ] Migrate existing Shodh data
+- [ ] Verify API works
+
+### 1.2 Update Home Assistant
+- [ ] Check if custom component needs updates
+- [ ] Test voice commands via Assist
+- [ ] Test text commands via Assist
+
+### 1.3 End-to-end testing
+- [ ] Memory persistence works
+- [ ] Conversation history works
+- [ ] HA entity queries work
+- [ ] Device control works
+
+## Phase 2: Fresh Install Test
+
+### 2.1 Simulate new user experience
+- [ ] Fresh VM or clean environment
+- [ ] Follow README instructions exactly
+- [ ] Document any friction points
+- [ ] Note missing prerequisites
+- [ ] Time the installation process
+
+### 2.2 Documentation polish
+- [ ] Update README based on fresh install findings
+- [ ] Add troubleshooting section
+- [ ] Create video walkthrough (optional)
+- [ ] Verify HACS installation works
+
+## Phase 3: SaaS / Hosted Option
+
+### 3.1 Architecture
+- [ ] Design hosted API service
+- [ ] User authentication (API keys or OAuth)
+- [ ] Multi-tenant Shodh (user isolation)
+- [ ] Usage tracking/limits
+
+### 3.2 Infrastructure
+- [ ] Cloud hosting (AWS/GCP/Hetzner)
+- [ ] Domain setup
+- [ ] SSL certificates
+- [ ] Monitoring/alerting
+
+### 3.3 Monetization
+- [ ] Pricing tiers (free tier? paid only?)
+- [ ] Payment integration (Stripe)
+- [ ] User dashboard
+- [ ] Usage analytics
+
+### 3.4 Simplified user flow
+```
+User installs HA component → Enters API key → Done
+(No Shodh, no server, no Docker needed)
+```
+
+## Phase 4: Public Launch
+
+- [ ] GitHub release with changelog
+- [ ] Reddit/HA community announcement
+- [ ] Demo video
+- [ ] Landing page (optional)
+
+---
+
+**Current Status:** Phase 1.1 - ubuntuserver cleanup
