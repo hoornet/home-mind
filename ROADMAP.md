@@ -11,13 +11,13 @@
 - [x] Verify API works
 
 ### 1.2 Update Home Assistant
-- [ ] Check if custom component needs updates
-- [ ] Test voice commands via Assist
-- [ ] Test text commands via Assist
+- [x] Check if custom component needs updates (v0.4.0 already installed)
+- [x] Test voice commands via Assist
+- [x] Test text commands via Assist
 
 ### 1.3 End-to-end testing
-- [ ] Memory persistence works
-- [ ] Conversation history works
+- [x] Memory persistence works
+- [x] Conversation history works
 - [ ] HA entity queries work
 - [ ] Device control works
 
@@ -71,4 +71,4 @@ User installs HA component → Enters API key → Done
 
 ---
 
-**Current Status:** Phase 1.2 - Home Assistant component check
+**Current Status:** Phase 1.3 - Final end-to-end testing (entity queries, device control)
