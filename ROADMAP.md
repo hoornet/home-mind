@@ -18,8 +18,8 @@
 ### 1.3 End-to-end testing
 - [x] Memory persistence works
 - [x] Conversation history works
-- [ ] HA entity queries work
-- [ ] Device control works
+- [x] HA entity queries work
+- [x] Device control works
 
 ## Phase 2: Fresh Install Test
 
@@ -71,4 +71,4 @@ User installs HA component → Enters API key → Done
 
 ---
 
-**Current Status:** Phase 1.3 - Final end-to-end testing (entity queries, device control)
+**Current Status:** Phase 1 COMPLETE - Ready for Phase 2 (fresh install test) or documentation cleanup
