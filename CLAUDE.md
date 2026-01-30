@@ -36,6 +36,10 @@ npm run dev          # Run with tsx watch (hot reload)
 npm run typecheck    # Type check only
 npm run lint         # ESLint
 npm start            # Run compiled dist/index.js
+```
+
+**HA Bridge only** (has tests):
+```bash
 npm test             # Run tests (vitest)
 npm run test:watch   # Run tests in watch mode
 npm run test:coverage # Run tests with coverage report
@@ -71,10 +75,11 @@ Home Mind API server for voice/HA integration. Express + Claude SDK + SQLite.
 - `llm/client.ts` - Claude client with streaming (`messages.stream()`)
 - `llm/tools.ts` - HA tool definitions for Claude
 - `llm/prompts.ts` - System prompts with memory injection
-- `memory/store.ts` - SQLite fact storage
-- `memory/extractor.ts` - Fact extraction using Claude Haiku
+- `memory/store.ts` - SQLite fact storage with conversation history
+- `memory/extractor.ts` - Fact extraction using Claude Haiku (with smart replacement)
 - `memory/types.ts` - Memory type definitions
 - `ha/client.ts` - HA client with 10-second entity caching
+- `config.ts` - Zod-validated environment config
 
 ### src/ha-integration/custom_components/home_mind/
 HA custom component that registers as a conversation agent.
@@ -96,6 +101,11 @@ HA custom component that registers as a conversation agent.
 - `HA_URL` (required) - Home Assistant URL
 - `HA_TOKEN` (required) - Long-lived access token
 - `PORT` - Server port (default: 3100)
+- `HA_SKIP_TLS_VERIFY` - Set `true` for self-signed certs
+- `DB_PATH` - SQLite database path (default: `./data/memory.db`)
+- `SHODH_ENABLED` - Enable Shodh memory backend (default: false)
+- `SHODH_URL` - Shodh server URL (when enabled)
+- `SHODH_API_KEY` - Shodh API key (when enabled)
 
 ## Code Patterns
 
@@ -202,13 +212,17 @@ This ensures code and documentation changes are traceable by version name (e.g.,
 
 2. **Separate memory stores** - Web (LibreChat/MongoDB) and Voice (Shodh/SQLite) have separate memories. Sync planned for v1.0.
 
-3. **Claude Haiku 4.5** for chat - Better instruction following than older Haiku, faster than Sonnet.
+3. **Claude Haiku 4.5** for chat - Better instruction following than older Haiku, faster than Sonnet. Model: `claude-haiku-4-5-20251001`.
 
 4. **Streaming responses** - `messages.stream()` reduces time-to-first-token. Simple queries: 2-3s. Tool queries: 8-15s (multiple API round-trips).
 
 5. **Entity caching** - 10-second TTL in HA Bridge. Minimal impact (~6%) since bottleneck is Claude API calls, not HA API.
 
 6. **120s timeout** in HA integration - Claude with tool use can take 60s+.
+
+7. **Smart fact replacement** - New facts supersede conflicting old ones. Prevents memory clutter from preference changes.
+
+8. **Prompt caching** - Static system prompt portion (~1500 tokens) uses Anthropic's cache for faster TTFT.
 
 ## Known Limitations
 
@@ -239,3 +253,13 @@ This ensures code and documentation changes are traceable by version name (e.g.,
 **Memory not persisting:**
 - Check SQLite DB exists: `src/ha-bridge/data/memory.db`
 - Check fact extraction in logs (Haiku extracts facts from responses)
+
+**Follow-up questions don't work ("Yes" gets generic response):**
+- Verify `conversationId` is being passed from HA
+- Check `conversation_messages` table has entries
+- Conversation history loads last 10 messages per session
+
+**Slow responses (>30s):**
+- Check model is `claude-haiku-4-5-20251001` (not Sonnet)
+- Look for failed tool calls in logs (retries = more Claude calls)
+- Multiple tools = multiple API round-trips (architectural limit)
