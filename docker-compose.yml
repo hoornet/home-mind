@@ -15,6 +15,8 @@ services:
     volumes:
       # Use SHODH_DATA_PATH env var for existing data, or default to named volume
       - ${SHODH_DATA_PATH:-shodh_data}:/data
+      # Persist model cache to avoid re-downloading ONNX Runtime
+      - shodh_cache:/root/.cache/shodh-memory
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3030/health"]
       interval: 30s
@@ -56,6 +58,8 @@ services:
 
 volumes:
   shodh_data:
+    driver: local
+  shodh_cache:
     driver: local
 
 networks:

@@ -71,7 +71,7 @@ export class ShodhMemoryClient {
   constructor(config: ShodhConfig) {
     this.baseUrl = config.baseUrl.replace(/\/$/, ""); // Remove trailing slash
     this.apiKey = config.apiKey;
-    this.timeout = config.timeout || 10000;
+    this.timeout = config.timeout || 60000; // 60s to handle Shodh cold start
   }
 
   private async request<T>(
