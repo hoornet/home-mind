@@ -1,5 +1,5 @@
 {
-  "name": "@home-mind/ha-bridge",
+  "name": "@home-mind/server",
   "version": "0.5.0",
   "description": "Home Mind API server - AI assistant with cognitive memory for Home Assistant",
   "type": "module",

@@ -25,11 +25,11 @@ services:
     networks:
       - home-mind
 
-  # HA Bridge - API server
-  ha-bridge:
+  # Home Mind Server - API server
+  server:
     build:
-      context: ./src/ha-bridge
-    container_name: home-mind-api
+      context: ./src/home-mind-server
+    container_name: home-mind-server
     restart: unless-stopped
     ports:
       - "${PORT:-3100}:3100"

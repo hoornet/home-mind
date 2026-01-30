@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Quick Status
 
-**Version:** See `src/ha-bridge/package.json` for current version (currently 0.5.0)
+**Version:** See `src/home-mind-server/package.json` for current version (currently 0.5.0)
 
 ## Architecture
 
@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │              ↓                          │
 │  src/ha-integration/ (Custom Component) │
 │              ↓                          │
-│  src/ha-bridge/ (Express API)           │
+│  src/home-mind-server/ (Express API)           │
 │              ↓                          │
 │  Shodh Memory (Cognitive Memory)        │
 │              ↓                          │
@@ -22,11 +22,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 └─────────────────────────────────────────┘
 ```
 
-**Single path architecture** - All interactions go through ha-bridge with Shodh as the only memory backend.
+**Single path architecture** - All interactions go through home-mind-server with Shodh as the only memory backend.
 
 ## Development Commands
 
-Run from `src/ha-bridge/`:
+Run from `src/home-mind-server/`:
 
 ```bash
 npm install          # Install dependencies
@@ -42,7 +42,7 @@ npm run test:coverage # Run tests with coverage report
 
 **Local Development:**
 ```bash
-cd src/ha-bridge
+cd src/home-mind-server
 cp .env.example .env  # Create and edit with your credentials
 npm install
 npm run dev           # Starts server at localhost:3100 with hot reload
@@ -57,7 +57,7 @@ npm run dev           # Starts server at localhost:3100 with hot reload
 
 ## Source Structure
 
-### src/ha-bridge/src/
+### src/home-mind-server/src/
 Home Mind API server. Express + Claude SDK + Shodh Memory.
 
 - `index.ts` - Express server entry point
@@ -75,7 +75,7 @@ Home Mind API server. Express + Claude SDK + Shodh Memory.
 ### src/ha-integration/custom_components/home_mind/
 HA custom component that registers as a conversation agent.
 
-- `conversation.py` - Main agent: receives Assist requests → calls HA Bridge API → returns response
+- `conversation.py` - Main agent: receives Assist requests → calls Home Mind Server API → returns response
 - `config_flow.py` - UI configuration flow
 - `const.py` - Constants (120s timeout for Claude tool calls)
 
@@ -84,7 +84,7 @@ Deprecated code preserved for reference. See `archive/README.md`.
 
 ## Environment Variables
 
-**HA Bridge** (`src/ha-bridge/.env` or root `.env` for Docker):
+**Home Mind Server** (`src/home-mind-server/.env` or root `.env` for Docker):
 - `ANTHROPIC_API_KEY` (required) - Anthropic API key
 - `HA_URL` (required) - Home Assistant URL
 - `HA_TOKEN` (required) - Long-lived access token
@@ -141,9 +141,9 @@ export SHODH_API_KEY=$(openssl rand -hex 32)
 SHODH_DEV_API_KEY=$SHODH_API_KEY SHODH_HOST=0.0.0.0 ./shodh-memory-server
 ```
 
-**Start HA Bridge:**
+**Start Home Mind Server:**
 ```bash
-cd src/ha-bridge
+cd src/home-mind-server
 npm install && npm run build
 node dist/index.js
 ```
@@ -164,8 +164,8 @@ ssh haos12 "ha core restart"
 ### View Logs
 
 ```bash
-docker compose logs -f ha-bridge   # HA Bridge logs
-docker compose logs -f shodh       # Shodh logs
+docker compose logs -f server   # Home Mind Server logs
+docker compose logs -f shodh    # Shodh logs
 ```
 
 ### Test API
@@ -184,13 +184,13 @@ curl -X POST http://localhost:3100/api/chat \
 
 3. **Streaming responses** - `messages.stream()` reduces time-to-first-token. Simple queries: 2-3s. Tool queries: 8-15s (multiple API round-trips).
 
-4. **Entity caching** - 10-second TTL in HA Bridge.
+4. **Entity caching** - 10-second TTL in Home Mind Server.
 
 5. **120s timeout** in HA integration - Claude with tool use can take 60s+.
 
 6. **Smart fact replacement** - New facts supersede conflicting old ones.
 
-7. **Single architecture** (v0.5.0) - Removed LibreChat/MCP integration and SQLite fallback. One path: HA Assist → ha-bridge → Shodh.
+7. **Single architecture** (v0.5.0) - Removed LibreChat/MCP integration and SQLite fallback. One path: HA Assist → home-mind-server → Shodh.
 
 ## Known Limitations
 
@@ -200,22 +200,22 @@ curl -X POST http://localhost:3100/api/chat \
 
 ## Common Debugging
 
-**HA Bridge not responding:**
+**Home Mind Server not responding:**
 1. Check health: `curl http://localhost:3100/api/health`
 2. Check env vars are set (ANTHROPIC_API_KEY, HA_URL, HA_TOKEN, SHODH_URL, SHODH_API_KEY)
 3. Check Shodh is running: `curl http://localhost:3030/health`
 
 **"Shodh Memory is not available" error:**
-- Ensure Shodh is running before starting ha-bridge
+- Ensure Shodh is running before starting home-mind-server
 - Check SHODH_URL is correct (use `http://shodh:3030` in Docker, `http://localhost:3030` locally)
 
 **Claude returns generic responses (no HA data):**
 - Verify HA_URL and HA_TOKEN in .env
-- Check HA Bridge logs for tool call errors
+- Check Home Mind Server logs for tool call errors
 
 **Memory not persisting:**
 - Check Shodh health: `curl http://localhost:3030/health`
-- Check fact extraction in ha-bridge logs
+- Check fact extraction in home-mind-server logs
 
 **Follow-up questions don't work:**
 - Verify `conversationId` is being passed from HA

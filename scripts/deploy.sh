@@ -1,6 +1,6 @@
 #!/bin/bash
 # Home Mind Deployment Script
-# Deploys ha-bridge and shodh using Docker Compose
+# Deploys home-mind-server and shodh using Docker Compose
 
 set -e
 

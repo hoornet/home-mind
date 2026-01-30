@@ -58,7 +58,7 @@ app.use("/api", createRouter(llm, memory, "shodh"));
 // Root endpoint
 app.get("/", (_req, res) => {
   res.json({
-    name: "Home Mind API",
+    name: "Home Mind Server",
     version: "0.5.0",
     description: "Home Assistant AI with cognitive memory for voice integration",
     memoryBackend: "shodh",
@@ -75,7 +75,7 @@ app.get("/", (_req, res) => {
 app.listen(config.port, () => {
   console.log(`
 ┌─────────────────────────────────────────┐
-│        Home Mind API Started            │
+│      Home Mind Server Started           │
 ├─────────────────────────────────────────┤
 │  Port: ${config.port.toString().padEnd(33)}│
 │  Memory: Shodh (cognitive)              │

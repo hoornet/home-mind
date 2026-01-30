@@ -64,7 +64,7 @@ See [docs/MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) for more examples.
 │              ↓                          │
 │  HA Custom Component                    │
 │              ↓                          │
-│  Home Mind API (ha-bridge)              │
+│  Home Mind API (home-mind-server)              │
 │              ↓                          │
 │  Shodh Memory (Cognitive Memory)        │
 │              ↓                          │
