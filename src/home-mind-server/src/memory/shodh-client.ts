@@ -77,31 +77,53 @@ export class ShodhMemoryClient {
   private async request<T>(
     endpoint: string,
     method: "GET" | "POST" | "DELETE" = "GET",
-    body?: unknown
+    body?: unknown,
+    retries: number = 3
   ): Promise<T> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    let lastError: Error | null = null;
 
-    try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": this.apiKey,
-        },
-        body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal,
-      });
+    for (let attempt = 0; attempt < retries; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`Shodh API error ${response.status}: ${text}`);
+      try {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": this.apiKey,
+          },
+          body: body ? JSON.stringify(body) : undefined,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`Shodh API error ${response.status}: ${text}`);
+        }
+
+        return (await response.json()) as T;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        lastError = err as Error;
+
+        // Don't retry on abort (timeout) or non-retryable errors
+        if (err instanceof DOMException && err.name === "AbortError") {
+          throw err;
+        }
+
+        // Retry on fetch failures (connection issues)
+        if (attempt < retries - 1) {
+          const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
       }
-
-      return (await response.json()) as T;
-    } finally {
-      clearTimeout(timeoutId);
     }
+
+    throw lastError || new Error("Shodh request failed after retries");
   }
 
   /**
