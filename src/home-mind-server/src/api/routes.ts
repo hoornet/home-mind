@@ -26,7 +26,8 @@ const AddFactSchema = z.object({
 export function createRouter(
   llm: LLMClient,
   memory: IMemoryStore,
-  memoryBackend: "sqlite" | "shodh" = "sqlite"
+  memoryBackend: "sqlite" | "shodh" = "sqlite",
+  version: string = "0.0.0"
 ): Router {
   const router = Router();
 
@@ -194,7 +195,7 @@ export function createRouter(
     res.json({
       status: "ok",
       timestamp: new Date().toISOString(),
-      version: "0.5.0",
+      version,
       memoryBackend,
     });
   });

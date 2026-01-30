@@ -24,14 +24,19 @@
 ## Phase 2: Fresh Install Test
 
 ### 2.1 Simulate new user experience
-- [ ] Fresh VM or clean environment
-- [ ] Follow README instructions exactly
-- [ ] Document any friction points
-- [ ] Note missing prerequisites
-- [ ] Time the installation process
+- [x] Fresh VM or clean environment (Ubuntu Server 24.04 VM via KVM)
+- [x] Follow README instructions exactly
+- [x] Document any friction points
+- [x] Note missing prerequisites
+- [x] Time the installation process (~6 minutes after Docker installed)
+
+**Friction points found:**
+1. ~~GitHub repo is private~~ - Need to make public before launch
+2. ~~Docker install instructions missing~~ - Fixed in README
+3. ~~Version hardcoded as 0.5.0~~ - Fixed to read from package.json
 
 ### 2.2 Documentation polish
-- [ ] Update README based on fresh install findings
+- [x] Update README based on fresh install findings
 - [ ] Add troubleshooting section
 - [ ] Create video walkthrough (optional)
 - [ ] Verify HACS installation works
@@ -71,4 +76,4 @@ User installs HA component → Enters API key → Done
 
 ---
 
-**Current Status:** Phase 1 COMPLETE - Ready for Phase 2 (fresh install test) or documentation cleanup
+**Current Status:** Phase 2.1 COMPLETE - Fresh install tested (~6 min), docs updated. Need to make GitHub repo public before launch.

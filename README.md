@@ -76,10 +76,9 @@ See [docs/MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) for more examples.
 
 ### Prerequisites
 
-- Docker & Docker Compose
-- Home Assistant with API access
-- Anthropic API key
-- Shodh Memory binary (see [docker/shodh/README.md](docker/shodh/README.md))
+- **Docker & Docker Compose** - [Install Docker](https://docs.docker.com/engine/install/) or run `curl -fsSL https://get.docker.com | sh`
+- **Home Assistant** with a [long-lived access token](https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token)
+- **Anthropic API key** from [console.anthropic.com](https://console.anthropic.com/)
 
 ### 1. Clone and Configure
 
@@ -100,8 +99,10 @@ SHODH_API_KEY=$(openssl rand -hex 32)
 ### 2. Deploy with Docker Compose
 
 ```bash
-# Place Shodh binary
-cp ~/shodh-memory-server docker/shodh/
+# Download Shodh Memory binary (latest release)
+cd docker/shodh
+curl -sL https://github.com/varun29ankuS/shodh-memory/releases/latest/download/shodh-memory-linux-x64.tar.gz | tar -xz
+cd ../..
 
 # Deploy
 ./scripts/deploy.sh
@@ -137,7 +138,7 @@ cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 
 ## Project Status
 
-**Current Version:** v0.5.0
+**Current Version:** v0.6.0
 
 - [x] Voice control via HA Assist
 - [x] Cognitive memory with Shodh

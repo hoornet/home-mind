@@ -1,6 +1,11 @@
 import "dotenv/config";
 import express from "express";
+import { createRequire } from "module";
 import { loadConfig } from "./config.js";
+
+// Read version from package.json
+const require = createRequire(import.meta.url);
+const { version } = require("../package.json");
 import { ShodhMemoryStore } from "./memory/shodh-client.js";
 import { FactExtractor } from "./memory/extractor.js";
 import { HomeAssistantClient } from "./ha/client.js";
@@ -53,13 +58,13 @@ app.use((req, res, next) => {
 });
 
 // Mount API routes
-app.use("/api", createRouter(llm, memory, "shodh"));
+app.use("/api", createRouter(llm, memory, "shodh", version));
 
 // Root endpoint
 app.get("/", (_req, res) => {
   res.json({
     name: "Home Mind Server",
-    version: "0.5.0",
+    version,
     description: "Home Assistant AI with cognitive memory for voice integration",
     memoryBackend: "shodh",
     endpoints: {
