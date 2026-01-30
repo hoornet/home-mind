@@ -3,12 +3,12 @@
 ## Phase 1: Cleanup & Testing (Current)
 
 ### 1.1 Update ubuntuserver
-- [ ] Stop old ha-bridge container
-- [ ] Remove old ~/home-mind/ directory
-- [ ] Clone fresh repo
-- [ ] Set up docker-compose (shodh + server)
-- [ ] Migrate existing Shodh data
-- [ ] Verify API works
+- [x] Stop old ha-bridge container
+- [x] Remove old ~/home-mind/ directory
+- [x] Clone fresh repo (via scp)
+- [x] Set up docker-compose (shodh + server)
+- [x] Migrate existing Shodh data
+- [x] Verify API works
 
 ### 1.2 Update Home Assistant
 - [ ] Check if custom component needs updates
@@ -71,4 +71,4 @@ User installs HA component → Enters API key → Done
 
 ---
 
-**Current Status:** Phase 1.1 - ubuntuserver cleanup
+**Current Status:** Phase 1.2 - Home Assistant component check

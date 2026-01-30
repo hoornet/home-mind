@@ -1,6 +1,7 @@
 # Shodh Memory Server
 # Runs the pre-compiled Shodh binary
-FROM debian:bookworm-slim
+# Note: Ubuntu 24.04 needed for GLIBC 2.39 (Shodh binary requires 2.38+)
+FROM ubuntu:24.04
 
 WORKDIR /app
 

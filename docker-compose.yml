@@ -1,8 +1,6 @@
 # Home Mind - Docker Compose
 # AI assistant for Home Assistant with cognitive memory
 
-version: '3.8'
-
 services:
   # Shodh Memory - Cognitive memory backend
   shodh:
@@ -15,7 +13,8 @@ services:
       - SHODH_PORT=3030
       - SHODH_DEV_API_KEY=${SHODH_API_KEY}
     volumes:
-      - shodh_data:/data
+      # Use SHODH_DATA_PATH env var for existing data, or default to named volume
+      - ${SHODH_DATA_PATH:-shodh_data}:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3030/health"]
       interval: 30s
