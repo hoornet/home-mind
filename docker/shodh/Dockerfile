@@ -11,12 +11,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the pre-compiled binary (must be provided during build)
+# Copy the pre-compiled binary and ONNX runtime (must be provided during build)
 COPY shodh-memory-server /app/shodh-memory-server
-RUN chmod +x /app/shodh-memory-server
+COPY libonnxruntime.so /usr/lib/libonnxruntime.so
+RUN chmod +x /app/shodh-memory-server && ldconfig
 
-# Create data directory
-RUN mkdir -p /data
+# Create data directory and symlink (Shodh uses /app/shodh_memory_data by default)
+RUN mkdir -p /data && ln -s /data /app/shodh_memory_data
 
 # Expose port
 EXPOSE 3030

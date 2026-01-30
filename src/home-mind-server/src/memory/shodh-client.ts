@@ -92,6 +92,7 @@ export class ShodhMemoryClient {
           headers: {
             "Content-Type": "application/json",
             "X-API-Key": this.apiKey,
+            "Connection": "keep-alive",
           },
           body: body ? JSON.stringify(body) : undefined,
           signal: controller.signal,
@@ -109,14 +110,15 @@ export class ShodhMemoryClient {
         clearTimeout(timeoutId);
         lastError = err as Error;
 
-        // Don't retry on abort (timeout) or non-retryable errors
+        // Don't retry on abort (timeout)
         if (err instanceof DOMException && err.name === "AbortError") {
           throw err;
         }
 
-        // Retry on fetch failures (connection issues)
+        // Retry on all fetch failures (connection issues, socket errors, DNS)
         if (attempt < retries - 1) {
-          const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+          const delay = Math.min(500 * Math.pow(2, attempt), 3000);
+          console.log(`Shodh request failed (attempt ${attempt + 1}/${retries}), retrying in ${delay}ms...`);
           await new Promise((resolve) => setTimeout(resolve, delay));
           continue;
         }
