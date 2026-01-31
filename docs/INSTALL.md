@@ -43,24 +43,31 @@ cd ../..
 
 ```bash
 cp .env.example .env
-```
-
-Edit `.env` with your values:
-```bash
 nano .env
 ```
 
-Required settings:
-```
-ANTHROPIC_API_KEY=sk-ant-api03-...your-key...
-HA_URL=http://192.168.x.x:8123
-HA_TOKEN=your-long-lived-access-token
-SHODH_API_KEY=generate-a-random-string
+Fill in these **required** settings:
+
+| Variable | Description | How to get it |
+|----------|-------------|---------------|
+| `ANTHROPIC_API_KEY` | Your Claude API key | [console.anthropic.com](https://console.anthropic.com/) → API Keys → Create Key |
+| `HA_URL` | Your Home Assistant URL | Usually `http://192.168.x.x:8123` or `http://homeassistant.local:8123` |
+| `HA_TOKEN` | Long-lived access token | In HA: Profile (bottom left) → Long-Lived Access Tokens → Create Token |
+| `SHODH_API_KEY` | Random string for Shodh auth | Generate with: `openssl rand -hex 32` |
+
+Example `.env`:
+```bash
+ANTHROPIC_API_KEY=sk-ant-api03-xxxxx
+HA_URL=http://192.168.1.100:8123
+HA_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SHODH_API_KEY=a1b2c3d4e5f6...
 ```
 
-To generate a random API key:
+**Optional settings** (defaults are fine for most users):
 ```bash
-openssl rand -hex 32
+PORT=3100                    # API port (default: 3100)
+HA_SKIP_TLS_VERIFY=true      # Set to true if HA uses self-signed HTTPS cert
+MEMORY_TOKEN_LIMIT=1500      # Max memory context tokens (default: 1500)
 ```
 
 ### Step 4: Deploy
