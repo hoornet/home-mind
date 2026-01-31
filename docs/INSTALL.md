@@ -57,7 +57,7 @@ Fill in these **required** settings:
 | Variable | Description | How to get it |
 |----------|-------------|---------------|
 | `ANTHROPIC_API_KEY` | Your Claude API key | [console.anthropic.com](https://console.anthropic.com/) → API Keys → Create Key |
-| `HA_URL` | Your Home Assistant URL | Usually `http://192.168.x.x:8123` or `http://homeassistant.local:8123` |
+| `HA_URL` | Your Home Assistant URL | Usually `http://192.168.x.x:8123`. Use `https://` if HA requires SSL. |
 | `HA_TOKEN` | Long-lived access token | In HA: Profile (bottom left) → Long-Lived Access Tokens → Create Token |
 | `SHODH_API_KEY` | Random string for Shodh auth | Generate with: `openssl rand -hex 32` |
 
@@ -72,7 +72,7 @@ SHODH_API_KEY=a1b2c3d4e5f6...
 **Optional settings** (defaults are fine for most users):
 ```bash
 PORT=3100                    # API port (default: 3100)
-HA_SKIP_TLS_VERIFY=true      # Set to true if HA uses self-signed HTTPS cert
+HA_SKIP_TLS_VERIFY=true      # Set to true if HA uses HTTPS (required for self-signed certs)
 MEMORY_TOKEN_LIMIT=1500      # Max memory context tokens (default: 1500)
 ```
 
