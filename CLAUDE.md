@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Quick Status
 
-**Version:** See `src/home-mind-server/package.json` for current version (currently 0.5.0)
+**Version:** See `src/home-mind-server/package.json` for current version (currently 0.6.0)
 
 ## Architecture
 
@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │              ↓                          │
 │  src/ha-integration/ (Custom Component) │
 │              ↓                          │
-│  src/home-mind-server/ (Express API)           │
+│  src/home-mind-server/ (Express API)    │
 │              ↓                          │
 │  Shodh Memory (Cognitive Memory)        │
 │              ↓                          │
@@ -38,6 +38,12 @@ npm start            # Run compiled dist/index.js
 npm test             # Run tests (vitest)
 npm run test:watch   # Run tests in watch mode
 npm run test:coverage # Run tests with coverage report
+
+# Run a single test file
+npm test -- src/memory/shodh-client.test.ts
+
+# Run a specific test by name
+npm test -- -t "can check health"
 ```
 
 **Local Development:**
@@ -93,6 +99,10 @@ Deprecated code preserved for reference. See `archive/README.md`.
 - `PORT` - Server port (default: 3100)
 - `HA_SKIP_TLS_VERIFY` - Set `true` for self-signed certs
 - `MEMORY_TOKEN_LIMIT` - Max tokens for memory context (default: 1500)
+
+**Integration Tests** (optional, for running against real Shodh):
+- `SHODH_TEST_URL` - Shodh URL for integration tests
+- `SHODH_TEST_API_KEY` - Shodh API key for integration tests
 
 ## Code Patterns
 
