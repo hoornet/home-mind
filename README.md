@@ -152,6 +152,12 @@ cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 - [CLAUDE.md](CLAUDE.md) - Development guide
 - [docs/MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) - Memory system examples
 
+## Contact
+
+- **Issues & Feature Requests**: [GitHub Issues](https://github.com/hoornet/home-mind/issues)
+- **Author**: Jure Sršen ([@hoornet](https://github.com/hoornet))
+- **Email**: 44338+hoornet@users.noreply.github.com
+
 ## License
 
 GNU Affero General Public License v3.0 - see [LICENSE](LICENSE) for details.
