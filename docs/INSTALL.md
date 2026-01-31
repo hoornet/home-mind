@@ -116,7 +116,9 @@ Should return: `{"status":"ok",...}`
 1. Go to Settings → Devices & Services
 2. Click "+ Add Integration"
 3. Search for "Home Mind"
-4. Enter your server URL: `http://YOUR_SERVER_IP:3100`
+4. Fill in the fields:
+   - **API URL**: `http://YOUR_SERVER_IP:3100` (e.g., `http://192.168.1.100:3100`)
+   - **User ID**: Leave as `default` or enter a custom identifier
 5. Click Submit
 
 ---
