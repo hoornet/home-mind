@@ -118,7 +118,7 @@ Should return: `{"status":"ok",...}`
 3. Search for "Home Mind"
 4. Fill in the fields:
    - **API URL**: `http://YOUR_SERVER_IP:3100` (e.g., `http://192.168.1.100:3100`)
-   - **User ID**: Leave as `default` or enter a custom identifier
+   - **User ID**: Identifier for memory storage. Leave as `default` for single-user setups. Use different IDs (e.g., "jure", "partner") if you want separate memories per person.
 5. Click Submit
 
 ---
