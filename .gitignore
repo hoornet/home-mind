@@ -275,6 +275,9 @@ cython_debug/
 # Project specific
 # ===================
 
+# Claude Code local settings
+.claude/
+
 # Docker volumes
 data/
 

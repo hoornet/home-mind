@@ -33,5 +33,11 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "author": "hoornet",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hoornet/home-mind.git"
   }
 }
