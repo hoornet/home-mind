@@ -35,15 +35,21 @@ cd home-mind
 
 ```bash
 cd docker/shodh
-curl -sL https://github.com/varun29ankuS/shodh-memory/releases/latest/download/shodh-memory-linux-x64.tar.gz | tar -xz
+curl -L https://github.com/varun29ankuS/shodh-memory/releases/latest/download/shodh-memory-linux-x64.tar.gz | tar -xzv
 cd ../..
 ```
+
+Verify you see 4 files extracted (including `libonnxruntime.so` and `shodh-memory-server`). If not, check your internet connection and try again.
 
 ### Step 3: Configure environment
 
 ```bash
 cp .env.example .env
-nano .env
+```
+
+Edit `.env` with your preferred editor (`nano`, `vi`, or `vim`):
+```bash
+nano .env    # or: vi .env
 ```
 
 Fill in these **required** settings:
