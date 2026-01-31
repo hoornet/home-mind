@@ -128,7 +128,8 @@ Should return: `{"status":"ok",...}`
 1. Go to Settings → Voice assistants
 2. Click your voice assistant (or create one)
 3. Under "Conversation agent", select "Home Mind"
-4. Save
+4. Turn **OFF** "Prefer handling commands locally" (otherwise HA will bypass Home Mind)
+5. Save
 
 ---
 
