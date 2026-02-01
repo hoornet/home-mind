@@ -152,6 +152,12 @@ cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 - [CLAUDE.md](CLAUDE.md) - Development guide
 - [docs/MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) - Memory system examples
 
+## Support the Project
+
+If Home Mind is useful to you, consider supporting its development:
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b?logo=ko-fi)](https://ko-fi.com/hoornet)
+
 ## Contact
 
 - **Issues & Feature Requests**: [GitHub Issues](https://github.com/hoornet/home-mind/issues)

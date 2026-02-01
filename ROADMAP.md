@@ -39,7 +39,15 @@
 - [x] Update README based on fresh install findings
 - [ ] Add troubleshooting section
 - [ ] Create video walkthrough (optional)
-- [ ] Verify HACS installation works
+- [x] Verify HACS installation works
+
+### 2.3 Project support
+- [x] Make GitHub repo public
+- [x] Ko-fi page (ko-fi.com/hoornet)
+- [ ] GitHub Sponsors
+- [x] Add funding links to repo (FUNDING.yml with Ko-fi)
+- [x] Add Support section to README
+- [x] Blog post on swapper.si
 
 ## Phase 3: SaaS / Hosted Option
 
@@ -76,4 +84,4 @@ User installs HA component → Enters API key → Done
 
 ---
 
-**Current Status:** Phase 2.1 COMPLETE - Fresh install tested (~6 min), docs updated. Need to make GitHub repo public before launch.
+**Current Status:** Phase 2.2 in progress - Repo is public, HACS verified, Ko-fi set up. Adding more funding/support options.
