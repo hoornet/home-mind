@@ -37,7 +37,7 @@
 
 ### 2.2 Documentation polish
 - [x] Update README based on fresh install findings
-- [ ] Add troubleshooting section
+- [x] Add troubleshooting section
 - [ ] Create video walkthrough (optional)
 - [x] Verify HACS installation works
 

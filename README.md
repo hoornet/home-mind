@@ -152,6 +152,60 @@ cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 - [CLAUDE.md](CLAUDE.md) - Development guide
 - [docs/MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) - Memory system examples
 
+## Troubleshooting
+
+### "Unable to connect" in Home Assistant
+
+1. Verify Home Mind server is running:
+   ```bash
+   curl http://your-server-ip:3100/api/health
+   ```
+2. Check the URL in integration config (use `http://`, not `https://`)
+3. Ensure port 3100 is accessible from Home Assistant
+
+### "Shodh Memory is not available"
+
+Shodh must be running before the Home Mind server starts:
+```bash
+docker compose logs shodh          # Check Shodh logs
+curl http://localhost:3030/health  # Test Shodh directly
+docker compose restart             # Restart both services
+```
+
+### AI doesn't know about my devices
+
+1. Verify Home Assistant connection:
+   ```bash
+   docker compose logs server | grep -i "home assistant"
+   ```
+2. Check `HA_URL` and `HA_TOKEN` in your `.env` file
+3. Ensure the token hasn't expired (create a new long-lived token if needed)
+
+### Slow responses (>30 seconds)
+
+- Queries with device control require multiple API calls (normal: 8-15s)
+- Check server logs for errors: `docker compose logs -f server`
+- Verify you're using Claude Haiku (default), not Sonnet
+
+### Memory not working
+
+1. Check Shodh is healthy: `curl http://localhost:3030/health`
+2. Look for "Extracted facts" in server logs
+3. Memory requires explicit statements like "remember that..." or corrections
+
+### Voice commands not working
+
+1. Ensure Home Mind is set as the conversation agent in HA Voice Assistants
+2. Disable "Prefer handling commands locally" in the voice assistant settings
+3. Check HA logs: Settings → System → Logs → filter for "home_mind"
+
+### View logs
+
+```bash
+docker compose logs -f server   # Home Mind server
+docker compose logs -f shodh    # Shodh Memory
+```
+
 ## Support the Project
 
 If Home Mind is useful to you, consider supporting its development:
