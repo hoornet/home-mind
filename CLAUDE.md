@@ -106,5 +106,4 @@ HA custom component installed via HACS from `https://github.com/hoornet/home-min
 
 - Single-user only (multi-user via OIDC planned)
 - Conversation history lost on server restart (in-memory only)
-- Voice response: ~2-3s simple, ~8-15s with tool calls (Claude API round-trips)
 - Fact extraction uses older Haiku 3.5 (`claude-3-5-haiku-20241022`), chat uses Haiku 4.5

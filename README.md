@@ -183,7 +183,7 @@ docker compose restart             # Restart both services
 
 ### Slow responses (>30 seconds)
 
-- Queries with device control require multiple API calls (normal: 8-15s)
+- Queries with device control require multiple API round-trips
 - Check server logs for errors: `docker compose logs -f server`
 - Verify you're using Claude Haiku (default), not Sonnet
 
