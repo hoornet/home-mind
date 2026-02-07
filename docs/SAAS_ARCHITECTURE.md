@@ -271,15 +271,11 @@ At 1000 users: $7,000-9,000/mo revenue
 1. **Self-hosted still free?**
    - Yes, keeps AGPL spirit, drives awareness
 
-2. **What about LibreChat users?**
-   - Future: MCP server could also use installation tokens
-   - Or separate pricing for web interface
-
-3. **Usage limits?**
+2. **Usage limits?**
    - BYOK: Unlimited (their key, their cost)
    - Managed: Soft limit? 1000 messages/mo included, then $0.01/msg?
 
-4. **Trial period?**
+3. **Trial period?**
    - 14-day free trial of Managed tier?
    - Or just generous free tier?
 

@@ -9,7 +9,7 @@ The memory system allows Claude to remember facts, preferences, and corrections 
 ## How Memory Works
 
 - **Automatic Learning**: Claude automatically identifies important information to remember
-- **Persistent Storage**: Information persists across chat sessions (stored in MongoDB)
+- **Persistent Storage**: Information persists across chat sessions (stored in Shodh Memory)
 - **User Transparency**: Memory updates are indicated with "Updated saved memory" notifications
 - **Cross-Session**: Facts learned in one conversation are available in future conversations
 
@@ -202,7 +202,7 @@ User: Is 25°C unusual?
 AI: 25°C is a moderate temperature.  ← No context, generic answer
 ```
 
-**LibreChat + Memory + History:**
+**Home Mind + Memory + History:**
 ```
 User: Is 25°C unusual?
 Claude: Yes, that's 4-5°C above your normal 20-21°C range!  ← Learned, contextual
@@ -233,10 +233,11 @@ No other Home Assistant AI integration can do this.
 
 ### For Developers
 
-1. **Memory Configuration**
-   - Use Haiku for memory agent (NOT Sonnet 4 - thinking mode causes errors)
-   - Set reasonable tokenLimit (2000 works well)
-   - Enable personalize: true for user control
+1. **Memory Architecture**
+   - Fact extraction uses Claude Haiku 3.5 (`claude-3-5-haiku-20241022`) — runs async after each response
+   - Facts stored in Shodh Memory with semantic search and Hebbian learning
+   - Facts retrieved via semantic similarity to the current message
+   - `MEMORY_TOKEN_LIMIT` controls how many fact tokens are included in context (default 1500)
 
 2. **Memory Works Best With**
    - Factual information (baselines, preferences, device names)
@@ -244,8 +245,8 @@ No other Home Assistant AI integration can do this.
    - Repeated patterns and routines
 
 3. **Memory Limitations**
-   - Limited by tokenLimit (default 2000 tokens)
-   - Older memories may be forgotten as new ones are added
+   - Limited by `MEMORY_TOKEN_LIMIT` (default 1500 tokens)
+   - Shodh applies natural decay — infrequently accessed facts fade over time
    - Complex logic may not persist perfectly
 
 ## Testing Memory
@@ -259,39 +260,29 @@ To test if memory is working:
 
 ## Memory Configuration
 
-Current configuration in `librechat.yaml`:
+Configuration is via environment variables (see `.env.example`):
 
-```yaml
-memory:
-  disabled: false
-  tokenLimit: 2000
-  charLimit: 10000
-  personalize: true
-  messageWindowSize: 5
-  agent:
-    provider: "anthropic"
-    model: "claude-3-5-haiku-20241022"  # MUST use Haiku, not Sonnet 4
-```
+- `SHODH_URL` — Shodh Memory service URL
+- `SHODH_API_KEY` — API key for Shodh
+- `MEMORY_TOKEN_LIMIT` — Max tokens of facts to include in context (default 1500)
 
-**Important:** Using Sonnet 4 causes "temperature is not supported when thinking is enabled" errors.
+Fact categories: `baseline`, `preference`, `identity`, `device`, `pattern`, `correction`
 
 ## Troubleshooting
 
 ### Memory Not Working?
 
-1. **Check LibreChat logs:**
+1. **Check server logs:**
    ```bash
-   docker logs LibreChat 2>&1 | grep -i memory
+   docker logs home-mind-server 2>&1 | grep -i memory
    ```
 
-2. **Verify configuration:**
-   - Is `memory.disabled: false`?
-   - Is memory agent model available?
-   - Is tokenLimit reasonable?
+2. **Verify Shodh is running:**
+   - `GET /api/health` should show Shodh as connected
+   - Check `SHODH_URL` and `SHODH_API_KEY` in `.env`
 
-3. **Check memory agent errors:**
-   - Look for temperature/thinking errors (means wrong model)
-   - Look for API key issues
+3. **Check stored facts:**
+   - `GET /api/memory/:userId` to list all facts for a user
 
 ### Memory Inconsistent?
 
@@ -300,15 +291,14 @@ memory:
    - Ask Claude to confirm: "Did you remember that?"
 
 2. **May be hitting token limits:**
-   - Increase tokenLimit if needed
-   - Check if old memories are being forgotten
+   - Increase `MEMORY_TOKEN_LIMIT` if needed
+   - Check if Shodh's natural decay is dropping older facts
 
 ## Known Limitations
 
-1. **Token Budget**: Limited by tokenLimit (default 2000 tokens)
-2. **Model Requirement**: Must use Haiku, not Sonnet 4
-3. **Scope**: Memory is per-user (not shared across users)
-4. **Persistence**: Stored in MongoDB (requires backup)
+1. **Token Budget**: Limited by `MEMORY_TOKEN_LIMIT` (default 1500 tokens)
+2. **Scope**: Memory is per-user (not shared across users)
+3. **Persistence**: Stored in Shodh Memory (runs as Docker service alongside server)
 
 ## Success Metrics
 
@@ -330,5 +320,5 @@ memory:
 
 ---
 
-**Last Updated:** January 16, 2026
+**Last Updated:** February 7, 2026
 **Status:** Memory + History features validated and beta-ready
