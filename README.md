@@ -111,7 +111,7 @@ cd ../..
 ### 3. Install HA Custom Component
 
 **HACS (Recommended):**
-1. Add `https://github.com/hoornet/home-mind-hacs` as custom repository in HACS
+1. Add `https://github.com/hoornet/home-mind-hacs` as custom repository in HACS (select **Integration** as the type)
 2. Install "Home Mind"
 3. Restart Home Assistant
 
