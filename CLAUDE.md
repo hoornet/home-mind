@@ -22,7 +22,7 @@ HA Assist (Voice/Text) → HA Custom Component (Python) → Home Mind Server (Ex
 ### Two Claude Calls Per Request
 
 - **Chat model**: `claude-haiku-4-5-20251001` in `llm/client.ts` - handles conversation + HA tool calls
-- **Extraction model**: `claude-3-5-haiku-20241022` in `memory/extractor.ts` - extracts facts from conversation (async, non-blocking)
+- **Extraction model**: `claude-haiku-4-5-20251001` in `memory/extractor.ts` - extracts facts from conversation (async, non-blocking)
 
 ### Memory Architecture
 
@@ -106,4 +106,4 @@ HA custom component installed via HACS from `https://github.com/hoornet/home-min
 
 - Single-user only (multi-user via OIDC planned)
 - Conversation history lost on server restart (in-memory only)
-- Fact extraction uses older Haiku 3.5 (`claude-3-5-haiku-20241022`), chat uses Haiku 4.5
+- Both chat and extraction use Haiku 4.5 (`claude-haiku-4-5-20251001`)

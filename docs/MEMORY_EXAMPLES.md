@@ -234,7 +234,7 @@ No other Home Assistant AI integration can do this.
 ### For Developers
 
 1. **Memory Architecture**
-   - Fact extraction uses Claude Haiku 3.5 (`claude-3-5-haiku-20241022`) — runs async after each response
+   - Fact extraction uses Claude Haiku 4.5 (`claude-haiku-4-5-20251001`) — runs async after each response
    - Facts stored in Shodh Memory with semantic search and Hebbian learning
    - Facts retrieved via semantic similarity to the current message
    - `MEMORY_TOKEN_LIMIT` controls how many fact tokens are included in context (default 1500)
