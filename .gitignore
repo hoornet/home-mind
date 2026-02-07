@@ -286,5 +286,6 @@ secrets/
 *.pem
 *.key
 
-# Drafts
+# Drafts and publicity
 drafts/
+publicity/
