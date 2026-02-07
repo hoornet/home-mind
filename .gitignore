@@ -285,3 +285,6 @@ data/
 secrets/
 *.pem
 *.key
+
+# Drafts
+drafts/
