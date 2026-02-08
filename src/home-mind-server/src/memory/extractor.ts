@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { ExtractedFact, Fact } from "./types.js";
+import type { IFactExtractor } from "../llm/interface.js";
 
 const EXTRACTION_PROMPT = `You are a memory extraction assistant for a smart home AI. Analyze this conversation and extract facts worth remembering about the user and their home.
 
@@ -37,11 +38,13 @@ Important:
 - Common replacements: temperature preferences, sensor baselines, routines, device names
 - Return valid JSON only, no explanation`;
 
-export class FactExtractor {
+export class FactExtractor implements IFactExtractor {
   private client: Anthropic;
+  private model: string;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, model: string = "claude-haiku-4-5-20251001") {
     this.client = new Anthropic({ apiKey });
+    this.model = model;
   }
 
   async extract(
@@ -72,7 +75,7 @@ ${JSON.stringify(factsJson, null, 2)}`;
         .replace("{assistant_response}", assistantResponse);
 
       const response = await this.client.messages.create({
-        model: "claude-haiku-4-5-20251001",
+        model: this.model,
         max_tokens: 500,
         messages: [{ role: "user", content: prompt }],
       });

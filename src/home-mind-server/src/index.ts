@@ -34,14 +34,14 @@ if (!healthy) {
 }
 console.log("  ✓ Memory store: Shodh Memory (cognitive, semantic search)");
 
-const extractor = new FactExtractor(config.anthropicApiKey);
-console.log("  Fact extractor: Claude Haiku");
+const extractor = new FactExtractor(config.anthropicApiKey, config.llmModel);
+console.log(`  Fact extractor: ${config.llmProvider}/${config.llmModel}`);
 
 const ha = new HomeAssistantClient(config);
 console.log(`  Home Assistant: ${config.haUrl}`);
 
 const llm = new LLMClient(config, memory, extractor, ha);
-console.log("  LLM client: Claude Haiku 4.5");
+console.log(`  LLM client: ${config.llmProvider}/${config.llmModel}`);
 
 // Create Express app
 const app = express();
@@ -83,6 +83,7 @@ app.listen(config.port, () => {
 │      Home Mind Server Started           │
 ├─────────────────────────────────────────┤
 │  Port: ${config.port.toString().padEnd(33)}│
+│  LLM: ${(config.llmProvider + "/" + config.llmModel).substring(0, 32).padEnd(32)}│
 │  Memory: Shodh (cognitive)              │
 │  HA URL: ${config.haUrl.substring(0, 30).padEnd(30)}│
 │  Log Level: ${config.logLevel.padEnd(27)}│

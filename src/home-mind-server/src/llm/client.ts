@@ -1,38 +1,30 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Config } from "../config.js";
 import type { IMemoryStore } from "../memory/interface.js";
-import { FactExtractor } from "../memory/extractor.js";
 import { HomeAssistantClient } from "../ha/client.js";
 import { buildSystemPrompt, type CachedSystemPrompt } from "./prompts.js";
 import { HA_TOOLS } from "./tools.js";
+import type {
+  ChatRequest,
+  ChatResponse,
+  StreamCallback,
+  IChatEngine,
+  IFactExtractor,
+} from "./interface.js";
 
-export interface ChatRequest {
-  message: string;
-  userId: string;
-  conversationId?: string;
-  isVoice?: boolean;
-}
+export type { ChatRequest, ChatResponse, StreamCallback };
 
-export interface ChatResponse {
-  response: string;
-  toolsUsed: string[];
-  factsLearned: number;
-}
-
-// Callback for streaming text chunks
-export type StreamCallback = (chunk: string) => void;
-
-export class LLMClient {
+export class LLMClient implements IChatEngine {
   private anthropic: Anthropic;
   private memory: IMemoryStore;
-  private extractor: FactExtractor;
+  private extractor: IFactExtractor;
   private ha: HomeAssistantClient;
   private config: Config;
 
   constructor(
     config: Config,
     memory: IMemoryStore,
-    extractor: FactExtractor,
+    extractor: IFactExtractor,
     ha: HomeAssistantClient
   ) {
     this.config = config;
@@ -162,7 +154,7 @@ export class LLMClient {
     onChunk?: StreamCallback
   ): Promise<Anthropic.Message> {
     const stream = this.anthropic.messages.stream({
-      model: "claude-haiku-4-5-20251001",
+      model: this.config.llmModel,
       max_tokens: isVoice ? 500 : 2048,
       system: systemPrompt,
       tools: HA_TOOLS,

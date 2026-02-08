@@ -5,7 +5,9 @@ const ConfigSchema = z.object({
   port: z.coerce.number().default(3100),
   logLevel: z.enum(["debug", "info", "warn", "error"]).default("info"),
 
-  // Anthropic
+  // LLM
+  llmProvider: z.enum(["anthropic"]).default("anthropic"),
+  llmModel: z.string().default("claude-haiku-4-5-20251001"),
   anthropicApiKey: z.string().min(1, "ANTHROPIC_API_KEY is required"),
 
   // Home Assistant
@@ -30,6 +32,8 @@ export function loadConfig(): Config {
   const result = ConfigSchema.safeParse({
     port: process.env.PORT,
     logLevel: process.env.LOG_LEVEL,
+    llmProvider: process.env.LLM_PROVIDER,
+    llmModel: process.env.LLM_MODEL,
     anthropicApiKey: process.env.ANTHROPIC_API_KEY,
     haUrl: process.env.HA_URL,
     haToken: process.env.HA_TOKEN,

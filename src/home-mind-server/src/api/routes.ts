@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import type { LLMClient } from "../llm/client.js";
+import type { IChatEngine } from "../llm/interface.js";
 import type { IMemoryStore } from "../memory/interface.js";
 
 // Request validation schemas
@@ -24,7 +24,7 @@ const AddFactSchema = z.object({
 });
 
 export function createRouter(
-  llm: LLMClient,
+  llm: IChatEngine,
   memory: IMemoryStore,
   memoryBackend: "sqlite" | "shodh" = "sqlite",
   version: string = "0.0.0"
