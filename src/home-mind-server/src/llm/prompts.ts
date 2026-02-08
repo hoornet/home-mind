@@ -148,3 +148,35 @@ ${factsText}`;
     },
   ];
 }
+
+/**
+ * Build system prompt as a plain text string (for providers that don't support cache_control blocks).
+ */
+export function buildSystemPromptText(
+  facts: string[],
+  isVoice: boolean = false
+): string {
+  const factsText =
+    facts.length > 0 ? facts.map((f) => `- ${f}`).join("\n") : "No memories yet.";
+
+  const now = new Date();
+  const dateTimeStr = now.toLocaleString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+
+  const staticPrompt = isVoice ? STATIC_VOICE_PROMPT : STATIC_SYSTEM_PROMPT;
+
+  return `${staticPrompt}
+
+## Current Context:
+- Date/Time: ${dateTimeStr}
+
+## What You Remember About This User:
+${factsText}`;
+}

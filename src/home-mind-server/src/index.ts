@@ -7,9 +7,8 @@ import { loadConfig } from "./config.js";
 const require = createRequire(import.meta.url);
 const { version } = require("../package.json");
 import { ShodhMemoryStore } from "./memory/shodh-client.js";
-import { FactExtractor } from "./memory/extractor.js";
 import { HomeAssistantClient } from "./ha/client.js";
-import { LLMClient } from "./llm/client.js";
+import { createChatEngine, createFactExtractor } from "./llm/factory.js";
 import { createRouter } from "./api/routes.js";
 
 // Load configuration
@@ -34,13 +33,13 @@ if (!healthy) {
 }
 console.log("  ✓ Memory store: Shodh Memory (cognitive, semantic search)");
 
-const extractor = new FactExtractor(config.anthropicApiKey, config.llmModel);
+const extractor = createFactExtractor(config);
 console.log(`  Fact extractor: ${config.llmProvider}/${config.llmModel}`);
 
 const ha = new HomeAssistantClient(config);
 console.log(`  Home Assistant: ${config.haUrl}`);
 
-const llm = new LLMClient(config, memory, extractor, ha);
+const llm = createChatEngine(config, memory, extractor, ha);
 console.log(`  LLM client: ${config.llmProvider}/${config.llmModel}`);
 
 // Create Express app

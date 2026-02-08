@@ -4,6 +4,7 @@ import type { IMemoryStore } from "../memory/interface.js";
 import { HomeAssistantClient } from "../ha/client.js";
 import { buildSystemPrompt, type CachedSystemPrompt } from "./prompts.js";
 import { HA_TOOLS } from "./tools.js";
+import { handleToolCall, extractAndStoreFacts } from "./tool-handler.js";
 import type {
   ChatRequest,
   ChatResponse,
@@ -95,7 +96,8 @@ export class LLMClient implements IChatEngine {
 
       const toolPromises = toolBlocks.map(async (block) => {
         toolsUsed.push(block.name);
-        const result = await this.handleToolCall(
+        const result = await handleToolCall(
+          this.ha,
           block.name,
           block.input as Record<string, unknown>
         );
@@ -130,9 +132,13 @@ export class LLMClient implements IChatEngine {
     }
 
     // 7. Extract and store new facts (async, don't block response)
-    this.extractAndStoreFacts(userId, message, responseText).catch((err) =>
-      console.error("Fact extraction failed:", err)
-    );
+    extractAndStoreFacts(
+      this.memory,
+      this.extractor,
+      userId,
+      message,
+      responseText
+    ).catch((err) => console.error("Fact extraction failed:", err));
 
     // Count facts learned (we don't wait for extraction, so return 0 for now)
     return {
@@ -170,79 +176,5 @@ export class LLMClient implements IChatEngine {
 
     // Wait for the complete message
     return await stream.finalMessage();
-  }
-
-  private async handleToolCall(
-    toolName: string,
-    input: Record<string, unknown>
-  ): Promise<unknown> {
-    try {
-      switch (toolName) {
-        case "get_state":
-          return await this.ha.getState(input.entity_id as string);
-
-        case "get_entities":
-          return await this.ha.getEntities(input.domain as string | undefined);
-
-        case "search_entities":
-          return await this.ha.searchEntities(input.query as string);
-
-        case "call_service":
-          return await this.ha.callService(
-            input.domain as string,
-            input.service as string,
-            input.entity_id as string | undefined,
-            input.data as Record<string, unknown> | undefined
-          );
-
-        case "get_history":
-          return await this.ha.getHistory(
-            input.entity_id as string,
-            input.start_time as string | undefined,
-            input.end_time as string | undefined
-          );
-
-        default:
-          return { error: `Unknown tool: ${toolName}` };
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return { error: message };
-    }
-  }
-
-  private async extractAndStoreFacts(
-    userId: string,
-    userMessage: string,
-    assistantResponse: string
-  ): Promise<number> {
-    // Get existing facts to check for conflicts
-    const existingFacts = await this.memory.getFacts(userId);
-
-    const extractedFacts = await this.extractor.extract(
-      userMessage,
-      assistantResponse,
-      existingFacts
-    );
-
-    let storedCount = 0;
-    for (const fact of extractedFacts) {
-      // Delete any facts that this new fact replaces
-      if (fact.replaces && fact.replaces.length > 0) {
-        for (const oldFactId of fact.replaces) {
-          const deleted = await this.memory.deleteFact(oldFactId);
-          if (deleted) {
-            console.log(`Replaced old fact ${oldFactId} for ${userId}`);
-          }
-        }
-      }
-
-      // Add the new fact
-      const id = await this.memory.addFact(userId, fact.content, fact.category);
-      storedCount++;
-      console.log(`Stored new fact for ${userId}: ${fact.content}`);
-    }
-
-    return storedCount;
   }
 }

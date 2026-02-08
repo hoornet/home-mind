@@ -1,14 +1,14 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import type { ExtractedFact, Fact } from "./types.js";
 import type { IFactExtractor } from "../llm/interface.js";
 import { EXTRACTION_PROMPT, VALID_CATEGORIES } from "./extraction-prompt.js";
 
-export class FactExtractor implements IFactExtractor {
-  private client: Anthropic;
+export class OpenAIFactExtractor implements IFactExtractor {
+  private client: OpenAI;
   private model: string;
 
-  constructor(apiKey: string, model: string = "claude-haiku-4-5-20251001") {
-    this.client = new Anthropic({ apiKey });
+  constructor(apiKey: string, model: string, baseUrl?: string) {
+    this.client = new OpenAI({ apiKey, baseURL: baseUrl });
     this.model = model;
   }
 
@@ -18,7 +18,6 @@ export class FactExtractor implements IFactExtractor {
     existingFacts: Fact[] = []
   ): Promise<ExtractedFact[]> {
     try {
-      // Build existing facts section for the prompt
       let existingFactsSection = "";
       if (existingFacts.length > 0) {
         const factsJson = existingFacts.map((f) => ({
@@ -39,23 +38,20 @@ ${JSON.stringify(factsJson, null, 2)}`;
         .replace("{user_message}", userMessage)
         .replace("{assistant_response}", assistantResponse);
 
-      const response = await this.client.messages.create({
+      const response = await this.client.chat.completions.create({
         model: this.model,
         max_tokens: 500,
         messages: [{ role: "user", content: prompt }],
       });
 
-      const text =
-        response.content[0].type === "text" ? response.content[0].text : "";
+      const text = response.choices[0]?.message?.content ?? "";
 
-      // Parse JSON response
       const facts = JSON.parse(text);
 
       if (!Array.isArray(facts)) {
         return [];
       }
 
-      // Validate structure
       return facts
         .filter(
           (f: any) =>
@@ -69,7 +65,6 @@ ${JSON.stringify(factsJson, null, 2)}`;
           replaces: Array.isArray(f.replaces) ? f.replaces : [],
         }));
     } catch (error) {
-      // Log but don't fail - extraction is best-effort
       console.error("Fact extraction failed:", error);
       return [];
     }

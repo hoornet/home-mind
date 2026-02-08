@@ -39,7 +39,11 @@ services:
     environment:
       - PORT=3100
       - LOG_LEVEL=${LOG_LEVEL:-info}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
+      - LLM_MODEL=${LLM_MODEL:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
       - HA_URL=${HA_URL}
       - HA_TOKEN=${HA_TOKEN}
       - HA_SKIP_TLS_VERIFY=${HA_SKIP_TLS_VERIFY:-false}
