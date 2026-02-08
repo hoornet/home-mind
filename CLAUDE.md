@@ -5,24 +5,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Architecture
 
 ```
-HA Assist (Voice/Text) → HA Custom Component (Python) → Home Mind Server (Express/TS) → Claude API + Shodh Memory + HA REST API
+HA Assist (Voice/Text) → HA Custom Component (Python) → Home Mind Server (Express/TS) → LLM API (Anthropic or OpenAI) + Shodh Memory + HA REST API
 ```
 
-**Single path, no fallbacks.** All interactions flow through home-mind-server. Shodh Memory is the only memory backend (required, no SQLite fallback).
+**Single path, no fallbacks.** All interactions flow through home-mind-server. Shodh Memory is the only memory backend (required, no SQLite fallback). LLM provider is selected via `LLM_PROVIDER` env var (default: `anthropic`).
 
-### Request Flow (LLMClient.chat)
+### Request Flow (IChatEngine.chat)
 
 1. Load user's facts from Shodh via semantic search (query = current message)
-2. Build system prompt: static part (cached via `cache_control: ephemeral`) + dynamic part (facts + datetime)
+2. Build system prompt: static part (cached via `cache_control: ephemeral` for Anthropic, plain string for OpenAI) + dynamic part (facts + datetime)
 3. Load conversation history from in-memory Map (keyed by conversationId)
-4. Stream response via `messages.stream()` with tool loop (parallel tool execution)
-5. Fire-and-forget fact extraction (Claude Haiku 3.5 extracts facts, replaces conflicting old ones)
+4. Stream response with tool loop (parallel tool execution)
+5. Fire-and-forget fact extraction (extracts facts, replaces conflicting old ones)
 6. Return response to caller
 
-### Two Claude Calls Per Request
+### Two LLM Calls Per Request
 
-- **Chat model**: `claude-haiku-4-5-20251001` in `llm/client.ts` - handles conversation + HA tool calls
-- **Extraction model**: `claude-haiku-4-5-20251001` in `memory/extractor.ts` - extracts facts from conversation (async, non-blocking)
+- **Chat**: `IChatEngine` — handles conversation + HA tool calls. Implementations: `LLMClient` (Anthropic), `OpenAIChatEngine` (OpenAI)
+- **Extraction**: `IFactExtractor` — extracts facts from conversation (async, non-blocking). Implementations: `FactExtractor` (Anthropic), `OpenAIFactExtractor` (OpenAI)
+
+Provider is selected at startup by `llm/factory.ts` based on `LLM_PROVIDER` config.
 
 ### Memory Architecture
 
@@ -63,7 +65,7 @@ import { loadConfig } from "./config.js";
 
 **Zod validation** for all config and request schemas. Config loads from env vars via `loadConfig()` in `config.ts` — exits process on validation failure.
 
-**HA tool definitions** are raw `Anthropic.Tool[]` objects in `llm/tools.ts` (not Zod schemas). Five tools: `get_state`, `get_entities`, `search_entities`, `call_service`, `get_history`.
+**HA tool definitions** are provider-neutral `ToolDefinition[]` in `llm/tool-definitions.ts`, converted to provider format via `toAnthropicTools()` / `toOpenAITools()`. Five tools: `get_state`, `get_entities`, `search_entities`, `call_service`, `get_history`. Shared execution logic in `llm/tool-handler.ts`.
 
 **Prompt caching**: System prompt split into static (cached) + dynamic (facts/datetime) blocks in `llm/prompts.ts`. Two variants: regular and voice (shorter).
 
@@ -80,7 +82,14 @@ return ConversationResult(response=intent_response)
 
 ## Environment Variables
 
-Server requires: `ANTHROPIC_API_KEY`, `HA_URL`, `HA_TOKEN`, `SHODH_URL`, `SHODH_API_KEY`
+Server requires: `HA_URL`, `HA_TOKEN`, `SHODH_URL`, `SHODH_API_KEY`, plus the API key for the selected provider.
+
+LLM config:
+- `LLM_PROVIDER` — `anthropic` (default) or `openai`
+- `LLM_MODEL` — model ID (default: `claude-haiku-4-5-20251001`)
+- `ANTHROPIC_API_KEY` — required when `LLM_PROVIDER=anthropic`
+- `OPENAI_API_KEY` — required when `LLM_PROVIDER=openai`
+- `OPENAI_BASE_URL` — optional, for OpenAI-compatible APIs (Azure, local proxies)
 
 Optional: `PORT` (default 3100), `HA_SKIP_TLS_VERIFY`, `MEMORY_TOKEN_LIMIT` (default 1500), `LOG_LEVEL`
 
@@ -106,4 +115,4 @@ HA custom component installed via HACS from `https://github.com/hoornet/home-min
 
 - Single-user only (multi-user via OIDC planned)
 - Conversation history lost on server restart (in-memory only)
-- Both chat and extraction use Haiku 4.5 (`claude-haiku-4-5-20251001`)
+- Both chat and extraction use the same model (configured via `LLM_MODEL`)
