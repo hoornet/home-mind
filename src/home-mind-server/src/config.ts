@@ -48,14 +48,18 @@ const ConfigSchema = z
 export type Config = z.infer<typeof ConfigSchema>;
 
 export function loadConfig(): Config {
+  // Treat empty strings as undefined for optional fields
+  const emptyToUndefined = (v: string | undefined) =>
+    v === "" ? undefined : v;
+
   const result = ConfigSchema.safeParse({
     port: process.env.PORT,
-    logLevel: process.env.LOG_LEVEL,
-    llmProvider: process.env.LLM_PROVIDER,
-    llmModel: process.env.LLM_MODEL,
-    anthropicApiKey: process.env.ANTHROPIC_API_KEY,
-    openaiApiKey: process.env.OPENAI_API_KEY,
-    openaiBaseUrl: process.env.OPENAI_BASE_URL,
+    logLevel: emptyToUndefined(process.env.LOG_LEVEL),
+    llmProvider: emptyToUndefined(process.env.LLM_PROVIDER),
+    llmModel: emptyToUndefined(process.env.LLM_MODEL),
+    anthropicApiKey: emptyToUndefined(process.env.ANTHROPIC_API_KEY),
+    openaiApiKey: emptyToUndefined(process.env.OPENAI_API_KEY),
+    openaiBaseUrl: emptyToUndefined(process.env.OPENAI_BASE_URL),
     haUrl: process.env.HA_URL,
     haToken: process.env.HA_TOKEN,
     haSkipTlsVerify: process.env.HA_SKIP_TLS_VERIFY,
