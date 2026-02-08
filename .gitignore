@@ -289,3 +289,6 @@ secrets/
 # Drafts and publicity
 drafts/
 publicity/
+
+# Private / personal docs
+jure-private/

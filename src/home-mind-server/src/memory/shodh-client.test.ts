@@ -412,7 +412,7 @@ describe("ShodhMemoryStore", () => {
 });
 
 describe("Integration tests (requires running Shodh)", () => {
-  const SHODH_URL = process.env.SHODH_TEST_URL || "http://192.168.88.12:3030";
+  const SHODH_URL = process.env.SHODH_TEST_URL || "http://localhost:3030";
   const SHODH_API_KEY = process.env.SHODH_TEST_API_KEY || "";
 
   // Skip if no API key configured

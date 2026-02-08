@@ -1,7 +1,7 @@
 # Home Mind
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/Version-0.6.0-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.7.0-brightgreen.svg)]()
 [![Status](https://img.shields.io/badge/Status-Voice%20Working-success.svg)]()
 
 AI assistant for Home Assistant with cognitive memory. Adds learning capabilities, persistent memory, and voice control to your smart home.
@@ -21,6 +21,7 @@ Home Mind provides:
 - **Cognitive memory** with semantic search and natural decay (via Shodh Memory)
 - **Learning** from corrections and user preferences
 - **Voice control** via HA Assist (Wyoming protocol)
+- **Multi-LLM support** — Anthropic (Claude) or OpenAI, with more providers planned
 - **Self-hosted** and privacy-focused
 
 ## Memory in Action
@@ -68,7 +69,7 @@ See [docs/MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) for more examples.
 │              ↓                          │
 │  Shodh Memory (Cognitive Memory)        │
 │              ↓                          │
-│  Claude API + Home Assistant REST API   │
+│  LLM API (Anthropic/OpenAI) + HA REST API │
 └─────────────────────────────────────────┘
 ```
 
@@ -78,7 +79,7 @@ See [docs/MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) for more examples.
 
 - **Docker & Docker Compose** - [Install Docker](https://docs.docker.com/engine/install/) or run `curl -fsSL https://get.docker.com | sh`
 - **Home Assistant** with a [long-lived access token](https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token)
-- **Anthropic API key** from [console.anthropic.com](https://console.anthropic.com/)
+- **LLM API key** — either [Anthropic](https://console.anthropic.com/) (default) or [OpenAI](https://platform.openai.com/)
 
 ### 1. Clone and Configure
 
@@ -90,7 +91,9 @@ cp .env.example .env
 
 Edit `.env` with your credentials:
 ```bash
+# LLM provider (default: anthropic, also supports: openai)
 ANTHROPIC_API_KEY=sk-ant-api03-...
+# Or for OpenAI: LLM_PROVIDER=openai and OPENAI_API_KEY=sk-...
 HA_URL=https://your-ha-instance:8123
 HA_TOKEN=your-long-lived-access-token
 SHODH_API_KEY=$(openssl rand -hex 32)
@@ -138,12 +141,13 @@ cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 
 ## Project Status
 
-**Current Version:** v0.6.0
+**Current Version:** v0.7.0
 
 - [x] Voice control via HA Assist
 - [x] Cognitive memory with Shodh
 - [x] Streaming responses
 - [x] HACS integration
+- [x] Multi-LLM provider support (Anthropic + OpenAI)
 - [ ] Multi-user support (OIDC)
 - [ ] HA Add-on packaging
 

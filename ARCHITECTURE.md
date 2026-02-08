@@ -1,8 +1,8 @@
 # Home Mind Architecture
 
-**Version:** 0.6.0
-**Last Updated:** January 30, 2026
-**Status:** Phase 1 Complete - Voice + Text + Memory Working
+**Version:** 0.7.0
+**Last Updated:** February 8, 2026
+**Status:** Voice + Text + Memory + Multi-LLM Provider Support
 
 ---
 
@@ -25,7 +25,7 @@ Home Mind is an AI assistant for Home Assistant with cognitive memory. It provid
 │          ↓                                                       │
 │   Home Mind Server (Express API @ :3100)                        │
 │          ↓                         ↓                            │
-│   Claude Haiku 4.5          Shodh Memory (@ :3030)              │
+│   LLM API (Anthropic/OpenAI) Shodh Memory (@ :3030)             │
 │          ↓                         ↓                            │
 │   HA REST API              Cognitive Memory                     │
 │   (device control)         (semantic search, Hebbian learning)  │
@@ -48,19 +48,24 @@ The API server that processes chat requests:
 ```
 src/home-mind-server/
 ├── src/
-│   ├── index.ts           # Entry point
-│   ├── config.ts          # Zod-validated config
-│   ├── api/routes.ts      # HTTP endpoints
+│   ├── index.ts              # Entry point
+│   ├── config.ts             # Zod-validated config
+│   ├── api/routes.ts         # HTTP endpoints
 │   ├── llm/
-│   │   ├── client.ts      # Claude client with streaming
-│   │   ├── tools.ts       # HA tool definitions
-│   │   └── prompts.ts     # System prompt builder
+│   │   ├── interface.ts      # IChatEngine, IFactExtractor
+│   │   ├── factory.ts        # Provider routing (Anthropic/OpenAI)
+│   │   ├── client.ts         # Anthropic chat engine
+│   │   ├── openai-client.ts  # OpenAI chat engine
+│   │   ├── tool-definitions.ts # Provider-neutral tool schemas
+│   │   ├── tool-handler.ts   # Shared tool dispatch
+│   │   └── prompts.ts        # System prompt builder
 │   ├── memory/
-│   │   ├── shodh-client.ts  # Shodh Memory API client
-│   │   ├── extractor.ts     # Fact extraction with Haiku
-│   │   └── types.ts         # Memory types
+│   │   ├── shodh-client.ts   # Shodh Memory API client
+│   │   ├── extractor.ts      # Anthropic fact extractor
+│   │   ├── openai-extractor.ts # OpenAI fact extractor
+│   │   └── types.ts          # Memory types
 │   └── ha/
-│       └── client.ts      # HA REST API client
+│       └── client.ts         # HA REST API client
 └── Dockerfile
 ```
 
@@ -169,14 +174,6 @@ services:
       - SHODH_URL=http://shodh:3030
 ```
 
-### Infrastructure
-
-| Component | Host | Port |
-|-----------|------|------|
-| Home Assistant | haos12 | 8123 |
-| Home Mind Server | ubuntuserver | 3100 |
-| Shodh Memory | ubuntuserver | 3030 |
-
 ---
 
 ## Performance
@@ -234,9 +231,8 @@ services:
 
 - **README.md** - Quick start guide
 - **CLAUDE.md** - Development guide
-- **ROADMAP.md** - Task tracking
+- **docs/INSTALL.md** - Detailed installation guide
 - **docs/MEMORY_EXAMPLES.md** - Memory system examples
-- **docs/SAAS_ARCHITECTURE.md** - SaaS plans
 
 ---
 
@@ -248,3 +244,4 @@ services:
 | 0.3.0 | 2026-01-18 | Voice integration, SQLite memory |
 | 0.5.0 | 2026-01-29 | Shodh Memory, consolidated architecture |
 | 0.6.0 | 2026-01-30 | Shodh v0.1.75, bundled ONNX, documentation cleanup |
+| 0.7.0 | 2026-02-08 | Multi-LLM provider support (Anthropic + OpenAI) |
