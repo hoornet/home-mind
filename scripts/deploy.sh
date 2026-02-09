@@ -18,6 +18,18 @@ if [ ! -f "$PROJECT_DIR/.env" ]; then
     exit 1
 fi
 
+# Auto-generate SHODH_API_KEY if not set
+SHODH_API_KEY=$(grep "^SHODH_API_KEY=" "$PROJECT_DIR/.env" 2>/dev/null | cut -d'=' -f2-)
+if [ -z "$SHODH_API_KEY" ] || [ "$SHODH_API_KEY" = "your-shodh-api-key" ]; then
+    GENERATED_KEY=$(openssl rand -hex 32)
+    if grep -q "^SHODH_API_KEY=" "$PROJECT_DIR/.env"; then
+        sed -i "s|^SHODH_API_KEY=.*|SHODH_API_KEY=$GENERATED_KEY|" "$PROJECT_DIR/.env"
+    else
+        echo "SHODH_API_KEY=$GENERATED_KEY" >> "$PROJECT_DIR/.env"
+    fi
+    echo "Generated SHODH_API_KEY automatically"
+fi
+
 # Check for Shodh binary
 SHODH_BINARY="$PROJECT_DIR/docker/shodh/shodh-memory-server"
 if [ ! -f "$SHODH_BINARY" ]; then

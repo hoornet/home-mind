@@ -1,6 +1,6 @@
 # Home Mind Architecture
 
-**Version:** 0.7.0
+**Version:** 0.8.0
 **Last Updated:** February 8, 2026
 **Status:** Voice + Text + Memory + Multi-LLM Provider Support
 
@@ -244,4 +244,5 @@ services:
 | 0.3.0 | 2026-01-18 | Voice integration, SQLite memory |
 | 0.5.0 | 2026-01-29 | Shodh Memory, consolidated architecture |
 | 0.6.0 | 2026-01-30 | Shodh v0.1.75, bundled ONNX, documentation cleanup |
+| 0.8.0 | 2026-02-09 | Auto-generate SHODH_API_KEY, add CHANGELOG |
 | 0.7.0 | 2026-02-08 | Multi-LLM provider support (Anthropic + OpenAI) |
