@@ -32,10 +32,10 @@ describe("buildSystemPrompt (Anthropic)", () => {
     expect(blocks).toHaveLength(3);
     // Static block (cached)
     expect(blocks[0]).toHaveProperty("cache_control");
-    // Custom block (not cached)
+    // Custom block (cached — persona text is typically stable across requests)
     expect(blocks[1].text).toContain("## Custom Instructions:");
     expect(blocks[1].text).toContain("You are Ava.");
-    expect(blocks[1]).not.toHaveProperty("cache_control");
+    expect(blocks[1]).toHaveProperty("cache_control", { type: "ephemeral" });
     // Dynamic block
     expect(blocks[2].text).toContain("fact1");
   });

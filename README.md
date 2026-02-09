@@ -1,7 +1,7 @@
 # Home Mind
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/Version-0.8.0-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.9.0-brightgreen.svg)]()
 [![Status](https://img.shields.io/badge/Status-Voice%20Working-success.svg)]()
 
 AI assistant for Home Assistant with cognitive memory. Adds learning capabilities, persistent memory, and voice control to your smart home.
@@ -129,6 +129,35 @@ cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 2. Enter your Home Mind API URL (e.g., `http://192.168.1.100:3100`)
 3. Set as conversation agent in Voice Assistants
 
+## Custom Prompt
+
+You can customize the AI's personality and behavior without touching the core system prompt. The custom prompt is **additive** — it layers your instructions on top of the built-in smart home capabilities (tool usage, memory, response style). The AI still knows how to control devices, remember facts, and query sensors; your prompt shapes *how* it does those things.
+
+### Setting a Custom Prompt
+
+There are three ways, in order of precedence:
+
+**1. Per-request** (API clients):
+```bash
+curl -X POST http://localhost:3100/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message": "hello", "customPrompt": "You are Ada, a warm and witty assistant."}'
+```
+
+**2. HA Integration** (recommended for most users):
+Settings → Devices & Services → Home Mind → Configure → enter your custom prompt.
+
+**3. Server-level default** (env var):
+```bash
+CUSTOM_PROMPT="You are Ada, a warm and witty assistant who loves wordplay."
+```
+
+If a per-request prompt is provided, it overrides the server default. If neither is set, the built-in prompt is used as-is.
+
+### How It Differs from Anthropic Console / OpenAI Playground
+
+In those tools, the system prompt **is** the entire system prompt — you control everything. Here, your custom prompt is inserted as a `## Custom Instructions` section inside a larger prompt that already includes smart home tool instructions, memory guidelines, and dynamic context (time, remembered facts). You're customizing behavior, not replacing it.
+
 ## Available Tools
 
 | Tool | Description |
@@ -141,13 +170,14 @@ cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 
 ## Project Status
 
-**Current Version:** v0.8.0
+**Current Version:** v0.9.0
 
 - [x] Voice control via HA Assist
 - [x] Cognitive memory with Shodh
 - [x] Streaming responses
 - [x] HACS integration
 - [x] Multi-LLM provider support (Anthropic + OpenAI)
+- [x] Custom system prompt (AI personality customization)
 - [ ] Multi-user support (OIDC)
 - [ ] HA Add-on packaging
 

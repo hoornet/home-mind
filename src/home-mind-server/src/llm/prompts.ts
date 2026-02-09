@@ -149,6 +149,7 @@ ${factsText}`;
     blocks.push({
       type: "text" as const,
       text: `\n## Custom Instructions:\n${customPrompt}`,
+      cache_control: { type: "ephemeral" as const },
     });
   }
 
