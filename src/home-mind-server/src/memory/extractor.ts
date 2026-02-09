@@ -48,8 +48,11 @@ ${JSON.stringify(factsJson, null, 2)}`;
       const text =
         response.content[0].type === "text" ? response.content[0].text : "";
 
+      // Strip markdown code fences if present (LLMs sometimes wrap JSON in ```json ... ```)
+      const cleaned = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+
       // Parse JSON response
-      const facts = JSON.parse(text);
+      const facts = JSON.parse(cleaned);
 
       if (!Array.isArray(facts)) {
         return [];

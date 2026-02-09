@@ -46,7 +46,10 @@ ${JSON.stringify(factsJson, null, 2)}`;
 
       const text = response.choices[0]?.message?.content ?? "";
 
-      const facts = JSON.parse(text);
+      // Strip markdown code fences if present (LLMs sometimes wrap JSON in ```json ... ```)
+      const cleaned = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+
+      const facts = JSON.parse(cleaned);
 
       if (!Array.isArray(facts)) {
         return [];

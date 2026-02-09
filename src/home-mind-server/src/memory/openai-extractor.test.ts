@@ -175,6 +175,21 @@ describe("OpenAIFactExtractor", () => {
     expect(result).toEqual([]);
   });
 
+  it("strips markdown code fences from JSON response", async () => {
+    const json = JSON.stringify([
+      { content: "Daughter name is TOTO", category: "identity", replaces: [] },
+    ]);
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: "```json\n" + json + "\n```" } }],
+    });
+
+    const result = await extractor.extract("msg", "resp", []);
+
+    expect(result).toEqual([
+      { content: "Daughter name is TOTO", category: "identity", replaces: [] },
+    ]);
+  });
+
   it("returns empty array when response is invalid JSON", async () => {
     mockCreate.mockResolvedValue({
       choices: [{ message: { content: "not json at all" } }],
