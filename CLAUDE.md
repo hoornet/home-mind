@@ -56,14 +56,20 @@ npm test -- -t "can check health"
 
 Requires Shodh Memory running at SHODH_URL. For local dev: `cp .env.example .env` and fill in credentials.
 
+## Testing Patterns
+
+Vitest with `globals: true`. Tests mock constructors using `class` syntax in `vi.mock()` factories (not `vi.fn().mockImplementation()`) because the code uses `new`. Config tests use `vi.resetModules()` + dynamic `import()` to test different env var configurations.
+
+Integration tests (e.g., `shodh-client.test.ts`) only run when `SHODH_TEST_URL` and `SHODH_TEST_API_KEY` are set — otherwise `describe.skip`.
+
 ## Code Patterns
 
-**ES Modules with `.js` extensions** in TypeScript imports:
+**ES Modules with `.js` extensions** in TypeScript imports (required by `moduleResolution: "NodeNext"` in tsconfig):
 ```typescript
 import { loadConfig } from "./config.js";
 ```
 
-**Zod validation** for all config and request schemas. Config loads from env vars via `loadConfig()` in `config.ts` — exits process on validation failure.
+**Zod validation** for all config and request schemas. Config loads from env vars via `loadConfig()` in `config.ts` — exits process on validation failure. Uses `emptyToUndefined()` helper because Docker Compose sets empty strings (not `undefined`) for unset env vars.
 
 **HA tool definitions** are provider-neutral `ToolDefinition[]` in `llm/tool-definitions.ts`, converted to provider format via `toAnthropicTools()` / `toOpenAITools()`. Five tools: `get_state`, `get_entities`, `search_entities`, `call_service`, `get_history`. Shared execution logic in `llm/tool-handler.ts`.
 
@@ -73,12 +79,30 @@ import { loadConfig } from "./config.js";
 
 **Self-signed TLS**: HA client uses undici Agent with `rejectUnauthorized: false` when `HA_SKIP_TLS_VERIFY=true`.
 
-**HA conversation agent** (Python) uses `intent.IntentResponse` (not `conversation.IntentResponse`):
+**Token estimation**: Uses `content.length / 4` as rough token count (4 chars ≈ 1 token) for fact budget limiting.
+
+**JSON from LLMs**: Both fact extractors strip markdown code fences (`` ```json ... ``` ``) before `JSON.parse()` — LLMs sometimes wrap JSON responses.
+
+**Startup sequence**: Server checks Shodh health (`memory.isHealthy()`) and exits with `process.exit(1)` if unhealthy, before Express starts listening. Graceful shutdown handles SIGTERM/SIGINT and calls `memory.close()`.
+
+**SSE streaming**: `/api/chat/stream` sends `event: chunk` for text, `event: done` with full response, `event: error` on failure. Calls `res.flushHeaders()` immediately. Both `/api/chat` and `/api/chat/stream` use the same `llm.chat()` internally — non-streaming just omits the `onChunk` callback.
+
+### HA Integration Gotchas (Python)
+
+**HA conversation agent** uses `intent.IntentResponse` (not `conversation.IntentResponse`):
 ```python
 intent_response = intent.IntentResponse(language=user_input.language)
 intent_response.async_set_speech(response)
 return ConversationResult(response=intent_response)
 ```
+
+**OptionsFlow has no `__init__`** — passing `config_entry` to the superclass constructor breaks in newer HA versions (fixed in v0.9.1).
+
+**Voice detection**: Detected via `user_input.agent_id is not None` (not HA metadata), sets `isVoice=true` on server request.
+
+**Conversation IDs**: Uses `ulid.ulid_now()` (not UUID).
+
+**120-second timeout**: `DEFAULT_TIMEOUT = 120` for API calls because tool-using LLM responses can take 60+ seconds.
 
 ## Environment Variables
 
@@ -107,7 +131,9 @@ Integration tests: `SHODH_TEST_URL`, `SHODH_TEST_API_KEY`
 
 ## Deployment
 
-Docker Compose runs two services: `shodh` (memory backend, port 3030) and `server` (API, port 3100). Server depends on Shodh healthcheck. Shodh binary must be placed in `docker/shodh/` before build.
+Docker Compose (root `docker-compose.yml`) runs two services: `shodh` (memory backend, port 3030) and `server` (API, port 3100). Server depends on Shodh healthcheck.
+
+**Shodh Docker**: Uses Ubuntu 24.04 (not Alpine) because the pre-compiled binary requires GLIBC 2.38+. Both `shodh-memory-server` binary and `libonnxruntime.so` must be in `docker/shodh/` before build. `deploy.sh` auto-generates `SHODH_API_KEY` via `openssl rand -hex 32` if not set.
 
 HA custom component installed via HACS from `https://github.com/hoornet/home-mind-hacs` or manually copied to `/config/custom_components/home_mind/`.
 
