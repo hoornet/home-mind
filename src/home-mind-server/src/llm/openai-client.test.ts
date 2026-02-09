@@ -395,6 +395,42 @@ describe("OpenAIChatEngine", () => {
     expect(result.response).toBe("data");
   });
 
+  it("includes customPrompt in system message when provided", async () => {
+    mockCreate.mockResolvedValue(
+      makeStream([
+        { choices: [{ delta: { content: "Hey!" }, finish_reason: null }] },
+        { choices: [{ delta: {}, finish_reason: "stop" }] },
+      ])
+    );
+
+    await engine.chat({
+      message: "Hi",
+      userId: "user-1",
+      customPrompt: "You are Ava, a sarcastic AI.",
+    });
+
+    const createCall = mockCreate.mock.calls[0][0];
+    const systemMsg = createCall.messages[0];
+    expect(systemMsg.role).toBe("system");
+    expect(systemMsg.content).toContain("## Custom Instructions:");
+    expect(systemMsg.content).toContain("You are Ava, a sarcastic AI.");
+  });
+
+  it("does not include custom instructions section when customPrompt absent", async () => {
+    mockCreate.mockResolvedValue(
+      makeStream([
+        { choices: [{ delta: { content: "Hi" }, finish_reason: null }] },
+        { choices: [{ delta: {}, finish_reason: "stop" }] },
+      ])
+    );
+
+    await engine.chat({ message: "Hi", userId: "user-1" });
+
+    const createCall = mockCreate.mock.calls[0][0];
+    const systemMsg = createCall.messages[0];
+    expect(systemMsg.content).not.toContain("## Custom Instructions:");
+  });
+
   it("returns factsLearned as 0", async () => {
     mockCreate.mockResolvedValue(
       makeStream([

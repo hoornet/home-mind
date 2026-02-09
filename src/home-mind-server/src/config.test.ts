@@ -27,6 +27,7 @@ describe("loadConfig", () => {
     delete process.env.SHODH_URL;
     delete process.env.SHODH_API_KEY;
     delete process.env.MEMORY_TOKEN_LIMIT;
+    delete process.env.CUSTOM_PROMPT;
 
     vi.resetModules();
   });
@@ -181,5 +182,31 @@ describe("loadConfig", () => {
     const config = await loadConfigFresh();
 
     expect(config.openaiBaseUrl).toBe("https://my-proxy.example.com/v1");
+  });
+
+  it("picks up CUSTOM_PROMPT from env var", async () => {
+    Object.assign(process.env, BASE_ENV);
+    process.env.CUSTOM_PROMPT = "You are Ava, a sarcastic AI.";
+
+    const config = await loadConfigFresh();
+
+    expect(config.customPrompt).toBe("You are Ava, a sarcastic AI.");
+  });
+
+  it("treats empty CUSTOM_PROMPT as undefined", async () => {
+    Object.assign(process.env, BASE_ENV);
+    process.env.CUSTOM_PROMPT = "";
+
+    const config = await loadConfigFresh();
+
+    expect(config.customPrompt).toBeUndefined();
+  });
+
+  it("leaves customPrompt undefined when not set", async () => {
+    Object.assign(process.env, BASE_ENV);
+
+    const config = await loadConfigFresh();
+
+    expect(config.customPrompt).toBeUndefined();
   });
 });

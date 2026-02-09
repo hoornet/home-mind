@@ -27,6 +27,9 @@ const ConfigSchema = z
 
     // Memory settings
     memoryTokenLimit: z.coerce.number().default(1500),
+
+    // Custom prompt
+    customPrompt: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.llmProvider === "anthropic" && !data.anthropicApiKey) {
@@ -66,6 +69,7 @@ export function loadConfig(): Config {
     shodhUrl: process.env.SHODH_URL,
     shodhApiKey: process.env.SHODH_API_KEY,
     memoryTokenLimit: process.env.MEMORY_TOKEN_LIMIT,
+    customPrompt: emptyToUndefined(process.env.CUSTOM_PROMPT),
   });
 
   if (!result.success) {

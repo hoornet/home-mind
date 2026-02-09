@@ -2,6 +2,15 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.9.0] - 2026-02-09
+
+### Added
+- **Custom system prompt** — customize AI personality and behavior
+  - Server-level default via `CUSTOM_PROMPT` env var
+  - Per-request override via `customPrompt` field in chat API payload
+  - HA integration options flow for configuring custom prompt in the UI
+  - Request-level prompt takes precedence over server-level default
+
 ## [0.8.0] - 2026-02-09
 
 ### Added

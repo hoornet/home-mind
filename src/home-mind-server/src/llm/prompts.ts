@@ -108,7 +108,8 @@ export type CachedSystemPrompt = Anthropic.MessageCreateParams["system"];
  */
 export function buildSystemPrompt(
   facts: string[],
-  isVoice: boolean = false
+  isVoice: boolean = false,
+  customPrompt?: string
 ): CachedSystemPrompt {
   const factsText =
     facts.length > 0 ? facts.map((f) => `- ${f}`).join("\n") : "No memories yet.";
@@ -135,18 +136,28 @@ export function buildSystemPrompt(
 ## What You Remember About This User:
 ${factsText}`;
 
-  // Return as array with cache_control on the static part
-  return [
+  // Build content blocks: static (cached) + optional custom prompt + dynamic
+  const blocks: Anthropic.TextBlockParam[] = [
     {
       type: "text" as const,
       text: staticPrompt,
       cache_control: { type: "ephemeral" as const },
     },
-    {
-      type: "text" as const,
-      text: dynamicContent,
-    },
   ];
+
+  if (customPrompt) {
+    blocks.push({
+      type: "text" as const,
+      text: `\n## Custom Instructions:\n${customPrompt}`,
+    });
+  }
+
+  blocks.push({
+    type: "text" as const,
+    text: dynamicContent,
+  });
+
+  return blocks;
 }
 
 /**
@@ -154,7 +165,8 @@ ${factsText}`;
  */
 export function buildSystemPromptText(
   facts: string[],
-  isVoice: boolean = false
+  isVoice: boolean = false,
+  customPrompt?: string
 ): string {
   const factsText =
     facts.length > 0 ? facts.map((f) => `- ${f}`).join("\n") : "No memories yet.";
@@ -172,7 +184,11 @@ export function buildSystemPromptText(
 
   const staticPrompt = isVoice ? STATIC_VOICE_PROMPT : STATIC_SYSTEM_PROMPT;
 
-  return `${staticPrompt}
+  const customSection = customPrompt
+    ? `\n\n## Custom Instructions:\n${customPrompt}`
+    : "";
+
+  return `${staticPrompt}${customSection}
 
 ## Current Context:
 - Date/Time: ${dateTimeStr}

@@ -9,6 +9,7 @@ const ChatRequestSchema = z.object({
   userId: z.string().default("default"),
   conversationId: z.string().optional(),
   isVoice: z.boolean().default(false),
+  customPrompt: z.string().optional(),
 });
 
 const AddFactSchema = z.object({
@@ -27,7 +28,8 @@ export function createRouter(
   llm: IChatEngine,
   memory: IMemoryStore,
   memoryBackend: "sqlite" | "shodh" = "sqlite",
-  version: string = "0.0.0"
+  version: string = "0.0.0",
+  defaultCustomPrompt?: string
 ): Router {
   const router = Router();
 
@@ -47,7 +49,10 @@ export function createRouter(
       }
 
       // Use streaming internally (no callback = just faster processing)
-      const response = await llm.chat(parsed.data);
+      const response = await llm.chat({
+        ...parsed.data,
+        customPrompt: parsed.data.customPrompt ?? defaultCustomPrompt,
+      });
       res.json(response);
     } catch (error) {
       console.error("Chat error:", error);
@@ -78,7 +83,10 @@ export function createRouter(
       res.flushHeaders();
 
       // Stream chunks to client
-      const response = await llm.chat(parsed.data, (chunk: string) => {
+      const response = await llm.chat({
+        ...parsed.data,
+        customPrompt: parsed.data.customPrompt ?? defaultCustomPrompt,
+      }, (chunk: string) => {
         res.write(`event: chunk\ndata: ${JSON.stringify({ text: chunk })}\n\n`);
       });
 

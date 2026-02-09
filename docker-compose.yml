@@ -50,6 +50,7 @@ services:
       - SHODH_URL=http://shodh:3030
       - SHODH_API_KEY=${SHODH_API_KEY}
       - MEMORY_TOKEN_LIMIT=${MEMORY_TOKEN_LIMIT:-1500}
+      - CUSTOM_PROMPT=${CUSTOM_PROMPT:-}
     depends_on:
       shodh:
         condition: service_healthy

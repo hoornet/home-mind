@@ -3,6 +3,7 @@
 DOMAIN = "home_mind"
 CONF_API_URL = "api_url"
 CONF_USER_ID = "user_id"
+CONF_CUSTOM_PROMPT = "custom_prompt"
 
 DEFAULT_API_URL = "http://localhost:3100"
 DEFAULT_USER_ID = "default"

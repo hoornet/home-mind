@@ -57,7 +57,7 @@ app.use((req, res, next) => {
 });
 
 // Mount API routes
-app.use("/api", createRouter(llm, memory, "shodh", version));
+app.use("/api", createRouter(llm, memory, "shodh", version, config.customPrompt));
 
 // Root endpoint
 app.get("/", (_req, res) => {

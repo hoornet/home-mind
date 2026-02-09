@@ -43,7 +43,7 @@ export class LLMClient implements IChatEngine {
     request: ChatRequest,
     onChunk?: StreamCallback
   ): Promise<ChatResponse> {
-    const { message, userId, conversationId, isVoice = false } = request;
+    const { message, userId, conversationId, isVoice = false, customPrompt } = request;
     const toolsUsed: string[] = [];
 
     // 1. Load user's memory (pass current message as context for Shodh's proactive retrieval)
@@ -55,7 +55,7 @@ export class LLMClient implements IChatEngine {
     const factContents = facts.map((f) => f.content);
 
     // 2. Build system prompt with memory
-    const systemPrompt = buildSystemPrompt(factContents, isVoice);
+    const systemPrompt = buildSystemPrompt(factContents, isVoice, customPrompt);
 
     // 3. Load conversation history if we have a conversationId
     const messages: Anthropic.MessageParam[] = [];

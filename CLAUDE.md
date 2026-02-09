@@ -91,14 +91,14 @@ LLM config:
 - `OPENAI_API_KEY` — required when `LLM_PROVIDER=openai`
 - `OPENAI_BASE_URL` — optional, for OpenAI-compatible APIs (Azure, local proxies)
 
-Optional: `PORT` (default 3100), `HA_SKIP_TLS_VERIFY`, `MEMORY_TOKEN_LIMIT` (default 1500), `LOG_LEVEL`
+Optional: `PORT` (default 3100), `HA_SKIP_TLS_VERIFY`, `MEMORY_TOKEN_LIMIT` (default 1500), `LOG_LEVEL`, `CUSTOM_PROMPT` (server-level default custom system prompt)
 
 Integration tests: `SHODH_TEST_URL`, `SHODH_TEST_API_KEY`
 
 ## API Endpoints
 
-- `POST /api/chat` — Full response (uses streaming internally)
-- `POST /api/chat/stream` — SSE streaming (`event: chunk` then `event: done`)
+- `POST /api/chat` — Full response (uses streaming internally). Body: `{ message, userId?, conversationId?, isVoice?, customPrompt? }`
+- `POST /api/chat/stream` — SSE streaming (`event: chunk` then `event: done`). Same body as `/api/chat`
 - `GET /api/health` — Health check
 - `GET /api/memory/:userId` — List user's facts
 - `POST /api/memory/:userId/facts` — Add fact manually

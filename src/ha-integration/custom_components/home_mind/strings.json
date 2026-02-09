@@ -18,6 +18,20 @@
       "already_configured": "Home Mind is already configured."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Home Mind Options",
+        "description": "Configure optional settings for Home Mind.",
+        "data": {
+          "custom_prompt": "Custom system prompt"
+        },
+        "data_description": {
+          "custom_prompt": "Custom instructions for the AI personality and behavior. Leave empty to use the default."
+        }
+      }
+    }
+  },
   "entity": {
     "conversation": {
       "home_mind": {

@@ -44,7 +44,7 @@ export class OpenAIChatEngine implements IChatEngine {
     request: ChatRequest,
     onChunk?: StreamCallback
   ): Promise<ChatResponse> {
-    const { message, userId, conversationId, isVoice = false } = request;
+    const { message, userId, conversationId, isVoice = false, customPrompt } = request;
     const toolsUsed: string[] = [];
 
     // 1. Load user's memory
@@ -56,7 +56,7 @@ export class OpenAIChatEngine implements IChatEngine {
     const factContents = facts.map((f) => f.content);
 
     // 2. Build system prompt as plain text
-    const systemPrompt = buildSystemPromptText(factContents, isVoice);
+    const systemPrompt = buildSystemPromptText(factContents, isVoice, customPrompt);
 
     // 3. Load conversation history
     const messages: OpenAI.ChatCompletionMessageParam[] = [

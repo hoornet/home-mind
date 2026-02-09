@@ -13,6 +13,7 @@ export interface ChatRequest {
   userId: string;
   conversationId?: string;
   isVoice?: boolean;
+  customPrompt?: string;
 }
 
 export interface ChatResponse {

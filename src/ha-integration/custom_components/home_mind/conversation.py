@@ -24,6 +24,7 @@ from .const import (
     DOMAIN,
     CONF_API_URL,
     CONF_USER_ID,
+    CONF_CUSTOM_PROMPT,
     DEFAULT_USER_ID,
     DEFAULT_TIMEOUT,
     API_CHAT_ENDPOINT,
@@ -55,6 +56,7 @@ class HomeMindConversationAgent(ConversationEntity):
         self.entry = entry
         self._api_url = entry.data[CONF_API_URL].rstrip("/")
         self._default_user_id = entry.data.get(CONF_USER_ID, DEFAULT_USER_ID)
+        self._custom_prompt = entry.options.get(CONF_CUSTOM_PROMPT)
         self._session = async_get_clientsession(hass)
 
         self._attr_unique_id = entry.entry_id
@@ -135,6 +137,9 @@ class HomeMindConversationAgent(ConversationEntity):
             "conversationId": conversation_id,
             "isVoice": is_voice,
         }
+
+        if self._custom_prompt:
+            payload["customPrompt"] = self._custom_prompt
 
         _LOGGER.debug("Calling Home Mind API: %s with payload: %s", url, payload)
 
