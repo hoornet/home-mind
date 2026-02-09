@@ -16,6 +16,17 @@ export function createChatEngine(
   switch (config.llmProvider) {
     case "openai":
       return new OpenAIChatEngine(config, memory, extractor, ha);
+    case "ollama":
+      return new OpenAIChatEngine(
+        {
+          ...config,
+          openaiApiKey: "ollama",
+          openaiBaseUrl: config.ollamaBaseUrl ?? "http://localhost:11434/v1",
+        },
+        memory,
+        extractor,
+        ha
+      );
     case "anthropic":
       return new LLMClient(config, memory, extractor, ha);
   }
@@ -28,6 +39,12 @@ export function createFactExtractor(config: Config): IFactExtractor {
         config.openaiApiKey!,
         config.llmModel,
         config.openaiBaseUrl
+      );
+    case "ollama":
+      return new OpenAIFactExtractor(
+        "ollama",
+        config.llmModel,
+        config.ollamaBaseUrl ?? "http://localhost:11434/v1"
       );
     case "anthropic":
       return new FactExtractor(config.anthropicApiKey!, config.llmModel);

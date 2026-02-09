@@ -88,6 +88,44 @@ describe("createChatEngine", () => {
       mockHa
     );
   });
+
+  it("returns OpenAIChatEngine for ollama provider with default base URL", () => {
+    const config = { llmProvider: "ollama", llmModel: "llama3.1" } as Config;
+
+    const engine = createChatEngine(config, mockMemory, mockExtractor, mockHa);
+
+    expect(engine).toBeInstanceOf(OpenAIChatEngine);
+    expect(OpenAIChatEngineSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        openaiApiKey: "ollama",
+        openaiBaseUrl: "http://localhost:11434/v1",
+      }),
+      mockMemory,
+      mockExtractor,
+      mockHa
+    );
+  });
+
+  it("returns OpenAIChatEngine for ollama provider with custom base URL", () => {
+    const config = {
+      llmProvider: "ollama",
+      llmModel: "llama3.1",
+      ollamaBaseUrl: "http://192.168.1.50:11434/v1",
+    } as Config;
+
+    const engine = createChatEngine(config, mockMemory, mockExtractor, mockHa);
+
+    expect(engine).toBeInstanceOf(OpenAIChatEngine);
+    expect(OpenAIChatEngineSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        openaiApiKey: "ollama",
+        openaiBaseUrl: "http://192.168.1.50:11434/v1",
+      }),
+      mockMemory,
+      mockExtractor,
+      mockHa
+    );
+  });
 });
 
 describe("createFactExtractor", () => {
@@ -147,6 +185,39 @@ describe("createFactExtractor", () => {
       "oai-key",
       "gpt-4o-mini",
       undefined
+    );
+  });
+
+  it("returns OpenAIFactExtractor for ollama provider with default base URL", () => {
+    const config = {
+      llmProvider: "ollama",
+      llmModel: "llama3.1",
+    } as Config;
+
+    const extractor = createFactExtractor(config);
+
+    expect(extractor).toBeInstanceOf(OpenAIFactExtractor);
+    expect(OpenAIFactExtractorSpy).toHaveBeenCalledWith(
+      "ollama",
+      "llama3.1",
+      "http://localhost:11434/v1"
+    );
+  });
+
+  it("returns OpenAIFactExtractor for ollama provider with custom base URL", () => {
+    const config = {
+      llmProvider: "ollama",
+      llmModel: "llama3.1",
+      ollamaBaseUrl: "http://192.168.1.50:11434/v1",
+    } as Config;
+
+    const extractor = createFactExtractor(config);
+
+    expect(extractor).toBeInstanceOf(OpenAIFactExtractor);
+    expect(OpenAIFactExtractorSpy).toHaveBeenCalledWith(
+      "ollama",
+      "llama3.1",
+      "http://192.168.1.50:11434/v1"
     );
   });
 });

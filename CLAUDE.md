@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Architecture
 
 ```
-HA Assist (Voice/Text) → HA Custom Component (Python) → Home Mind Server (Express/TS) → LLM API (Anthropic or OpenAI) + Shodh Memory + HA REST API
+HA Assist (Voice/Text) → HA Custom Component (Python) → Home Mind Server (Express/TS) → LLM API (Anthropic/OpenAI/Ollama) + Shodh Memory + HA REST API
 ```
 
 **Single path, no fallbacks.** All interactions flow through home-mind-server. Shodh Memory is the only memory backend (required, no SQLite fallback). LLM provider is selected via `LLM_PROVIDER` env var (default: `anthropic`).
@@ -21,8 +21,8 @@ HA Assist (Voice/Text) → HA Custom Component (Python) → Home Mind Server (Ex
 
 ### Two LLM Calls Per Request
 
-- **Chat**: `IChatEngine` — handles conversation + HA tool calls. Implementations: `LLMClient` (Anthropic), `OpenAIChatEngine` (OpenAI)
-- **Extraction**: `IFactExtractor` — extracts facts from conversation (async, non-blocking). Implementations: `FactExtractor` (Anthropic), `OpenAIFactExtractor` (OpenAI)
+- **Chat**: `IChatEngine` — handles conversation + HA tool calls. Implementations: `LLMClient` (Anthropic), `OpenAIChatEngine` (OpenAI/Ollama)
+- **Extraction**: `IFactExtractor` — extracts facts from conversation (async, non-blocking). Implementations: `FactExtractor` (Anthropic), `OpenAIFactExtractor` (OpenAI/Ollama)
 
 Provider is selected at startup by `llm/factory.ts` based on `LLM_PROVIDER` config.
 
@@ -106,14 +106,15 @@ return ConversationResult(response=intent_response)
 
 ## Environment Variables
 
-Server requires: `HA_URL`, `HA_TOKEN`, `SHODH_URL`, `SHODH_API_KEY`, plus the API key for the selected provider.
+Server requires: `HA_URL`, `HA_TOKEN`, `SHODH_URL`, `SHODH_API_KEY`, plus the API key for the selected provider (not needed for Ollama).
 
 LLM config:
-- `LLM_PROVIDER` — `anthropic` (default) or `openai`
-- `LLM_MODEL` — model ID (default: `claude-haiku-4-5-20251001`)
+- `LLM_PROVIDER` — `anthropic` (default), `openai`, or `ollama`
+- `LLM_MODEL` — model ID (default: `claude-haiku-4-5-20251001`; must be set explicitly for Ollama)
 - `ANTHROPIC_API_KEY` — required when `LLM_PROVIDER=anthropic`
 - `OPENAI_API_KEY` — required when `LLM_PROVIDER=openai`
 - `OPENAI_BASE_URL` — optional, for OpenAI-compatible APIs (Azure, local proxies)
+- `OLLAMA_BASE_URL` — optional, Ollama API endpoint (default: `http://localhost:11434/v1`)
 
 Optional: `PORT` (default 3100), `HA_SKIP_TLS_VERIFY`, `MEMORY_TOKEN_LIMIT` (default 1500), `LOG_LEVEL`, `CUSTOM_PROMPT` (server-level default custom system prompt)
 

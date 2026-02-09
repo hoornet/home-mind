@@ -7,11 +7,14 @@ const ConfigSchema = z
     logLevel: z.enum(["debug", "info", "warn", "error"]).default("info"),
 
     // LLM
-    llmProvider: z.enum(["anthropic", "openai"]).default("anthropic"),
+    llmProvider: z.enum(["anthropic", "openai", "ollama"]).default("anthropic"),
     llmModel: z.string().default("claude-haiku-4-5-20251001"),
     anthropicApiKey: z.string().optional(),
     openaiApiKey: z.string().optional(),
     openaiBaseUrl: z.string().url().optional(),
+
+    // Ollama
+    ollamaBaseUrl: z.string().url().optional(),
 
     // Home Assistant
     haUrl: z.string().url("HA_URL must be a valid URL"),
@@ -63,6 +66,7 @@ export function loadConfig(): Config {
     anthropicApiKey: emptyToUndefined(process.env.ANTHROPIC_API_KEY),
     openaiApiKey: emptyToUndefined(process.env.OPENAI_API_KEY),
     openaiBaseUrl: emptyToUndefined(process.env.OPENAI_BASE_URL),
+    ollamaBaseUrl: emptyToUndefined(process.env.OLLAMA_BASE_URL),
     haUrl: process.env.HA_URL,
     haToken: process.env.HA_TOKEN,
     haSkipTlsVerify: process.env.HA_SKIP_TLS_VERIFY,

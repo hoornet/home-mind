@@ -21,6 +21,7 @@ describe("loadConfig", () => {
     delete process.env.ANTHROPIC_API_KEY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.OPENAI_BASE_URL;
+    delete process.env.OLLAMA_BASE_URL;
     delete process.env.HA_URL;
     delete process.env.HA_TOKEN;
     delete process.env.HA_SKIP_TLS_VERIFY;
@@ -208,5 +209,41 @@ describe("loadConfig", () => {
     const config = await loadConfigFresh();
 
     expect(config.customPrompt).toBeUndefined();
+  });
+
+  it("accepts ollama provider without any API key", async () => {
+    Object.assign(process.env, BASE_ENV);
+    delete process.env.ANTHROPIC_API_KEY;
+    process.env.LLM_PROVIDER = "ollama";
+    process.env.LLM_MODEL = "llama3.1";
+
+    const config = await loadConfigFresh();
+
+    expect(config.llmProvider).toBe("ollama");
+    expect(config.llmModel).toBe("llama3.1");
+  });
+
+  it("accepts OLLAMA_BASE_URL when valid", async () => {
+    Object.assign(process.env, BASE_ENV);
+    delete process.env.ANTHROPIC_API_KEY;
+    process.env.LLM_PROVIDER = "ollama";
+    process.env.LLM_MODEL = "llama3.1";
+    process.env.OLLAMA_BASE_URL = "http://192.168.1.50:11434/v1";
+
+    const config = await loadConfigFresh();
+
+    expect(config.ollamaBaseUrl).toBe("http://192.168.1.50:11434/v1");
+  });
+
+  it("treats empty OLLAMA_BASE_URL as undefined", async () => {
+    Object.assign(process.env, BASE_ENV);
+    delete process.env.ANTHROPIC_API_KEY;
+    process.env.LLM_PROVIDER = "ollama";
+    process.env.LLM_MODEL = "llama3.1";
+    process.env.OLLAMA_BASE_URL = "";
+
+    const config = await loadConfigFresh();
+
+    expect(config.ollamaBaseUrl).toBeUndefined();
   });
 });
