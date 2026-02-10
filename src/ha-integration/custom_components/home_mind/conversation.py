@@ -56,7 +56,6 @@ class HomeMindConversationAgent(ConversationEntity):
         self.entry = entry
         self._api_url = entry.data[CONF_API_URL].rstrip("/")
         self._default_user_id = entry.data.get(CONF_USER_ID, DEFAULT_USER_ID)
-        self._custom_prompt = entry.options.get(CONF_CUSTOM_PROMPT)
         self._session = async_get_clientsession(hass)
 
         self._attr_unique_id = entry.entry_id
@@ -138,8 +137,9 @@ class HomeMindConversationAgent(ConversationEntity):
             "isVoice": is_voice,
         }
 
-        if self._custom_prompt:
-            payload["customPrompt"] = self._custom_prompt
+        custom_prompt = self.entry.options.get(CONF_CUSTOM_PROMPT)
+        if custom_prompt:
+            payload["customPrompt"] = custom_prompt
 
         _LOGGER.debug("Calling Home Mind API: %s with payload: %s", url, payload)
 
@@ -153,4 +153,4 @@ class HomeMindConversationAgent(ConversationEntity):
                 raise Exception(f"API error {response.status}: {error_text}")
 
             data = await response.json()
-            return data.get("response", "I received your request but got no response.")
+            return data.get("response") or "I received your request but got no response."
