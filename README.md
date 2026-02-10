@@ -131,7 +131,7 @@ cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 
 ## Custom Prompt
 
-You can customize the AI's personality and behavior without touching the core system prompt. The custom prompt is **additive** — it layers your instructions on top of the built-in smart home capabilities (tool usage, memory, response style). The AI still knows how to control devices, remember facts, and query sensors; your prompt shapes *how* it does those things.
+You can customize the AI's personality and behavior without touching the core system prompt. Your custom prompt **replaces the default identity** — it becomes the opening of the system prompt, giving it maximum authority over persona and tone. The built-in smart home capabilities (tool usage, memory, response style) are appended after your prompt. The AI still knows how to control devices, remember facts, and query sensors; your prompt shapes *who* it is and *how* it communicates.
 
 ### Setting a Custom Prompt
 
@@ -154,9 +154,15 @@ CUSTOM_PROMPT="You are Ada, a warm and witty assistant who loves wordplay."
 
 If a per-request prompt is provided, it overrides the server default. If neither is set, the built-in prompt is used as-is.
 
+### Tips for Effective Custom Prompts
+
+- **Lead with identity**: Start with "You are [name], ..." — this becomes the very first thing the AI reads
+- **Keep personality rules concise**: Shorter, punchier persona instructions work better than long rulebooks, especially on smaller models (Haiku, gpt-4o-mini)
+- **Separate concerns**: Put personality in the custom prompt; let the built-in prompt handle tool usage and memory
+
 ### How It Differs from Anthropic Console / OpenAI Playground
 
-In those tools, the system prompt **is** the entire system prompt — you control everything. Here, your custom prompt is inserted as a `## Custom Instructions` section inside a larger prompt that already includes smart home tool instructions, memory guidelines, and dynamic context (time, remembered facts). You're customizing behavior, not replacing it.
+In those tools, the system prompt **is** the entire system prompt — you control everything. Here, your custom prompt replaces the default identity line at the top of a larger prompt that also includes smart home tool instructions, memory guidelines, and dynamic context (time, remembered facts). You're defining the persona, not replacing the whole system.
 
 ## Available Tools
 
