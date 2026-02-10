@@ -1,7 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-// Static part of system prompt - this gets cached
-export const STATIC_SYSTEM_PROMPT = `You are a helpful smart home assistant with persistent memory. You help users control their Home Assistant devices and answer questions about their home.
+// Default identity when no custom prompt is provided
+const DEFAULT_IDENTITY = `You are a helpful smart home assistant with persistent memory. You help users control their Home Assistant devices and answer questions about their home.`;
+
+const DEFAULT_VOICE_IDENTITY = `You are a helpful smart home voice assistant with persistent memory. Keep responses brief but smart.`;
+
+// Tool/memory instructions shared across all personas
+const SYSTEM_INSTRUCTIONS = `
 
 ## WHEN TO USE TOOLS vs ANSWER DIRECTLY
 
@@ -62,7 +67,7 @@ When the user says "remember...", "save this...", "don't forget...", or teaches 
 - For factual queries: Give the data first, then context
 - For anomalies: Alert clearly with suggested actions`;
 
-export const STATIC_VOICE_PROMPT = `You are a helpful smart home voice assistant with persistent memory. Keep responses brief but smart.
+const VOICE_INSTRUCTIONS = `
 
 ## WHEN TO USE TOOLS vs ANSWER DIRECTLY
 
@@ -126,7 +131,13 @@ export function buildSystemPrompt(
     timeZoneName: "short",
   });
 
-  const staticPrompt = isVoice ? STATIC_VOICE_PROMPT : STATIC_SYSTEM_PROMPT;
+  const identity = customPrompt
+    ? customPrompt
+    : isVoice
+      ? DEFAULT_VOICE_IDENTITY
+      : DEFAULT_IDENTITY;
+
+  const instructions = isVoice ? VOICE_INSTRUCTIONS : SYSTEM_INSTRUCTIONS;
 
   // Dynamic content that changes per request
   const dynamicContent = `
@@ -136,27 +147,18 @@ export function buildSystemPrompt(
 ## What You Remember About This User:
 ${factsText}`;
 
-  // Build content blocks: static (cached) + optional custom prompt + dynamic
+  // Build content blocks: identity + instructions (cached) + dynamic
   const blocks: Anthropic.TextBlockParam[] = [
     {
       type: "text" as const,
-      text: staticPrompt,
+      text: identity + instructions,
       cache_control: { type: "ephemeral" as const },
     },
-  ];
-
-  if (customPrompt) {
-    blocks.push({
+    {
       type: "text" as const,
-      text: `\n## Custom Instructions:\n${customPrompt}`,
-      cache_control: { type: "ephemeral" as const },
-    });
-  }
-
-  blocks.push({
-    type: "text" as const,
-    text: dynamicContent,
-  });
+      text: dynamicContent,
+    },
+  ];
 
   return blocks;
 }
@@ -183,13 +185,15 @@ export function buildSystemPromptText(
     timeZoneName: "short",
   });
 
-  const staticPrompt = isVoice ? STATIC_VOICE_PROMPT : STATIC_SYSTEM_PROMPT;
+  const identity = customPrompt
+    ? customPrompt
+    : isVoice
+      ? DEFAULT_VOICE_IDENTITY
+      : DEFAULT_IDENTITY;
 
-  const customSection = customPrompt
-    ? `\n\n## Custom Instructions:\n${customPrompt}`
-    : "";
+  const instructions = isVoice ? VOICE_INSTRUCTIONS : SYSTEM_INSTRUCTIONS;
 
-  return `${staticPrompt}${customSection}
+  return `${identity}${instructions}
 
 ## Current Context:
 - Date/Time: ${dateTimeStr}

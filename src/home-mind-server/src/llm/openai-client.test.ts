@@ -412,11 +412,11 @@ describe("OpenAIChatEngine", () => {
     const createCall = mockCreate.mock.calls[0][0];
     const systemMsg = createCall.messages[0];
     expect(systemMsg.role).toBe("system");
-    expect(systemMsg.content).toContain("## Custom Instructions:");
-    expect(systemMsg.content).toContain("You are Ava, a sarcastic AI.");
+    expect(systemMsg.content).toMatch(/^You are Ava, a sarcastic AI\./);
+    expect(systemMsg.content).not.toContain("You are a helpful smart home assistant");
   });
 
-  it("does not include custom instructions section when customPrompt absent", async () => {
+  it("uses default identity when customPrompt absent", async () => {
     mockCreate.mockResolvedValue(
       makeStream([
         { choices: [{ delta: { content: "Hi" }, finish_reason: null }] },
@@ -428,7 +428,7 @@ describe("OpenAIChatEngine", () => {
 
     const createCall = mockCreate.mock.calls[0][0];
     const systemMsg = createCall.messages[0];
-    expect(systemMsg.content).not.toContain("## Custom Instructions:");
+    expect(systemMsg.content).toContain("You are a helpful smart home assistant");
   });
 
   it("returns factsLearned as 0", async () => {

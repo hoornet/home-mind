@@ -1,49 +1,53 @@
 import { describe, it, expect } from "vitest";
 import type Anthropic from "@anthropic-ai/sdk";
-import {
-  buildSystemPrompt,
-  buildSystemPromptText,
-  STATIC_SYSTEM_PROMPT,
-  STATIC_VOICE_PROMPT,
-} from "./prompts.js";
+import { buildSystemPrompt, buildSystemPromptText } from "./prompts.js";
 
 type TextBlock = Anthropic.TextBlockParam;
 
 describe("buildSystemPrompt (Anthropic)", () => {
-  it("returns 2 blocks without custom prompt", () => {
+  it("returns 2 blocks with default identity when no custom prompt", () => {
     const blocks = buildSystemPrompt(["fact1"]) as TextBlock[];
 
     expect(blocks).toHaveLength(2);
-    // Static block has cache_control
+    // Static block: default identity + instructions, cached
     expect(blocks[0]).toMatchObject({
       type: "text",
-      text: STATIC_SYSTEM_PROMPT,
       cache_control: { type: "ephemeral" },
     });
+    expect(blocks[0].text).toContain("You are a helpful smart home assistant");
+    expect(blocks[0].text).toContain("## WHEN TO USE TOOLS");
     // Dynamic block has no cache_control
     expect(blocks[1]).toMatchObject({ type: "text" });
     expect(blocks[1]).not.toHaveProperty("cache_control");
     expect(blocks[1].text).toContain("fact1");
   });
 
-  it("returns 3 blocks with custom prompt", () => {
+  it("replaces default identity with custom prompt", () => {
     const blocks = buildSystemPrompt(["fact1"], false, "You are Ava.") as TextBlock[];
 
-    expect(blocks).toHaveLength(3);
-    // Static block (cached)
-    expect(blocks[0]).toHaveProperty("cache_control");
-    // Custom block (cached — persona text is typically stable across requests)
-    expect(blocks[1].text).toContain("## Custom Instructions:");
-    expect(blocks[1].text).toContain("You are Ava.");
-    expect(blocks[1]).toHaveProperty("cache_control", { type: "ephemeral" });
+    expect(blocks).toHaveLength(2);
+    // Custom prompt is the identity, followed by instructions
+    expect(blocks[0].text).toMatch(/^You are Ava\./);
+    expect(blocks[0].text).toContain("## WHEN TO USE TOOLS");
+    expect(blocks[0].text).not.toContain("You are a helpful smart home assistant");
+    expect(blocks[0]).toHaveProperty("cache_control", { type: "ephemeral" });
     // Dynamic block
-    expect(blocks[2].text).toContain("fact1");
+    expect(blocks[1].text).toContain("fact1");
   });
 
-  it("uses voice prompt when isVoice is true", () => {
+  it("uses voice instructions when isVoice is true", () => {
     const blocks = buildSystemPrompt([], true) as TextBlock[];
 
-    expect(blocks[0].text).toBe(STATIC_VOICE_PROMPT);
+    expect(blocks[0].text).toContain("You are a helpful smart home voice assistant");
+    expect(blocks[0].text).toContain("Keep responses under 2-3 sentences");
+  });
+
+  it("uses voice instructions with custom prompt", () => {
+    const blocks = buildSystemPrompt([], true, "You are Ava.") as TextBlock[];
+
+    expect(blocks[0].text).toMatch(/^You are Ava\./);
+    expect(blocks[0].text).toContain("Keep responses under 2-3 sentences");
+    expect(blocks[0].text).not.toContain("You are a helpful smart home voice assistant");
   });
 
   it("shows 'No memories yet.' when facts are empty", () => {
@@ -55,34 +59,36 @@ describe("buildSystemPrompt (Anthropic)", () => {
 });
 
 describe("buildSystemPromptText (OpenAI)", () => {
-  it("returns text without custom prompt section when not provided", () => {
+  it("returns text with default identity when no custom prompt", () => {
     const text = buildSystemPromptText(["my fact"]);
 
-    expect(text).toContain(STATIC_SYSTEM_PROMPT);
+    expect(text).toContain("You are a helpful smart home assistant");
+    expect(text).toContain("## WHEN TO USE TOOLS");
     expect(text).toContain("my fact");
-    expect(text).not.toContain("## Custom Instructions:");
   });
 
-  it("includes custom prompt section between static and dynamic", () => {
-    const text = buildSystemPromptText(["my fact"], false, "Be sarcastic.");
+  it("replaces default identity with custom prompt", () => {
+    const text = buildSystemPromptText(["my fact"], false, "You are Ava, sarcastic and sharp.");
 
-    expect(text).toContain("## Custom Instructions:\nBe sarcastic.");
+    expect(text).toMatch(/^You are Ava, sarcastic and sharp\./);
+    expect(text).not.toContain("You are a helpful smart home assistant");
+    expect(text).toContain("## WHEN TO USE TOOLS");
     expect(text).toContain("my fact");
 
-    // Custom instructions should appear after static prompt, before dynamic context
-    const customIdx = text.indexOf("## Custom Instructions:");
+    // Custom prompt should appear before instructions and dynamic context
+    const customIdx = text.indexOf("You are Ava");
+    const toolsIdx = text.indexOf("## WHEN TO USE TOOLS");
     const contextIdx = text.indexOf("## Current Context:");
-    const staticEnd = text.indexOf(STATIC_SYSTEM_PROMPT) + STATIC_SYSTEM_PROMPT.length;
 
-    expect(customIdx).toBeGreaterThan(staticEnd - 1);
-    expect(customIdx).toBeLessThan(contextIdx);
+    expect(customIdx).toBeLessThan(toolsIdx);
+    expect(toolsIdx).toBeLessThan(contextIdx);
   });
 
-  it("uses voice prompt when isVoice is true", () => {
+  it("uses voice identity and instructions when isVoice is true", () => {
     const text = buildSystemPromptText([], true);
 
-    expect(text).toContain(STATIC_VOICE_PROMPT);
-    expect(text).not.toContain(STATIC_SYSTEM_PROMPT);
+    expect(text).toContain("You are a helpful smart home voice assistant");
+    expect(text).toContain("Keep responses under 2-3 sentences");
   });
 
   it("shows 'No memories yet.' when facts are empty", () => {
