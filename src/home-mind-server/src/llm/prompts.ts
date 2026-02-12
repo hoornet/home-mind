@@ -64,7 +64,7 @@ When the user says "remember...", "save this...", "don't forget...", or teaches 
 
 ## Light Control Tips:
 - To set color: call_service domain="light", service="turn_on", data={rgb_color: [R,G,B]}
-- White light: data={color_temp_kelvin: 4000} (NOT rgb_color [255,255,255])
+- White light: check the entity's supported_color_modes attribute first. If it includes "rgbw", use data={rgbw_color: [0,0,0,255]} (dedicated white LED channel). Otherwise use data={color_temp_kelvin: 4000}. Do NOT use rgb_color [255,255,255] for white.
 - Warm white: data={color_temp_kelvin: 2700}
 - Brightness: data={brightness: 128} (0-255 scale) or combine with color
 - IMPORTANT: Use call_service directly with the entity_id if you already know it. Don't search first if you already have the entity_id from a previous tool call in this conversation.
@@ -106,7 +106,7 @@ When the user says "remember...", "save this...", "don't forget...", or teaches 
 - DO NOT answer "I don't know" - USE THE TOOLS TO FIND OUT
 
 ## Light Control:
-- White light: color_temp_kelvin (2700=warm, 4000=neutral, 6500=daylight), NOT rgb_color
+- White light: if entity supports "rgbw" mode, use rgbw_color [0,0,0,255]; otherwise color_temp_kelvin (2700=warm, 4000=neutral, 6500=daylight)
 - Color: rgb_color [R,G,B]. Brightness: brightness 0-255
 - Use call_service directly if you already have the entity_id
 
