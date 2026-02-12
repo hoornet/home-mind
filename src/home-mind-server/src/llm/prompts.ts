@@ -104,6 +104,35 @@ When the user says "remember...", "save this...", "don't forget...", or teaches 
 - When something isn't found, try different search terms (English AND Slovenian room names)
 - If user mentions a room, search for it before saying you don't know`;
 
+/**
+ * Format current date/time with explicit UTC offset for LLM consumption.
+ * Returns both a human-readable string and an ISO timestamp.
+ */
+export function formatDateTimeWithOffset(): { display: string; iso: string } {
+  const now = new Date();
+  const offsetMinutes = now.getTimezoneOffset();
+  const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+  const offsetMins = Math.abs(offsetMinutes) % 60;
+  const sign = offsetMinutes <= 0 ? "+" : "-";
+  const offsetStr = offsetMins === 0
+    ? `UTC${sign}${offsetHours}`
+    : `UTC${sign}${offsetHours}:${String(offsetMins).padStart(2, "0")}`;
+
+  const display = now.toLocaleString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }) + ` (${offsetStr})`;
+
+  const iso = now.toISOString();
+
+  return { display, iso };
+}
+
 // Type for system prompt with caching
 export type CachedSystemPrompt = Anthropic.MessageCreateParams["system"];
 
@@ -119,17 +148,7 @@ export function buildSystemPrompt(
   const factsText =
     facts.length > 0 ? facts.map((f) => `- ${f}`).join("\n") : "No memories yet.";
 
-  // Get current date/time in a readable format
-  const now = new Date();
-  const dateTimeStr = now.toLocaleString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
+  const { display: dateTimeStr, iso: isoTimestamp } = formatDateTimeWithOffset();
 
   const identity = customPrompt
     ? customPrompt
@@ -143,6 +162,7 @@ export function buildSystemPrompt(
   const dynamicContent = `
 ## Current Context:
 - Date/Time: ${dateTimeStr}
+- ISO Timestamp: ${isoTimestamp}
 
 ## What You Remember About This User:
 ${factsText}`;
@@ -174,16 +194,7 @@ export function buildSystemPromptText(
   const factsText =
     facts.length > 0 ? facts.map((f) => `- ${f}`).join("\n") : "No memories yet.";
 
-  const now = new Date();
-  const dateTimeStr = now.toLocaleString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
+  const { display: dateTimeStr, iso: isoTimestamp } = formatDateTimeWithOffset();
 
   const identity = customPrompt
     ? customPrompt
@@ -197,6 +208,7 @@ export function buildSystemPromptText(
 
 ## Current Context:
 - Date/Time: ${dateTimeStr}
+- ISO Timestamp: ${isoTimestamp}
 
 ## What You Remember About This User:
 ${factsText}`;

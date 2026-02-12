@@ -52,6 +52,7 @@ services:
       - SHODH_API_KEY=${SHODH_API_KEY}
       - MEMORY_TOKEN_LIMIT=${MEMORY_TOKEN_LIMIT:-1500}
       - CUSTOM_PROMPT=${CUSTOM_PROMPT:-}
+      - TZ=${TZ:-Europe/Prague}
     depends_on:
       shodh:
         condition: service_healthy

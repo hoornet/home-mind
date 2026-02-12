@@ -99,11 +99,12 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         start_time: {
           type: "string",
           description:
-            "Start time in ISO 8601 format (default: 24 hours ago)",
+            "Start time in ISO 8601 format with timezone (e.g., '2026-01-15T20:00:00Z'). Use the ISO Timestamp from system context for calculations. Default: 24 hours ago.",
         },
         end_time: {
           type: "string",
-          description: "End time in ISO 8601 format (default: now)",
+          description:
+            "End time in ISO 8601 format with timezone (e.g., '2026-01-15T21:00:00Z'). Use the ISO Timestamp from system context for calculations. Default: now.",
         },
       },
       required: ["entity_id"],
