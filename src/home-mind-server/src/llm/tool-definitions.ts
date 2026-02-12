@@ -46,7 +46,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: "search_entities",
-    description: "Search for Home Assistant entities by name or ID substring",
+    description:
+      "Search for Home Assistant entities by name or ID substring. Returns entity IDs, states, and attributes. Use this to find the correct entity_id before calling call_service.",
     parameters: {
       type: "object",
       properties: {
@@ -71,7 +72,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         },
         service: {
           type: "string",
-          description: "Service name (e.g., 'turn_on', 'turn_off', 'toggle')",
+          description:
+            "Service name (e.g., 'turn_on', 'turn_off', 'toggle'). For lights: use 'turn_on' with data to set brightness/color — there is no separate 'set_color' service.",
         },
         entity_id: {
           type: "string",
@@ -79,7 +81,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         },
         data: {
           type: "object",
-          description: "Optional additional service data",
+          description:
+            "Optional service data. Common fields for light.turn_on: brightness (0-255), rgb_color ([R,G,B] each 0-255), color_temp_kelvin (2000-6500, e.g. 2700=warm white, 4000=neutral, 6500=daylight), hs_color ([hue 0-360, saturation 0-100]). For white light: use color_temp_kelvin. Do NOT invent fields like 'white' or 'color'.",
         },
       },
       required: ["domain", "service"],
