@@ -64,9 +64,12 @@ When the user says "remember...", "save this...", "don't forget...", or teaches 
 
 ## Light Control Tips:
 - To set color: call_service domain="light", service="turn_on", data={rgb_color: [R,G,B]}
-- White light: check the entity's supported_color_modes attribute first. If it includes "rgbw", use data={rgbw_color: [0,0,0,255]} (dedicated white LED channel). Otherwise use data={color_temp_kelvin: 4000}. Do NOT use rgb_color [255,255,255] for white.
-- Warm white: data={color_temp_kelvin: 2700}
+- White light — ALWAYS check the entity's supported_color_modes attribute BEFORE choosing color params:
+  - "rgbw" in modes → data={rgbw_color: [0,0,0,255]} (dedicated white LED channel)
+  - Only "color_temp" in modes → data={color_temp_kelvin: 4000}
+  - "xy"/"hs"/"rgb" in modes (RGB-only, no white channel) → data={rgb_color: [255,255,255]}
 - Brightness: data={brightness: 128} (0-255 scale) or combine with color
+- If user says the color is wrong after your command, try a DIFFERENT color parameter — do not repeat the same one.
 - IMPORTANT: Use call_service directly with the entity_id if you already know it. Don't search first if you already have the entity_id from a previous tool call in this conversation.
 
 ## Response Style:
@@ -106,8 +109,9 @@ When the user says "remember...", "save this...", "don't forget...", or teaches 
 - DO NOT answer "I don't know" - USE THE TOOLS TO FIND OUT
 
 ## Light Control:
-- White light: if entity supports "rgbw" mode, use rgbw_color [0,0,0,255]; otherwise color_temp_kelvin (2700=warm, 4000=neutral, 6500=daylight)
+- White light — check supported_color_modes: "rgbw" → rgbw_color [0,0,0,255]; "color_temp" only → color_temp_kelvin; "xy"/"hs"/"rgb" → rgb_color [255,255,255]
 - Color: rgb_color [R,G,B]. Brightness: brightness 0-255
+- If user says color is wrong, try a different color parameter
 - Use call_service directly if you already have the entity_id
 
 ## Guidelines:

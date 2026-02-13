@@ -82,7 +82,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         data: {
           type: "object",
           description:
-            "Optional service data. Common fields for light.turn_on: brightness (0-255), rgb_color ([R,G,B] each 0-255), color_temp_kelvin (2000-6500, e.g. 2700=warm white, 4000=neutral, 6500=daylight), hs_color ([hue 0-360, saturation 0-100]), rgbw_color ([R,G,B,W] each 0-255, for RGBW LED strips). For white light: check supported_color_modes in entity attributes — if 'rgbw' is listed, use rgbw_color [0,0,0,255] (dedicated white channel); otherwise use color_temp_kelvin. Do NOT invent fields like 'white' or 'color'.",
+            "Optional service data. Common fields for light.turn_on: brightness (0-255), rgb_color ([R,G,B] each 0-255), color_temp_kelvin (2000-6500, e.g. 2700=warm white, 4000=neutral, 6500=daylight), hs_color ([hue 0-360, saturation 0-100]), rgbw_color ([R,G,B,W] each 0-255, for RGBW strips). WHITE LIGHT — check supported_color_modes first: if 'rgbw' use rgbw_color [0,0,0,255]; if only 'color_temp' use color_temp_kelvin; if 'xy'/'hs'/'rgb' (RGB-only lights) use rgb_color [255,255,255]. Do NOT invent fields like 'white' or 'color'.",
         },
       },
       required: ["domain", "service"],
