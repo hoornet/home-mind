@@ -28,7 +28,7 @@ export interface IMemoryStore {
     category: FactCategory,
     confidence?: number
   ): Promise<string | null>;
-  deleteFact(factId: string): Promise<boolean>;
+  deleteFact(userId: string, factId: string): Promise<boolean>;
   clearUserFacts(userId: string): Promise<number>;
   getFactCount(userId: string): Promise<number>;
 

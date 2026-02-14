@@ -179,8 +179,9 @@ export function createRouter(
     "/memory/:userId/facts/:factId",
     async (req: Request, res: Response) => {
       try {
+        const userId = req.params.userId as string;
         const factId = req.params.factId as string;
-        const deleted = await memory.deleteFact(factId);
+        const deleted = await memory.deleteFact(userId, factId);
 
         if (deleted) {
           res.json({ message: "Fact deleted" });

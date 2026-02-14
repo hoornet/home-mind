@@ -153,7 +153,7 @@ describe("extractAndStoreFacts", () => {
     expect(extractor.extract).toHaveBeenCalledWith("I prefer 22", "Got it!", [
       { id: "old-1", content: "old fact", category: "preference" },
     ]);
-    expect(memory.deleteFact).toHaveBeenCalledWith("old-1");
+    expect(memory.deleteFact).toHaveBeenCalledWith("user-1", "old-1");
     expect(memory.addFact).toHaveBeenCalledWith(
       "user-1",
       "User prefers 22°C",

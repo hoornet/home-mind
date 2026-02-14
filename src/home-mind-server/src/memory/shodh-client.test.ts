@@ -346,28 +346,30 @@ describe("ShodhMemoryStore", () => {
 
   describe("deleteFact", () => {
     it("deletes a fact and returns true", async () => {
-      // First add a fact to populate the user map
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: "mem-to-delete", success: true }),
-      });
-      await store.addFact("user-1", "To delete", "preference");
-
-      // Now delete it
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({}),
       });
 
-      const result = await store.deleteFact("mem-to-delete");
+      const result = await store.deleteFact("user-1", "mem-to-delete");
 
       expect(result).toBe(true);
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3030/api/forget",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            user_id: "user-1",
+            memory_id: "mem-to-delete",
+          }),
+        })
+      );
     });
 
     it("returns false when forget fails", async () => {
       mockFetch.mockRejectedValueOnce(new Error("API error"));
 
-      const result = await store.deleteFact("nonexistent");
+      const result = await store.deleteFact("user-1", "nonexistent");
 
       expect(result).toBe(false);
     });

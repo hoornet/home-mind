@@ -338,10 +338,7 @@ export class ShodhMemoryStore {
     category: FactCategory,
     confidence: number = 0.8
   ): Promise<string> {
-    const id = await this.shodh.remember(userId, content, category, confidence);
-    // Track userId for potential deletion later
-    this.factUserMap.set(id, userId);
-    return id;
+    return this.shodh.remember(userId, content, category, confidence);
   }
 
   /**
@@ -374,17 +371,10 @@ export class ShodhMemoryStore {
 
   /**
    * Delete a fact explicitly
-   * Note: Shodh needs user_id, but our interface doesn't have it
-   * We store userId in a Map for lookup, or use a default
    */
-  private factUserMap: Map<string, string> = new Map();
-
-  async deleteFact(factId: string): Promise<boolean> {
+  async deleteFact(userId: string, factId: string): Promise<boolean> {
     try {
-      // Try to get userId from our cache, or use a default
-      const userId = this.factUserMap.get(factId) || "default";
       await this.shodh.forget(userId, factId);
-      this.factUserMap.delete(factId);
       return true;
     } catch {
       return false;

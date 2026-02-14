@@ -93,7 +93,7 @@ export async function extractAndStoreFacts(
   for (const fact of extractedFacts) {
     if (fact.replaces && fact.replaces.length > 0) {
       for (const oldFactId of fact.replaces) {
-        const deleted = await memory.deleteFact(oldFactId);
+        const deleted = await memory.deleteFact(userId, oldFactId);
         if (deleted) {
           console.log(`Replaced old fact ${oldFactId} for ${userId}`);
         }
