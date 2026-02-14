@@ -313,14 +313,18 @@ describe("ShodhMemoryClient", () => {
   });
 
   describe("getProactiveContext", () => {
-    it("calls /api/proactive_context with context", async () => {
+    it("calls /api/proactive_context and handles flat memory shape", async () => {
+      // Proactive context returns flat fields (no experience wrapper)
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           memories: [
             {
               id: "mem-1",
-              experience: { content: "User prefers 20°C", memory_type: "Preference", tags: ["preference"] },
+              content: "User prefers 20°C",
+              memory_type: "Preference",
+              tags: ["preference", "home-mind"],
+              score: 0.95,
               importance: 0.8,
               created_at: "2026-01-25T10:00:00Z",
             },
@@ -333,6 +337,7 @@ describe("ShodhMemoryClient", () => {
 
       expect(facts).toHaveLength(1);
       expect(facts[0].content).toBe("User prefers 20°C");
+      expect(facts[0].category).toBe("preference");
       expect(mockFetch).toHaveBeenCalledWith(
         "http://localhost:3030/api/proactive_context",
         expect.objectContaining({

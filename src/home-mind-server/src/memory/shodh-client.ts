@@ -39,7 +39,11 @@ interface ShodhExperience {
 
 interface ShodhMemory {
   id: string;
-  experience: ShodhExperience;
+  experience?: ShodhExperience; // present in /api/recall and /api/recall/tags
+  // Flat fields from /api/proactive_context (no experience wrapper)
+  content?: string;
+  memory_type?: string;
+  tags?: string[];
   importance: number;
   created_at: string;
   last_accessed?: string;
@@ -290,14 +294,20 @@ export class ShodhMemoryClient {
   }
 
   /**
-   * Convert Shodh memory to our Fact type
+   * Convert Shodh memory to our Fact type.
+   * Handles two response shapes:
+   * - /api/recall, /api/recall/tags: nested `experience` object
+   * - /api/proactive_context: flat fields (content, memory_type, tags at top level)
    */
   private toFact(mem: ShodhMemory, userId: string): Fact {
-    const exp = mem.experience;
+    // Normalize: proactive_context uses flat fields, recall uses experience wrapper
+    const content = mem.experience?.content ?? mem.content ?? "";
+    const tags = mem.experience?.tags ?? mem.tags ?? [];
+    const memoryType = mem.experience?.memory_type ?? mem.memory_type ?? "";
 
     // Try to get category from tags
     let category: FactCategory = "preference";
-    for (const tag of exp.tags) {
+    for (const tag of tags) {
       if (
         ["baseline", "preference", "identity", "device", "pattern", "correction"].includes(
           tag
@@ -309,14 +319,14 @@ export class ShodhMemoryClient {
     }
 
     // Fallback to mapping from memory_type
-    if (exp.memory_type in SHODH_TYPE_TO_CATEGORY) {
-      category = SHODH_TYPE_TO_CATEGORY[exp.memory_type];
+    if (memoryType in SHODH_TYPE_TO_CATEGORY) {
+      category = SHODH_TYPE_TO_CATEGORY[memoryType];
     }
 
     return {
       id: mem.id,
       userId,
-      content: exp.content,
+      content,
       category,
       confidence: mem.importance,
       createdAt: new Date(mem.created_at),
