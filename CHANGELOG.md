@@ -2,6 +2,22 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.10.0] - 2026-02-14
+
+### Added
+- **Ollama provider support** — run Home Mind with local LLMs, no API key needed
+  - Set `LLM_PROVIDER=ollama` and `LLM_MODEL=<model>` (e.g., `llama3.1`, `qwen2.5`)
+  - Optional `OLLAMA_BASE_URL` for non-default endpoints
+  - Reuses the OpenAI-compatible chat engine (Ollama exposes an OpenAI API)
+  - `OLLAMA_BASE_URL` passed through Docker Compose for containerized setups
+- This completes multi-LLM provider support: Anthropic, OpenAI, and Ollama (GitHub issue #1)
+
+### Fixed
+- **White light on RGBW strips** — use `rgbw_color: [0,0,0,255]` (dedicated W channel) instead of `color_temp_kelvin` which WLED doesn't render correctly
+- **White light on RGB-only lights** — use `rgb_color: [255,255,255]` for lights that lack a white channel (e.g., Gledopto GL-C-008P). `color_temp_kelvin` is accepted by HA but doesn't work on RGB-only controllers
+- **Enriched light tool descriptions** — `call_service` tool now documents `brightness`, `rgb_color`, `color_temp_kelvin`, `hs_color`, and `rgbw_color` fields with usage guidance, so the LLM picks the right color mode (GitHub issue #13)
+- **History timezone mismatch** — bare ISO timestamps from the LLM (no timezone suffix) are now normalized with `Z` before passing to HA, preventing empty history results
+
 ## [0.9.0] - 2026-02-09
 
 ### Added

@@ -1,7 +1,7 @@
 # Home Mind
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/Version-0.9.0-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.10.0-brightgreen.svg)]()
 [![Status](https://img.shields.io/badge/Status-Voice%20Working-success.svg)]()
 
 AI assistant for Home Assistant with cognitive memory. Adds learning capabilities, persistent memory, and voice control to your smart home.
@@ -177,13 +177,14 @@ In those tools, the system prompt **is** the entire system prompt — you contro
 
 ## Project Status
 
-**Current Version:** v0.9.0
+**Current Version:** v0.10.0
 
 - [x] Voice control via HA Assist
 - [x] Cognitive memory with Shodh
 - [x] Streaming responses
 - [x] HACS integration
-- [x] Multi-LLM provider support (Anthropic + OpenAI)
+- [x] Multi-LLM provider support (Anthropic, OpenAI, Ollama)
+- [x] Local inference via Ollama (no API key needed)
 - [x] Custom system prompt (AI personality customization)
 - [ ] Multi-user support (OIDC)
 - [ ] HA Add-on packaging
@@ -223,11 +224,20 @@ docker compose restart             # Restart both services
 2. Check `HA_URL` and `HA_TOKEN` in your `.env` file
 3. Ensure the token hasn't expired (create a new long-lived token if needed)
 
+### Ollama: model not found or slow startup
+
+- Pull the model first: `ollama pull llama3.1`
+- First request after pull may be slow (model loading into memory)
+- Ensure `LLM_MODEL` matches an installed model: `ollama list`
+- If running Ollama on a different machine, set `OLLAMA_BASE_URL=http://<host>:11434/v1`
+- Not all models support tool calling well — `llama3.1`, `qwen2.5`, and `mistral` are recommended
+
 ### Slow responses (>30 seconds)
 
 - Queries with device control require multiple API round-trips
 - Check server logs for errors: `docker compose logs -f server`
 - Verify you're using Claude Haiku (default), not Sonnet
+- Ollama responses depend on your hardware — GPU acceleration recommended for 7B+ models
 
 ### Memory not working
 
@@ -269,3 +279,5 @@ GNU Affero General Public License v3.0 - see [LICENSE](LICENSE) for details.
 - [Shodh Memory](https://github.com/varun29ankuS/shodh-memory) - Cognitive memory backend
 - [Home Assistant](https://www.home-assistant.io) - Open source home automation
 - [Anthropic Claude](https://www.anthropic.com) - AI model
+- [OpenAI](https://openai.com) - AI model
+- [Ollama](https://ollama.com) - Local LLM inference
