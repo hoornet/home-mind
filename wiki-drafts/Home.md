@@ -42,7 +42,7 @@ Home Mind sits between Home Assistant and a large language model. It enriches ev
 
 ## Project Status
 
-**Current Version:** 0.10.0
+**Current Version:** 0.10.1
 
 Completed:
 - Voice control via HA Assist

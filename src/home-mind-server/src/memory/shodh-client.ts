@@ -267,9 +267,9 @@ export class ShodhMemoryClient {
 }
 
 /**
- * Memory store that uses Shodh for facts but keeps SQLite for conversation history.
- * This is a hybrid approach - Shodh excels at long-term semantic memory,
- * while SQLite is simpler for short-term conversation state.
+ * Memory store that uses Shodh for long-term facts and in-memory storage
+ * for short-term conversation history. Shodh excels at semantic memory;
+ * conversation state is transient and lost on restart (by design).
  */
 export class ShodhMemoryStore {
   private shodh: ShodhMemoryClient;

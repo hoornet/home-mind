@@ -149,3 +149,4 @@ HA custom component installed via HACS from `https://github.com/hoornet/home-min
 - Single-user only (multi-user via OIDC planned)
 - Conversation history lost on server restart (in-memory only)
 - Both chat and extraction use the same model (configured via `LLM_MODEL`)
+- Fact extraction sometimes stores transient state or LLM hallucinations (improvement planned)

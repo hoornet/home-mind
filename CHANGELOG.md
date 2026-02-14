@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.10.1] - 2026-02-14
+
+### Fixed
+- **Single fact deletion after restart** — `DELETE /api/memory/:userId/facts/:factId` returned 404 after server restart because `deleteFact()` relied on an in-memory map to look up userId. Now userId is passed directly from the route parameter, so deletes work reliably regardless of server restarts. Also fixes fact replacement during extraction (the `replaces` field in extracted facts).
+
 ## [0.10.0] - 2026-02-14
 
 ### Added
