@@ -211,6 +211,142 @@ describe("ShodhMemoryClient", () => {
     });
   });
 
+  describe("rememberBatch", () => {
+    it("sends batch remember request with correct format", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          created: 2,
+          failed: 0,
+          memory_ids: ["mem-1", "mem-2"],
+          errors: [],
+        }),
+      });
+
+      const ids = await client.rememberBatch("user-1", [
+        { content: "User prefers 20°C", category: "preference", confidence: 0.9 },
+        { content: "User's name is Jure", category: "identity" },
+      ]);
+
+      expect(ids).toEqual(["mem-1", "mem-2"]);
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3030/api/remember/batch",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            user_id: "user-1",
+            memories: [
+              {
+                content: "User prefers 20°C",
+                memory_type: "Preference",
+                importance: 0.9,
+                tags: ["preference", "home-mind"],
+              },
+              {
+                content: "User's name is Jure",
+                memory_type: "Context",
+                importance: 0.8,
+                tags: ["identity", "home-mind"],
+              },
+            ],
+          }),
+        })
+      );
+    });
+
+    it("logs warning when some memories fail", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          created: 1,
+          failed: 1,
+          memory_ids: ["mem-1"],
+          errors: ["duplicate content"],
+        }),
+      });
+
+      const ids = await client.rememberBatch("user-1", [
+        { content: "Fact A", category: "preference" },
+        { content: "Fact B", category: "identity" },
+      ]);
+
+      expect(ids).toEqual(["mem-1"]);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe("recallByTags", () => {
+    it("calls /api/recall/tags with home-mind tag", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          memories: [
+            {
+              id: "mem-1",
+              experience: { content: "Test fact", memory_type: "Preference", tags: ["preference", "home-mind"] },
+              importance: 0.8,
+              created_at: "2026-01-25T10:00:00Z",
+            },
+          ],
+          count: 1,
+        }),
+      });
+
+      const facts = await client.recallByTags("user-1", 25);
+
+      expect(facts).toHaveLength(1);
+      expect(facts[0].content).toBe("Test fact");
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3030/api/recall/tags",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            user_id: "user-1",
+            tags: ["home-mind"],
+            limit: 25,
+          }),
+        })
+      );
+    });
+  });
+
+  describe("getProactiveContext", () => {
+    it("calls /api/proactive_context with context", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          memories: [
+            {
+              id: "mem-1",
+              experience: { content: "User prefers 20°C", memory_type: "Preference", tags: ["preference"] },
+              importance: 0.8,
+              created_at: "2026-01-25T10:00:00Z",
+            },
+          ],
+          memory_count: 1,
+        }),
+      });
+
+      const facts = await client.getProactiveContext("user-1", "bedroom temperature", 10);
+
+      expect(facts).toHaveLength(1);
+      expect(facts[0].content).toBe("User prefers 20°C");
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3030/api/proactive_context",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            user_id: "user-1",
+            context: "bedroom temperature",
+            limit: 10,
+          }),
+        })
+      );
+    });
+  });
+
   describe("forget", () => {
     it("sends forget request with correct format", async () => {
       mockFetch.mockResolvedValueOnce({
@@ -341,6 +477,54 @@ describe("ShodhMemoryStore", () => {
       const id = await store.addFact("user-1", "New fact", "preference");
 
       expect(id).toBe("new-mem-id");
+    });
+  });
+
+  describe("addFacts (batch)", () => {
+    it("uses single remember for one fact", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: "mem-1", success: true }),
+      });
+
+      const ids = await store.addFacts("user-1", [
+        { content: "Single fact", category: "preference" },
+      ]);
+
+      expect(ids).toEqual(["mem-1"]);
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3030/api/remember",
+        expect.objectContaining({ method: "POST" })
+      );
+    });
+
+    it("uses batch remember for multiple facts", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          created: 2,
+          failed: 0,
+          memory_ids: ["mem-1", "mem-2"],
+          errors: [],
+        }),
+      });
+
+      const ids = await store.addFacts("user-1", [
+        { content: "Fact A", category: "preference" },
+        { content: "Fact B", category: "identity" },
+      ]);
+
+      expect(ids).toEqual(["mem-1", "mem-2"]);
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3030/api/remember/batch",
+        expect.objectContaining({ method: "POST" })
+      );
+    });
+
+    it("returns empty array for empty input", async () => {
+      const ids = await store.addFacts("user-1", []);
+      expect(ids).toEqual([]);
+      expect(mockFetch).not.toHaveBeenCalled();
     });
   });
 

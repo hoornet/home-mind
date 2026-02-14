@@ -57,6 +57,25 @@ interface ShodhRememberResponse {
   success: boolean;
 }
 
+interface ShodhBatchRememberResponse {
+  created: number;
+  failed: number;
+  memory_ids: string[];
+  errors: string[];
+}
+
+interface ShodhProactiveContextResponse {
+  memories: ShodhMemory[];
+  due_reminders?: unknown[];
+  context_reminders?: unknown[];
+  memory_count?: number;
+}
+
+interface ShodhRecallByTagsResponse {
+  memories: ShodhMemory[];
+  count: number;
+}
+
 export interface ShodhConfig {
   baseUrl: string;
   apiKey: string;
@@ -188,24 +207,65 @@ export class ShodhMemoryClient {
   }
 
   /**
-   * Recall memories by tags (faster than semantic search)
-   * Falls back to regular recall since Shodh uses user_id for filtering
+   * Store multiple facts in one batch call.
+   * POST /api/remember/batch
    */
-  async recallByTags(userId: string, limit: number = 50): Promise<Fact[]> {
-    // Shodh filters by user_id, so we just use regular recall
-    return this.recall(userId, undefined, limit);
+  async rememberBatch(
+    userId: string,
+    memories: { content: string; category: FactCategory; confidence?: number }[]
+  ): Promise<string[]> {
+    const batch = memories.map((m) => ({
+      content: m.content,
+      memory_type: CATEGORY_TO_SHODH_TYPE[m.category],
+      importance: m.confidence ?? 0.8,
+      tags: [m.category, "home-mind"],
+    }));
+
+    const response = await this.request<ShodhBatchRememberResponse>(
+      "/api/remember/batch",
+      "POST",
+      { user_id: userId, memories: batch }
+    );
+
+    if (response.failed > 0) {
+      console.warn(
+        `[shodh] Batch remember: ${response.created} created, ${response.failed} failed`,
+        response.errors
+      );
+    }
+
+    return response.memory_ids;
   }
 
   /**
-   * Get proactive context - memories Shodh thinks are relevant
+   * Recall memories by tags using Shodh's /api/recall/tags endpoint.
+   */
+  async recallByTags(userId: string, limit: number = 50): Promise<Fact[]> {
+    const response = await this.request<ShodhRecallByTagsResponse>(
+      "/api/recall/tags",
+      "POST",
+      { user_id: userId, tags: ["home-mind"], limit }
+    );
+
+    return response.memories.map((mem) => this.toFact(mem, userId));
+  }
+
+  /**
+   * Get proactive context using Shodh's graph-based spreading activation.
+   * POST /api/proactive_context
    */
   async getProactiveContext(
     userId: string,
     currentContext: string,
     limit: number = 20
   ): Promise<Fact[]> {
-    // Use semantic search with the current context as query
-    return this.recall(userId, currentContext, limit);
+    const response = await this.request<ShodhProactiveContextResponse>(
+      "/api/proactive_context",
+      "POST",
+      { user_id: userId, context: currentContext, limit }
+    );
+
+    return response.memories.map((mem) => this.toFact(mem, userId));
   }
 
   /**
@@ -339,6 +399,22 @@ export class ShodhMemoryStore {
     confidence: number = 0.8
   ): Promise<string> {
     return this.shodh.remember(userId, content, category, confidence);
+  }
+
+  /**
+   * Add multiple facts in a single batch call
+   */
+  async addFacts(
+    userId: string,
+    facts: { content: string; category: FactCategory; confidence?: number }[]
+  ): Promise<string[]> {
+    if (facts.length === 0) return [];
+    if (facts.length === 1) {
+      const f = facts[0];
+      const id = await this.addFact(userId, f.content, f.category, f.confidence);
+      return [id];
+    }
+    return this.shodh.rememberBatch(userId, facts);
   }
 
   /**

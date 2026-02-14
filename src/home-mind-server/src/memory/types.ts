@@ -20,6 +20,7 @@ export interface Fact {
 export interface ExtractedFact {
   content: string;
   category: FactCategory;
+  confidence?: number; // 0.0–1.0, how confident the LLM is this is a lasting fact
   replaces?: string[]; // IDs of existing facts this one supersedes
 }
 

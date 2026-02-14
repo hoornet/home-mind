@@ -1,6 +1,7 @@
 import type { HomeAssistantClient } from "../ha/client.js";
 import type { IMemoryStore } from "../memory/interface.js";
 import type { IFactExtractor } from "./interface.js";
+import type { ExtractedFact } from "../memory/types.js";
 
 /**
  * Normalize a timestamp to ensure it has timezone info.
@@ -74,6 +75,39 @@ export async function handleToolCall(
   }
 }
 
+// Patterns that indicate transient state — these should not be stored as long-term facts
+const TRANSIENT_PATTERNS = /\b(currently|right now|at the moment|is showing|was just|is displaying|just turned|just set|is now)\b/i;
+
+/**
+ * Filter out garbage facts that the LLM extracted despite prompt instructions.
+ * Returns only facts worth storing.
+ */
+export function filterExtractedFacts(facts: ExtractedFact[]): { kept: ExtractedFact[]; skipped: { fact: ExtractedFact; reason: string }[] } {
+  const kept: ExtractedFact[] = [];
+  const skipped: { fact: ExtractedFact; reason: string }[] = [];
+
+  for (const fact of facts) {
+    if (fact.content.length < 10) {
+      skipped.push({ fact, reason: "too short (<10 chars)" });
+      continue;
+    }
+
+    if (TRANSIENT_PATTERNS.test(fact.content)) {
+      skipped.push({ fact, reason: "transient state pattern" });
+      continue;
+    }
+
+    if (typeof fact.confidence === "number" && fact.confidence < 0.5) {
+      skipped.push({ fact, reason: `low confidence (${fact.confidence})` });
+      continue;
+    }
+
+    kept.push(fact);
+  }
+
+  return { kept, skipped };
+}
+
 export async function extractAndStoreFacts(
   memory: IMemoryStore,
   extractor: IFactExtractor,
@@ -89,8 +123,17 @@ export async function extractAndStoreFacts(
     existingFacts
   );
 
-  let storedCount = 0;
-  for (const fact of extractedFacts) {
+  // Filter out garbage
+  const { kept, skipped } = filterExtractedFacts(extractedFacts);
+
+  for (const { fact, reason } of skipped) {
+    console.debug(`[filter] Skipped fact for ${userId}: "${fact.content}" — ${reason}`);
+  }
+
+  if (kept.length === 0) return 0;
+
+  // Delete replaced facts first
+  for (const fact of kept) {
     if (fact.replaces && fact.replaces.length > 0) {
       for (const oldFactId of fact.replaces) {
         const deleted = await memory.deleteFact(userId, oldFactId);
@@ -99,11 +142,17 @@ export async function extractAndStoreFacts(
         }
       }
     }
+  }
 
-    await memory.addFact(userId, fact.content, fact.category);
-    storedCount++;
+  // Batch store all kept facts
+  const ids = await memory.addFacts(
+    userId,
+    kept.map((f) => ({ content: f.content, category: f.category, confidence: f.confidence }))
+  );
+
+  for (const fact of kept) {
     console.log(`Stored new fact for ${userId}: ${fact.content}`);
   }
 
-  return storedCount;
+  return ids.length;
 }

@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { handleToolCall, extractAndStoreFacts, normalizeTimestamp } from "./tool-handler.js";
+import { handleToolCall, extractAndStoreFacts, filterExtractedFacts, normalizeTimestamp } from "./tool-handler.js";
 import type { HomeAssistantClient } from "../ha/client.js";
 import type { IMemoryStore } from "../memory/interface.js";
 import type { IFactExtractor } from "./interface.js";
+import type { ExtractedFact } from "../memory/types.js";
 
 describe("handleToolCall", () => {
   let ha: HomeAssistantClient;
@@ -112,6 +113,72 @@ describe("handleToolCall", () => {
   });
 });
 
+describe("filterExtractedFacts", () => {
+  it("keeps valid facts", () => {
+    const facts: ExtractedFact[] = [
+      { content: "User prefers 22°C for the bedroom", category: "preference", confidence: 0.9 },
+    ];
+    const { kept, skipped } = filterExtractedFacts(facts);
+    expect(kept).toHaveLength(1);
+    expect(skipped).toHaveLength(0);
+  });
+
+  it("skips facts shorter than 10 characters", () => {
+    const facts: ExtractedFact[] = [
+      { content: "Too short", category: "preference", confidence: 0.9 },
+    ];
+    const { kept, skipped } = filterExtractedFacts(facts);
+    expect(kept).toHaveLength(0);
+    expect(skipped).toHaveLength(1);
+    expect(skipped[0].reason).toContain("too short");
+  });
+
+  it("skips facts with transient state patterns", () => {
+    const transientFacts: ExtractedFact[] = [
+      { content: "Kitchen light is currently displaying red color", category: "device" },
+      { content: "Sensor is showing 22 degrees right now in the bedroom", category: "baseline" },
+      { content: "The light was just turned on by the assistant", category: "device" },
+      { content: "Temperature is now set to 25 degrees", category: "device" },
+    ];
+    const { kept, skipped } = filterExtractedFacts(transientFacts);
+    expect(kept).toHaveLength(0);
+    expect(skipped).toHaveLength(4);
+    for (const s of skipped) {
+      expect(s.reason).toContain("transient");
+    }
+  });
+
+  it("skips facts with confidence below 0.5", () => {
+    const facts: ExtractedFact[] = [
+      { content: "User might prefer warm lighting", category: "preference", confidence: 0.3 },
+    ];
+    const { kept, skipped } = filterExtractedFacts(facts);
+    expect(kept).toHaveLength(0);
+    expect(skipped[0].reason).toContain("low confidence");
+  });
+
+  it("keeps facts without confidence field (defaults to acceptable)", () => {
+    const facts: ExtractedFact[] = [
+      { content: "User prefers lights dim in the evening", category: "preference" },
+    ];
+    const { kept } = filterExtractedFacts(facts);
+    expect(kept).toHaveLength(1);
+  });
+
+  it("applies all filters and returns mixed results", () => {
+    const facts: ExtractedFact[] = [
+      { content: "User's name is Jure", category: "identity", confidence: 1.0 },
+      { content: "short", category: "preference", confidence: 0.9 },
+      { content: "Light is currently red in the kitchen", category: "device", confidence: 0.8 },
+      { content: "Maybe the user likes blue lights", category: "preference", confidence: 0.2 },
+    ];
+    const { kept, skipped } = filterExtractedFacts(facts);
+    expect(kept).toHaveLength(1);
+    expect(kept[0].content).toBe("User's name is Jure");
+    expect(skipped).toHaveLength(3);
+  });
+});
+
 describe("extractAndStoreFacts", () => {
   let memory: IMemoryStore;
   let extractor: IFactExtractor;
@@ -122,14 +189,16 @@ describe("extractAndStoreFacts", () => {
         { id: "old-1", content: "old fact", category: "preference" },
       ]),
       addFact: vi.fn().mockResolvedValue("new-id"),
+      addFacts: vi.fn().mockResolvedValue(["new-id"]),
       deleteFact: vi.fn().mockResolvedValue(true),
     } as unknown as IMemoryStore;
 
     extractor = {
       extract: vi.fn().mockResolvedValue([
         {
-          content: "User prefers 22°C",
+          content: "User prefers 22°C for bedroom",
           category: "preference",
+          confidence: 0.9,
           replaces: ["old-1"],
         },
       ]),
@@ -140,7 +209,7 @@ describe("extractAndStoreFacts", () => {
     vi.clearAllMocks();
   });
 
-  it("calls getFacts, extract, deleteFact for replaced, addFact for new", async () => {
+  it("calls getFacts, extract, deleteFact for replaced, addFacts for new", async () => {
     const count = await extractAndStoreFacts(
       memory,
       extractor,
@@ -154,20 +223,19 @@ describe("extractAndStoreFacts", () => {
       { id: "old-1", content: "old fact", category: "preference" },
     ]);
     expect(memory.deleteFact).toHaveBeenCalledWith("user-1", "old-1");
-    expect(memory.addFact).toHaveBeenCalledWith(
-      "user-1",
-      "User prefers 22°C",
-      "preference"
-    );
+    expect(memory.addFacts).toHaveBeenCalledWith("user-1", [
+      { content: "User prefers 22°C for bedroom", category: "preference", confidence: 0.9 },
+    ]);
     expect(count).toBe(1);
   });
 
-  it("stores multiple facts and returns correct count", async () => {
+  it("stores multiple facts via batch and returns correct count", async () => {
     (extractor.extract as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { content: "Fact A", category: "preference", replaces: [] },
-      { content: "Fact B", category: "identity", replaces: [] },
-      { content: "Fact C", category: "baseline", replaces: [] },
+      { content: "Fact A is a long enough preference", category: "preference", confidence: 0.8, replaces: [] },
+      { content: "Fact B is identity information", category: "identity", confidence: 0.9, replaces: [] },
+      { content: "Fact C is baseline sensor data", category: "baseline", confidence: 0.7, replaces: [] },
     ]);
+    (memory.addFacts as ReturnType<typeof vi.fn>).mockResolvedValue(["id-1", "id-2", "id-3"]);
 
     const count = await extractAndStoreFacts(
       memory,
@@ -178,7 +246,7 @@ describe("extractAndStoreFacts", () => {
     );
 
     expect(count).toBe(3);
-    expect(memory.addFact).toHaveBeenCalledTimes(3);
+    expect(memory.addFacts).toHaveBeenCalledTimes(1);
   });
 
   it("returns 0 when extraction yields no facts", async () => {
@@ -193,13 +261,13 @@ describe("extractAndStoreFacts", () => {
     );
 
     expect(count).toBe(0);
-    expect(memory.addFact).not.toHaveBeenCalled();
+    expect(memory.addFacts).not.toHaveBeenCalled();
     expect(memory.deleteFact).not.toHaveBeenCalled();
   });
 
   it("does not call deleteFact when replaces is empty", async () => {
     (extractor.extract as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { content: "New fact", category: "preference", replaces: [] },
+      { content: "New fact about user preference", category: "preference", confidence: 0.8, replaces: [] },
     ]);
 
     await extractAndStoreFacts(memory, extractor, "user-1", "msg", "resp");
@@ -209,12 +277,34 @@ describe("extractAndStoreFacts", () => {
 
   it("does not call deleteFact when replaces is undefined", async () => {
     (extractor.extract as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { content: "New fact", category: "preference" },
+      { content: "New fact about user preference", category: "preference", confidence: 0.8 },
     ]);
 
     await extractAndStoreFacts(memory, extractor, "user-1", "msg", "resp");
 
     expect(memory.deleteFact).not.toHaveBeenCalled();
+  });
+
+  it("filters out garbage facts before storing", async () => {
+    (extractor.extract as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { content: "User prefers 22°C for bedroom", category: "preference", confidence: 0.9, replaces: [] },
+      { content: "Light is currently red in the kitchen", category: "device", confidence: 0.8, replaces: [] },
+      { content: "too short", category: "preference", confidence: 0.9, replaces: [] },
+    ]);
+    (memory.addFacts as ReturnType<typeof vi.fn>).mockResolvedValue(["id-1"]);
+
+    const count = await extractAndStoreFacts(
+      memory,
+      extractor,
+      "user-1",
+      "msg",
+      "resp"
+    );
+
+    expect(count).toBe(1);
+    expect(memory.addFacts).toHaveBeenCalledWith("user-1", [
+      { content: "User prefers 22°C for bedroom", category: "preference", confidence: 0.9 },
+    ]);
   });
 });
 

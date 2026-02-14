@@ -21,6 +21,10 @@ export interface IMemoryStore {
     category: FactCategory,
     confidence?: number
   ): Promise<string>;
+  addFacts(
+    userId: string,
+    facts: { content: string; category: FactCategory; confidence?: number }[]
+  ): Promise<string[]>;
   factExists(userId: string, content: string): Promise<boolean>;
   addFactIfNew(
     userId: string,

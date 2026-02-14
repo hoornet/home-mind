@@ -65,6 +65,7 @@ ${JSON.stringify(factsJson, null, 2)}`;
         .map((f: any) => ({
           content: f.content,
           category: f.category,
+          confidence: typeof f.confidence === "number" ? f.confidence : undefined,
           replaces: Array.isArray(f.replaces) ? f.replaces : [],
         }));
     } catch (error) {
