@@ -1,6 +1,6 @@
 {
   "name": "@home-mind/server",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "description": "Home Mind API server - AI assistant with cognitive memory for Home Assistant",
   "type": "module",
   "main": "dist/index.js",

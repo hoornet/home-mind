@@ -2,6 +2,20 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.11.0] - 2026-02-14
+
+### Improved
+- **Fact extraction quality** — rewrote extraction prompt with explicit DO NOT rules and bad examples. LLMs previously stored garbage like transient device states ("light is currently red"), assistant actions, and single-event troubleshooting observations. New prompt includes confidence scoring and "if in doubt, return []" rule.
+- **Post-extraction filtering** — code-level safety net rejects facts that are too short (<10 chars), contain transient-state patterns ("currently", "right now", "was just"), or have low confidence (<0.5). Skipped facts logged at debug level with `[filter]` prefix.
+- **Batch fact storage** — extracted facts are now stored in a single Shodh batch call (`/api/remember/batch`) instead of N individual calls, reducing latency.
+- **Proactive context retrieval** — uses Shodh's graph-based spreading activation (`/api/proactive_context`) instead of plain semantic search, so co-accessed memories activate each other.
+- **Tag-based fact recall** — `getFacts()` now uses Shodh's `/api/recall/tags` endpoint (filtering by `home-mind` tag) instead of semantic-searching for the literal string "all memories".
+
+### Added
+- `confidence` field (0.0–1.0) on extracted facts
+- `addFacts()` batch method on `IMemoryStore` interface
+- `rememberBatch()`, `recallByTags()`, `getProactiveContext()` methods on `ShodhMemoryClient`
+
 ## [0.10.1] - 2026-02-14
 
 ### Fixed
