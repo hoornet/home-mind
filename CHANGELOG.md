@@ -2,6 +2,12 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.11.1] - 2026-02-14
+
+### Fixed
+- **Proactive context crash** — `/api/proactive_context` returns flat memory objects (no `experience` wrapper) unlike other Shodh endpoints. `toFact()` now handles both response shapes.
+- **History token overflow** — `get_history` for sensors with frequent state changes (e.g. temperature over 2 days) could return thousands of entries exceeding the 200K token limit. Now strips attributes and downsamples to 200 entries max.
+
 ## [0.11.0] - 2026-02-14
 
 ### Improved
@@ -15,10 +21,6 @@ All notable changes to Home Mind are documented here.
 - `confidence` field (0.0–1.0) on extracted facts
 - `addFacts()` batch method on `IMemoryStore` interface
 - `rememberBatch()`, `recallByTags()`, `getProactiveContext()` methods on `ShodhMemoryClient`
-
-### Fixed
-- **Proactive context crash** — `/api/proactive_context` returns flat memory objects (no `experience` wrapper) unlike other Shodh endpoints. `toFact()` now handles both response shapes.
-- **History token overflow** — `get_history` for sensors with frequent state changes (e.g. temperature over 2 days) could return thousands of entries exceeding the 200K token limit. Now strips attributes and downsamples to 200 entries max.
 
 ## [0.10.1] - 2026-02-14
 
