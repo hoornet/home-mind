@@ -1,6 +1,6 @@
 # Home Mind Architecture
 
-**Version:** 0.10.1
+**Version:** 0.11.0
 **Last Updated:** February 14, 2026
 **Status:** Voice + Text + Memory + Multi-LLM Provider Support
 
