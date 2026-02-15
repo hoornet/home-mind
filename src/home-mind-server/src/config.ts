@@ -30,6 +30,7 @@ const ConfigSchema = z
 
     // Memory settings
     memoryTokenLimit: z.coerce.number().default(1500),
+    memoryCleanupIntervalHours: z.coerce.number().min(0).default(6),
 
     // Custom prompt
     customPrompt: z.string().optional(),
@@ -73,6 +74,7 @@ export function loadConfig(): Config {
     shodhUrl: process.env.SHODH_URL,
     shodhApiKey: process.env.SHODH_API_KEY,
     memoryTokenLimit: process.env.MEMORY_TOKEN_LIMIT,
+    memoryCleanupIntervalHours: emptyToUndefined(process.env.MEMORY_CLEANUP_INTERVAL_HOURS),
     customPrompt: emptyToUndefined(process.env.CUSTOM_PROMPT),
   });
 

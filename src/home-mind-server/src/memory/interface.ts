@@ -36,6 +36,9 @@ export interface IMemoryStore {
   clearUserFacts(userId: string): Promise<number>;
   getFactCount(userId: string): Promise<number>;
 
+  // User tracking
+  getKnownUsers(): string[];
+
   // Conversation history
   storeMessage(
     conversationId: string,

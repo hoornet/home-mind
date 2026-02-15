@@ -2,6 +2,7 @@ import type { HomeAssistantClient, HistoryEntry } from "../ha/client.js";
 import type { IMemoryStore } from "../memory/interface.js";
 import type { IFactExtractor } from "./interface.js";
 import type { ExtractedFact } from "../memory/types.js";
+import { filterFacts } from "../memory/fact-patterns.js";
 
 /** Max history entries to return to the LLM to avoid blowing context window */
 const MAX_HISTORY_ENTRIES = 200;
@@ -107,53 +108,12 @@ export async function handleToolCall(
   }
 }
 
-// Patterns that indicate transient state — these should not be stored as long-term facts
-const TRANSIENT_PATTERNS = /\b(currently|right now|at the moment|is showing|was just|is displaying|just turned|just set|is now)\b/i;
-
-// Device spec/capability dump patterns — LLM catalogs entity attributes instead of extracting user facts
-const DEVICE_SPEC_PATTERNS = /\b(supports?\s+\d+|supports?\s+(rgbw|rgb|color_temp|xy|hs|brightness|on_off)|color.?mode|effect.?list|\d+\+?\s+effects?|firmware|protocol|supported.?features?|supported.?color)\b/i;
-
-// Command-echo patterns — assistant restating what it just did, not a user-stated fact
-const COMMAND_ECHO_PATTERNS = /\b(was set to|was changed to|was turned|has been set|has been turned|has been changed)\b/i;
-
 /**
  * Filter out garbage facts that the LLM extracted despite prompt instructions.
- * Returns only facts worth storing.
+ * Delegates to shared pattern matching in fact-patterns.ts.
  */
 export function filterExtractedFacts(facts: ExtractedFact[]): { kept: ExtractedFact[]; skipped: { fact: ExtractedFact; reason: string }[] } {
-  const kept: ExtractedFact[] = [];
-  const skipped: { fact: ExtractedFact; reason: string }[] = [];
-
-  for (const fact of facts) {
-    if (fact.content.length < 10) {
-      skipped.push({ fact, reason: "too short (<10 chars)" });
-      continue;
-    }
-
-    if (TRANSIENT_PATTERNS.test(fact.content)) {
-      skipped.push({ fact, reason: "transient state pattern" });
-      continue;
-    }
-
-    if (DEVICE_SPEC_PATTERNS.test(fact.content)) {
-      skipped.push({ fact, reason: "device spec/capability dump" });
-      continue;
-    }
-
-    if (COMMAND_ECHO_PATTERNS.test(fact.content)) {
-      skipped.push({ fact, reason: "command echo (restating action)" });
-      continue;
-    }
-
-    if (typeof fact.confidence === "number" && fact.confidence < 0.5) {
-      skipped.push({ fact, reason: `low confidence (${fact.confidence})` });
-      continue;
-    }
-
-    kept.push(fact);
-  }
-
-  return { kept, skipped };
+  return filterFacts(facts);
 }
 
 export async function extractAndStoreFacts(

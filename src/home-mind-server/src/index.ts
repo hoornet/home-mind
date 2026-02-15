@@ -10,6 +10,7 @@ import { ShodhMemoryStore } from "./memory/shodh-client.js";
 import { HomeAssistantClient } from "./ha/client.js";
 import { createChatEngine, createFactExtractor } from "./llm/factory.js";
 import { createRouter } from "./api/routes.js";
+import { MemoryCleanupJob } from "./jobs/memory-cleanup.js";
 
 // Load configuration
 const config = loadConfig();
@@ -92,15 +93,21 @@ Ready to accept requests at http://localhost:${config.port}
 `);
 });
 
+// Start periodic memory cleanup
+const cleanupJob = new MemoryCleanupJob(memory, config.memoryCleanupIntervalHours);
+cleanupJob.start();
+
 // Graceful shutdown
 process.on("SIGTERM", () => {
   console.log("Shutting down...");
+  cleanupJob.stop();
   memory.close();
   process.exit(0);
 });
 
 process.on("SIGINT", () => {
   console.log("Shutting down...");
+  cleanupJob.stop();
   memory.close();
   process.exit(0);
 });

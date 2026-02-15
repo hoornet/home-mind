@@ -344,6 +344,7 @@ export class ShodhMemoryClient {
 export class ShodhMemoryStore {
   private shodh: ShodhMemoryClient;
   private conversationDb: Map<string, ConversationMessage[]> = new Map();
+  private knownUsers = new Set<string>();
 
   constructor(shodhConfig: ShodhConfig) {
     this.shodh = new ShodhMemoryClient(shodhConfig);
@@ -496,12 +497,17 @@ export class ShodhMemoryStore {
   // Shodh is optimized for long-term memory, not short-term conversation state.
   // We use a simple in-memory store for conversation history.
 
+  getKnownUsers(): string[] {
+    return [...this.knownUsers];
+  }
+
   storeMessage(
     conversationId: string,
     userId: string,
     role: "user" | "assistant",
     content: string
   ): string {
+    this.knownUsers.add(userId);
     const id = crypto.randomUUID();
     const messages = this.conversationDb.get(conversationId) || [];
     messages.push({
