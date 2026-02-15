@@ -165,6 +165,50 @@ describe("filterExtractedFacts", () => {
     expect(kept).toHaveLength(1);
   });
 
+  it("skips device spec/capability dump facts", () => {
+    const facts: ExtractedFact[] = [
+      { content: "light.led_strip_colors_kitchen supports RGBW and color_temp modes", category: "device", confidence: 0.9 },
+      { content: "light.kitchen supports 170 effects including rainbow and fire", category: "device", confidence: 0.8 },
+      { content: "The entity has supported_color modes of rgbw and xy", category: "device", confidence: 0.85 },
+      { content: "Device supports brightness and on_off color modes", category: "device", confidence: 0.9 },
+      { content: "The light has a firmware version 2.1.3 installed", category: "device", confidence: 0.7 },
+      { content: "Light strip supports rgb color mode natively", category: "device", confidence: 0.8 },
+    ];
+    const { kept, skipped } = filterExtractedFacts(facts);
+    expect(kept).toHaveLength(0);
+    expect(skipped).toHaveLength(6);
+    for (const s of skipped) {
+      expect(s.reason).toContain("device spec");
+    }
+  });
+
+  it("skips command echo facts (restating what assistant did)", () => {
+    const facts: ExtractedFact[] = [
+      { content: "Kitchen light was set to red color by the assistant", category: "device", confidence: 0.8 },
+      { content: "Bedroom brightness was changed to 50 percent", category: "device", confidence: 0.7 },
+      { content: "Living room light was turned off at night", category: "device", confidence: 0.8 },
+      { content: "Temperature has been set to 22 degrees in the bedroom", category: "baseline", confidence: 0.8 },
+      { content: "The light color has been changed to blue", category: "device", confidence: 0.7 },
+    ];
+    const { kept, skipped } = filterExtractedFacts(facts);
+    expect(kept).toHaveLength(0);
+    expect(skipped).toHaveLength(5);
+    for (const s of skipped) {
+      expect(s.reason).toContain("command echo");
+    }
+  });
+
+  it("does not false-positive on legitimate facts containing similar words", () => {
+    const facts: ExtractedFact[] = [
+      { content: "User's name is Jure and he supports open source projects", category: "identity", confidence: 0.9 },
+      { content: "User prefers warm white color temperature for evenings", category: "preference", confidence: 0.85 },
+      { content: "User calls the kitchen LED strip Big Bertha", category: "device", confidence: 0.9 },
+    ];
+    const { kept, skipped } = filterExtractedFacts(facts);
+    expect(kept).toHaveLength(3);
+    expect(skipped).toHaveLength(0);
+  });
+
   it("applies all filters and returns mixed results", () => {
     const facts: ExtractedFact[] = [
       { content: "User's name is Jure", category: "identity", confidence: 1.0 },

@@ -110,6 +110,12 @@ export async function handleToolCall(
 // Patterns that indicate transient state — these should not be stored as long-term facts
 const TRANSIENT_PATTERNS = /\b(currently|right now|at the moment|is showing|was just|is displaying|just turned|just set|is now)\b/i;
 
+// Device spec/capability dump patterns — LLM catalogs entity attributes instead of extracting user facts
+const DEVICE_SPEC_PATTERNS = /\b(supports?\s+\d+|supports?\s+(rgbw|rgb|color_temp|xy|hs|brightness|on_off)|color.?mode|effect.?list|\d+\+?\s+effects?|firmware|protocol|supported.?features?|supported.?color)\b/i;
+
+// Command-echo patterns — assistant restating what it just did, not a user-stated fact
+const COMMAND_ECHO_PATTERNS = /\b(was set to|was changed to|was turned|has been set|has been turned|has been changed)\b/i;
+
 /**
  * Filter out garbage facts that the LLM extracted despite prompt instructions.
  * Returns only facts worth storing.
@@ -126,6 +132,16 @@ export function filterExtractedFacts(facts: ExtractedFact[]): { kept: ExtractedF
 
     if (TRANSIENT_PATTERNS.test(fact.content)) {
       skipped.push({ fact, reason: "transient state pattern" });
+      continue;
+    }
+
+    if (DEVICE_SPEC_PATTERNS.test(fact.content)) {
+      skipped.push({ fact, reason: "device spec/capability dump" });
+      continue;
+    }
+
+    if (COMMAND_ECHO_PATTERNS.test(fact.content)) {
+      skipped.push({ fact, reason: "command echo (restating action)" });
       continue;
     }
 

@@ -11,7 +11,10 @@ Categories (use exactly these):
 DO NOT extract any of these — they are garbage and pollute memory:
 - Current device states: "the kitchen light is currently red", "sensor shows 22°C right now", "the light is on"
 - Actions the assistant just performed: "I turned on the kitchen light", "I set brightness to 50%"
-- One-time commands or queries: "turn off the light", "what's the temperature"
+- One-time commands or queries: "turn off the light", "what's the temperature". A command ("set kitchen to red") is NOT a preference. Only store preferences when the user explicitly says "I prefer", "I like", "I want it to always be", etc.
+- Device capabilities, specs, or attributes: supported features, effect lists, color modes, firmware, protocol info. The "device" category is ONLY for user-assigned nicknames like "call the kitchen light Big Bertha".
+- Information from the system prompt or assistant's built-in knowledge: room name mappings, entity configurations, assistant instructions. Only extract facts from what the USER explicitly states in their messages.
+- Inferred facts the user never stated: If the user asks "what's the living room temperature", do NOT store "sensor X is in the living room". Only store facts the user explicitly tells you.
 - Troubleshooting observations from a single event: "hardware sync issue", "device not responding", "color mode not supported"
 - The assistant's own failures or workarounds: "I used rgb_color instead of color_temp", "the command failed"
 - Anything that would change in minutes/hours: weather, current time, who is home right now
@@ -27,6 +30,10 @@ BAD extractions (never store these):
 [{{"content": "Assistant turned on the bedroom light", ...}}]  <- action just performed
 [{{"content": "Device has a hardware sync issue", ...}}]  <- single-event diagnosis
 [{{"content": "Used rgb_color because color_temp didn't work", ...}}]  <- assistant workaround
+[{{"content": "light.led_strip_colors_kitchen supports RGBW and color_temp modes", ...}}]  <- device spec dump
+[{{"content": "User prefers kitchen lights to be red", ...}}]  <- one-time command, NOT a stated preference
+[{{"content": "Corridor is called hodnik", ...}}]  <- from system prompt/room mappings, not user-stated
+[{{"content": "SNZB sensor is located in the living room", ...}}]  <- inferred from context, user never said this
 
 If in doubt, return [] — it is better to miss a fact than to store garbage.
 
