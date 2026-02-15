@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.11.2] - 2026-02-15
+
+### Fixed
+- **Shodh forget endpoint** — `DELETE /api/forget/{memory_id}?user_id=...` instead of `POST /api/forget` which returned 404. Fixes fact deletion, bulk clear, and fact replacement during extraction. Workaround for [shodh-memory#33](https://github.com/varun29ankuS/shodh-memory/issues/33).
+
 ## [0.11.1] - 2026-02-14
 
 ### Fixed

@@ -362,13 +362,9 @@ describe("ShodhMemoryClient", () => {
       await client.forget("user-1", "mem-123");
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:3030/api/forget",
+        "http://localhost:3030/api/forget/mem-123?user_id=user-1",
         expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({
-            user_id: "user-1",
-            memory_id: "mem-123",
-          }),
+          method: "DELETE",
         })
       );
     });
@@ -544,13 +540,9 @@ describe("ShodhMemoryStore", () => {
 
       expect(result).toBe(true);
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:3030/api/forget",
+        "http://localhost:3030/api/forget/mem-to-delete?user_id=user-1",
         expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({
-            user_id: "user-1",
-            memory_id: "mem-to-delete",
-          }),
+          method: "DELETE",
         })
       );
     });

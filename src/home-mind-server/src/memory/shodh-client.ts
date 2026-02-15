@@ -287,10 +287,10 @@ export class ShodhMemoryClient {
    * Forget a memory explicitly
    */
   async forget(userId: string, memoryId: string): Promise<void> {
-    await this.request("/api/forget", "POST", {
-      user_id: userId,
-      memory_id: memoryId,
-    });
+    await this.request(
+      `/api/forget/${encodeURIComponent(memoryId)}?user_id=${encodeURIComponent(userId)}`,
+      "DELETE"
+    );
   }
 
   /**
