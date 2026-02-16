@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Config } from "../config.js";
 import type { IMemoryStore } from "../memory/interface.js";
+import type { IConversationStore } from "../memory/types.js";
 import type { IFactExtractor } from "./interface.js";
 import type { HomeAssistantClient } from "../ha/client.js";
 
@@ -45,6 +46,7 @@ import { handleToolCall, extractAndStoreFacts } from "./tool-handler.js";
 describe("OpenAIChatEngine", () => {
   let engine: OpenAIChatEngine;
   let memory: IMemoryStore;
+  let conversations: IConversationStore;
   let extractor: IFactExtractor;
   let ha: HomeAssistantClient;
   let config: Config;
@@ -59,9 +61,15 @@ describe("OpenAIChatEngine", () => {
 
     memory = {
       getFactsWithinTokenLimit: vi.fn().mockResolvedValue([]),
+    } as unknown as IMemoryStore;
+
+    conversations = {
       getConversationHistory: vi.fn().mockReturnValue([]),
       storeMessage: vi.fn(),
-    } as unknown as IMemoryStore;
+      getKnownUsers: vi.fn().mockReturnValue([]),
+      cleanupOldConversations: vi.fn().mockReturnValue(0),
+      close: vi.fn(),
+    } as unknown as IConversationStore;
 
     extractor = {} as IFactExtractor;
 
@@ -74,7 +82,7 @@ describe("OpenAIChatEngine", () => {
       memoryTokenLimit: 1500,
     } as Config;
 
-    engine = new OpenAIChatEngine(config, memory, extractor, ha);
+    engine = new OpenAIChatEngine(config, memory, conversations, extractor, ha);
   });
 
   afterEach(() => {
@@ -236,7 +244,7 @@ describe("OpenAIChatEngine", () => {
   });
 
   it("loads conversation history when conversationId provided", async () => {
-    (memory.getConversationHistory as ReturnType<typeof vi.fn>).mockReturnValue([
+    (conversations.getConversationHistory as ReturnType<typeof vi.fn>).mockReturnValue([
       { role: "user", content: "previous question" },
       { role: "assistant", content: "previous answer" },
     ]);
@@ -254,7 +262,7 @@ describe("OpenAIChatEngine", () => {
       conversationId: "conv-1",
     });
 
-    expect(memory.getConversationHistory).toHaveBeenCalledWith("conv-1", 10);
+    expect(conversations.getConversationHistory).toHaveBeenCalledWith("conv-1", 10);
 
     // Check messages passed to OpenAI include history
     const createCall = mockCreate.mock.calls[0][0];
@@ -283,13 +291,13 @@ describe("OpenAIChatEngine", () => {
       conversationId: "conv-1",
     });
 
-    expect(memory.storeMessage).toHaveBeenCalledWith(
+    expect(conversations.storeMessage).toHaveBeenCalledWith(
       "conv-1",
       "user-1",
       "user",
       "Hello"
     );
-    expect(memory.storeMessage).toHaveBeenCalledWith(
+    expect(conversations.storeMessage).toHaveBeenCalledWith(
       "conv-1",
       "user-1",
       "assistant",
@@ -307,7 +315,7 @@ describe("OpenAIChatEngine", () => {
 
     await engine.chat({ message: "Hello", userId: "user-1" });
 
-    expect(memory.storeMessage).not.toHaveBeenCalled();
+    expect(conversations.storeMessage).not.toHaveBeenCalled();
   });
 
   it("uses max_tokens 500 for voice mode", async () => {

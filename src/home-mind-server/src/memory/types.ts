@@ -32,3 +32,19 @@ export interface ConversationMessage {
   content: string;
   createdAt: Date;
 }
+
+export interface IConversationStore {
+  storeMessage(
+    conversationId: string,
+    userId: string,
+    role: "user" | "assistant",
+    content: string
+  ): string;
+  getConversationHistory(
+    conversationId: string,
+    limit?: number
+  ): ConversationMessage[] | Promise<ConversationMessage[]>;
+  getKnownUsers(): string[];
+  cleanupOldConversations(hoursOld?: number): number | Promise<number>;
+  close(): void;
+}

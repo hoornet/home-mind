@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Config } from "../config.js";
 import type { IMemoryStore } from "../memory/interface.js";
+import type { IConversationStore } from "../memory/types.js";
 import { HomeAssistantClient } from "../ha/client.js";
 import { buildSystemPrompt, type CachedSystemPrompt } from "./prompts.js";
 import { HA_TOOLS } from "./tools.js";
@@ -18,6 +19,7 @@ export type { ChatRequest, ChatResponse, StreamCallback };
 export class LLMClient implements IChatEngine {
   private anthropic: Anthropic;
   private memory: IMemoryStore;
+  private conversations: IConversationStore;
   private extractor: IFactExtractor;
   private ha: HomeAssistantClient;
   private config: Config;
@@ -25,12 +27,14 @@ export class LLMClient implements IChatEngine {
   constructor(
     config: Config,
     memory: IMemoryStore,
+    conversations: IConversationStore,
     extractor: IFactExtractor,
     ha: HomeAssistantClient
   ) {
     this.config = config;
     this.anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
     this.memory = memory;
+    this.conversations = conversations;
     this.extractor = extractor;
     this.ha = ha;
   }
@@ -61,7 +65,7 @@ export class LLMClient implements IChatEngine {
     const messages: Anthropic.MessageParam[] = [];
 
     if (conversationId) {
-      const history = this.memory.getConversationHistory(conversationId, 10);
+      const history = await this.conversations.getConversationHistory(conversationId, 10);
       for (const msg of history) {
         messages.push({ role: msg.role, content: msg.content });
       }
@@ -72,7 +76,7 @@ export class LLMClient implements IChatEngine {
 
     // Store user message in conversation history
     if (conversationId) {
-      this.memory.storeMessage(conversationId, userId, "user", message);
+      this.conversations.storeMessage(conversationId, userId, "user", message);
     }
 
     let response = await this.streamMessage(
@@ -128,7 +132,7 @@ export class LLMClient implements IChatEngine {
 
     // 6. Store assistant response in conversation history
     if (conversationId && responseText) {
-      this.memory.storeMessage(conversationId, userId, "assistant", responseText);
+      this.conversations.storeMessage(conversationId, userId, "assistant", responseText);
     }
 
     // 7. Extract and store new facts (async, don't block response)

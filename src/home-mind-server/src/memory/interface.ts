@@ -1,11 +1,11 @@
 /**
  * Memory Store Interface
  *
- * Common interface for memory backends (SQLite, Shodh, etc.)
- * All methods return Promises for consistency across sync/async backends.
+ * Common interface for long-term fact/memory backends (Shodh, etc.)
+ * Conversation history is handled separately by IConversationStore.
  */
 
-import type { Fact, FactCategory, ConversationMessage } from "./types.js";
+import type { Fact, FactCategory } from "./types.js";
 
 export interface IMemoryStore {
   // Fact operations
@@ -36,22 +36,7 @@ export interface IMemoryStore {
   clearUserFacts(userId: string): Promise<number>;
   getFactCount(userId: string): Promise<number>;
 
-  // User tracking
-  getKnownUsers(): string[];
-
-  // Conversation history
-  storeMessage(
-    conversationId: string,
-    userId: string,
-    role: "user" | "assistant",
-    content: string
-  ): string;
-  getConversationHistory(
-    conversationId: string,
-    limit?: number
-  ): ConversationMessage[];
-  cleanupOldConversations(hoursOld?: number): number;
-
   // Lifecycle
+  isHealthy(): Promise<boolean>;
   close(): void;
 }

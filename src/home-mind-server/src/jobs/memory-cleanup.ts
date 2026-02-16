@@ -6,6 +6,7 @@
  */
 
 import type { IMemoryStore } from "../memory/interface.js";
+import type { IConversationStore } from "../memory/types.js";
 import { matchesGarbagePattern } from "../memory/fact-patterns.js";
 
 export interface CleanupResult {
@@ -21,6 +22,7 @@ export class MemoryCleanupJob {
 
   constructor(
     private memory: IMemoryStore,
+    private conversations: IConversationStore,
     private intervalHours: number
   ) {}
 
@@ -65,7 +67,7 @@ export class MemoryCleanupJob {
   }
 
   async runOnce(): Promise<CleanupResult> {
-    const users = this.memory.getKnownUsers();
+    const users = this.conversations.getKnownUsers();
     const result: CleanupResult = {
       usersProcessed: 0,
       factsAnalyzed: 0,
@@ -101,7 +103,7 @@ export class MemoryCleanupJob {
 
     // Clean up stale conversations
     try {
-      result.conversationsDeleted = this.memory.cleanupOldConversations();
+      result.conversationsDeleted = await this.conversations.cleanupOldConversations();
     } catch (err) {
       console.error("[cleanup] Failed to clean old conversations:", err);
     }

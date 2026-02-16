@@ -32,6 +32,10 @@ const ConfigSchema = z
     memoryTokenLimit: z.coerce.number().default(1500),
     memoryCleanupIntervalHours: z.coerce.number().min(0).default(6),
 
+    // Conversation history
+    conversationStorage: z.enum(["memory", "sqlite"]).default("memory"),
+    conversationDbPath: z.string().default("/data/conversations.db"),
+
     // Custom prompt
     customPrompt: z.string().optional(),
   })
@@ -75,6 +79,8 @@ export function loadConfig(): Config {
     shodhApiKey: process.env.SHODH_API_KEY,
     memoryTokenLimit: process.env.MEMORY_TOKEN_LIMIT,
     memoryCleanupIntervalHours: emptyToUndefined(process.env.MEMORY_CLEANUP_INTERVAL_HOURS),
+    conversationStorage: emptyToUndefined(process.env.CONVERSATION_STORAGE),
+    conversationDbPath: emptyToUndefined(process.env.CONVERSATION_DB_PATH),
     customPrompt: emptyToUndefined(process.env.CUSTOM_PROMPT),
   });
 

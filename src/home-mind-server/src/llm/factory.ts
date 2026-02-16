@@ -1,5 +1,6 @@
 import type { Config } from "../config.js";
 import type { IMemoryStore } from "../memory/interface.js";
+import type { IConversationStore } from "../memory/types.js";
 import { HomeAssistantClient } from "../ha/client.js";
 import type { IChatEngine, IFactExtractor } from "./interface.js";
 import { LLMClient } from "./client.js";
@@ -10,12 +11,13 @@ import { OpenAIFactExtractor } from "../memory/openai-extractor.js";
 export function createChatEngine(
   config: Config,
   memory: IMemoryStore,
+  conversations: IConversationStore,
   extractor: IFactExtractor,
   ha: HomeAssistantClient
 ): IChatEngine {
   switch (config.llmProvider) {
     case "openai":
-      return new OpenAIChatEngine(config, memory, extractor, ha);
+      return new OpenAIChatEngine(config, memory, conversations, extractor, ha);
     case "ollama":
       return new OpenAIChatEngine(
         {
@@ -24,11 +26,12 @@ export function createChatEngine(
           openaiBaseUrl: config.ollamaBaseUrl ?? "http://localhost:11434/v1",
         },
         memory,
+        conversations,
         extractor,
         ha
       );
     case "anthropic":
-      return new LLMClient(config, memory, extractor, ha);
+      return new LLMClient(config, memory, conversations, extractor, ha);
   }
 }
 

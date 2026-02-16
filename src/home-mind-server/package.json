@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
+    "better-sqlite3": "^12.6.2",
     "dotenv": "^17.2.3",
     "express": "^4.21.0",
     "openai": "^6.18.0",
@@ -24,6 +25,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
     "@types/uuid": "^10.0.0",

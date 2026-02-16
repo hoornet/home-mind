@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import type { Config } from "../config.js";
 import type { IMemoryStore } from "../memory/interface.js";
+import type { IConversationStore } from "../memory/types.js";
 import { HomeAssistantClient } from "../ha/client.js";
 import { buildSystemPromptText } from "./prompts.js";
 import { TOOL_DEFINITIONS, toOpenAITools } from "./tool-definitions.js";
@@ -20,6 +21,7 @@ const OPENAI_TOOLS = toOpenAITools(TOOL_DEFINITIONS);
 export class OpenAIChatEngine implements IChatEngine {
   private client: OpenAI;
   private memory: IMemoryStore;
+  private conversations: IConversationStore;
   private extractor: IFactExtractor;
   private ha: HomeAssistantClient;
   private config: Config;
@@ -27,6 +29,7 @@ export class OpenAIChatEngine implements IChatEngine {
   constructor(
     config: Config,
     memory: IMemoryStore,
+    conversations: IConversationStore,
     extractor: IFactExtractor,
     ha: HomeAssistantClient
   ) {
@@ -36,6 +39,7 @@ export class OpenAIChatEngine implements IChatEngine {
       baseURL: config.openaiBaseUrl,
     });
     this.memory = memory;
+    this.conversations = conversations;
     this.extractor = extractor;
     this.ha = ha;
   }
@@ -64,7 +68,7 @@ export class OpenAIChatEngine implements IChatEngine {
     ];
 
     if (conversationId) {
-      const history = this.memory.getConversationHistory(conversationId, 10);
+      const history = await this.conversations.getConversationHistory(conversationId, 10);
       for (const msg of history) {
         messages.push({ role: msg.role, content: msg.content });
       }
@@ -74,7 +78,7 @@ export class OpenAIChatEngine implements IChatEngine {
     messages.push({ role: "user", content: message });
 
     if (conversationId) {
-      this.memory.storeMessage(conversationId, userId, "user", message);
+      this.conversations.storeMessage(conversationId, userId, "user", message);
     }
 
     // 5. Stream and handle tool call loop
@@ -111,7 +115,7 @@ export class OpenAIChatEngine implements IChatEngine {
 
     // 6. Store assistant response
     if (conversationId && responseText) {
-      this.memory.storeMessage(conversationId, userId, "assistant", responseText);
+      this.conversations.storeMessage(conversationId, userId, "assistant", responseText);
     }
 
     // 7. Extract and store facts (fire-and-forget)

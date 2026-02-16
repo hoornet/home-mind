@@ -14,7 +14,7 @@ HA Assist (Voice/Text) → HA Custom Component (Python) → Home Mind Server (Ex
 
 1. Load user's facts from Shodh via semantic search (query = current message)
 2. Build system prompt: static part (cached via `cache_control: ephemeral` for Anthropic, plain string for OpenAI) + dynamic part (facts + datetime)
-3. Load conversation history from in-memory Map (keyed by conversationId)
+3. Load conversation history from `IConversationStore` (keyed by conversationId)
 4. Stream response with tool loop (parallel tool execution)
 5. Fire-and-forget fact extraction (extracts facts, replaces conflicting old ones)
 6. Return response to caller
@@ -29,7 +29,7 @@ Provider is selected at startup by `llm/factory.ts` based on `LLM_PROVIDER` conf
 ### Memory Architecture
 
 - **Long-term facts**: Shodh Memory (external service, semantic search, Hebbian learning, natural decay)
-- **Conversation history**: In-memory `Map<string, ConversationMessage[]>` in ShodhMemoryStore (lost on restart, max 20 messages/conversation)
+- **Conversation history**: `IConversationStore` with two backends: `InMemoryConversationStore` (default, lost on restart) and `SqliteConversationStore` (persistent via `better-sqlite3`). Controlled by `CONVERSATION_STORAGE` env var (`memory` | `sqlite`). Max 20 messages/conversation.
 - **Entity cache**: 10-second TTL in HomeAssistantClient (invalidated after service calls)
 - **Fact categories**: baseline, preference, identity, device, pattern, correction
 - **Smart replacement**: Extractor identifies existing facts that new facts supersede (via `replaces` field)
@@ -122,7 +122,7 @@ LLM config:
 - `OPENAI_BASE_URL` — optional, for OpenAI-compatible APIs (Azure, local proxies)
 - `OLLAMA_BASE_URL` — optional, Ollama API endpoint (default: `http://localhost:11434/v1`)
 
-Optional: `PORT` (default 3100), `HA_SKIP_TLS_VERIFY`, `MEMORY_TOKEN_LIMIT` (default 1500), `LOG_LEVEL`, `CUSTOM_PROMPT` (server-level default custom system prompt), `TZ` (timezone for the Docker container, default `Europe/Prague` in docker-compose; Node.js uses this for `toLocaleString()` so the LLM sees correct local time)
+Optional: `PORT` (default 3100), `HA_SKIP_TLS_VERIFY`, `MEMORY_TOKEN_LIMIT` (default 1500), `LOG_LEVEL`, `CONVERSATION_STORAGE` (`memory` | `sqlite`, default `memory`), `CONVERSATION_DB_PATH` (default `/data/conversations.db`, only used when `CONVERSATION_STORAGE=sqlite`), `CUSTOM_PROMPT` (server-level default custom system prompt), `TZ` (timezone for the Docker container, default `Europe/Prague` in docker-compose; Node.js uses this for `toLocaleString()` so the LLM sees correct local time)
 
 Integration tests: `SHODH_TEST_URL`, `SHODH_TEST_API_KEY`
 
@@ -147,6 +147,6 @@ HA custom component installed via HACS from `https://github.com/hoornet/home-min
 ## Known Limitations
 
 - Single-user only (multi-user via OIDC planned)
-- Conversation history lost on server restart (in-memory only)
+- Conversation history lost on server restart by default (set `CONVERSATION_STORAGE=sqlite` for persistence)
 - Both chat and extraction use the same model (configured via `LLM_MODEL`)
 - Fact extraction sometimes stores transient state or LLM hallucinations (improvement planned)

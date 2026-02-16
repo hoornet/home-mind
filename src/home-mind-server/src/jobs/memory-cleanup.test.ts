@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryCleanupJob } from "./memory-cleanup.js";
 import type { IMemoryStore } from "../memory/interface.js";
+import type { IConversationStore } from "../memory/types.js";
 import type { Fact } from "../memory/types.js";
 
 function makeFact(overrides: Partial<Fact> & { id: string; content: string }): Fact {
@@ -17,14 +18,13 @@ function makeFact(overrides: Partial<Fact> & { id: string; content: string }): F
 
 describe("MemoryCleanupJob", () => {
   let memory: IMemoryStore;
+  let conversations: IConversationStore;
 
   beforeEach(() => {
     vi.useFakeTimers();
     memory = {
-      getKnownUsers: vi.fn().mockReturnValue(["user-1"]),
       getFacts: vi.fn().mockResolvedValue([]),
       deleteFact: vi.fn().mockResolvedValue(true),
-      cleanupOldConversations: vi.fn().mockReturnValue(0),
       // Stubs for unused methods
       getFactsWithinTokenLimit: vi.fn(),
       addFact: vi.fn(),
@@ -33,10 +33,17 @@ describe("MemoryCleanupJob", () => {
       addFactIfNew: vi.fn(),
       clearUserFacts: vi.fn(),
       getFactCount: vi.fn(),
+      isHealthy: vi.fn(),
+      close: vi.fn(),
+    } as unknown as IMemoryStore;
+
+    conversations = {
+      getKnownUsers: vi.fn().mockReturnValue(["user-1"]),
+      cleanupOldConversations: vi.fn().mockReturnValue(0),
       storeMessage: vi.fn(),
       getConversationHistory: vi.fn(),
       close: vi.fn(),
-    } as unknown as IMemoryStore;
+    } as unknown as IConversationStore;
   });
 
   afterEach(() => {
@@ -54,7 +61,7 @@ describe("MemoryCleanupJob", () => {
     ];
     (memory.getFacts as ReturnType<typeof vi.fn>).mockResolvedValue(facts);
 
-    const job = new MemoryCleanupJob(memory, 6);
+    const job = new MemoryCleanupJob(memory, conversations, 6);
     const result = await job.runOnce();
 
     expect(result.usersProcessed).toBe(1);
@@ -68,20 +75,20 @@ describe("MemoryCleanupJob", () => {
   });
 
   it("interval=0 disables the job (start is no-op)", () => {
-    const job = new MemoryCleanupJob(memory, 0);
+    const job = new MemoryCleanupJob(memory, conversations, 0);
     job.start();
 
     // Advance past initial delay — nothing should happen
     vi.advanceTimersByTime(60_000);
-    expect(memory.getKnownUsers).not.toHaveBeenCalled();
+    expect(conversations.getKnownUsers).not.toHaveBeenCalled();
 
     job.stop();
   });
 
   it("handles empty user set as no-op", async () => {
-    (memory.getKnownUsers as ReturnType<typeof vi.fn>).mockReturnValue([]);
+    (conversations.getKnownUsers as ReturnType<typeof vi.fn>).mockReturnValue([]);
 
-    const job = new MemoryCleanupJob(memory, 6);
+    const job = new MemoryCleanupJob(memory, conversations, 6);
     const result = await job.runOnce();
 
     expect(result.usersProcessed).toBe(0);
@@ -91,12 +98,12 @@ describe("MemoryCleanupJob", () => {
   });
 
   it("calls cleanupOldConversations during each cycle", async () => {
-    (memory.cleanupOldConversations as ReturnType<typeof vi.fn>).mockReturnValue(5);
+    (conversations.cleanupOldConversations as ReturnType<typeof vi.fn>).mockReturnValue(5);
 
-    const job = new MemoryCleanupJob(memory, 6);
+    const job = new MemoryCleanupJob(memory, conversations, 6);
     const result = await job.runOnce();
 
-    expect(memory.cleanupOldConversations).toHaveBeenCalled();
+    expect(conversations.cleanupOldConversations).toHaveBeenCalled();
     expect(result.conversationsDeleted).toBe(5);
   });
 
@@ -106,30 +113,30 @@ describe("MemoryCleanupJob", () => {
     ];
     (memory.getFacts as ReturnType<typeof vi.fn>).mockResolvedValue(facts);
 
-    const job = new MemoryCleanupJob(memory, 6);
+    const job = new MemoryCleanupJob(memory, conversations, 6);
     job.start();
 
     // Before 30s — nothing runs
-    expect(memory.getKnownUsers).not.toHaveBeenCalled();
+    expect(conversations.getKnownUsers).not.toHaveBeenCalled();
 
     // Advance past initial delay
     await vi.advanceTimersByTimeAsync(30_000);
 
-    expect(memory.getKnownUsers).toHaveBeenCalled();
+    expect(conversations.getKnownUsers).toHaveBeenCalled();
     expect(memory.getFacts).toHaveBeenCalledWith("user-1");
 
     job.stop();
   });
 
   it("continues processing remaining users when one fails", async () => {
-    (memory.getKnownUsers as ReturnType<typeof vi.fn>).mockReturnValue(["user-fail", "user-ok"]);
+    (conversations.getKnownUsers as ReturnType<typeof vi.fn>).mockReturnValue(["user-fail", "user-ok"]);
     (memory.getFacts as ReturnType<typeof vi.fn>)
       .mockRejectedValueOnce(new Error("Shodh timeout"))
       .mockResolvedValueOnce([
         makeFact({ id: "good-1", userId: "user-ok", content: "User prefers dim lights in bedroom" }),
       ]);
 
-    const job = new MemoryCleanupJob(memory, 6);
+    const job = new MemoryCleanupJob(memory, conversations, 6);
     const result = await job.runOnce();
 
     // user-fail failed, user-ok succeeded

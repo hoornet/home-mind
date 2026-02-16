@@ -51,8 +51,12 @@ services:
       - SHODH_URL=http://shodh:3030
       - SHODH_API_KEY=${SHODH_API_KEY}
       - MEMORY_TOKEN_LIMIT=${MEMORY_TOKEN_LIMIT:-1500}
+      - CONVERSATION_STORAGE=${CONVERSATION_STORAGE:-memory}
+      - CONVERSATION_DB_PATH=/data/conversations.db
       - CUSTOM_PROMPT=${CUSTOM_PROMPT:-}
       - TZ=${TZ:-Europe/Prague}
+    volumes:
+      - conversation_data:/data
     depends_on:
       shodh:
         condition: service_healthy
@@ -69,6 +73,8 @@ volumes:
   shodh_data:
     driver: local
   shodh_cache:
+    driver: local
+  conversation_data:
     driver: local
 
 networks:

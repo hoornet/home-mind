@@ -556,42 +556,6 @@ describe("ShodhMemoryStore", () => {
     });
   });
 
-  describe("conversation history (in-memory)", () => {
-    it("stores and retrieves messages", () => {
-      store.storeMessage("conv-1", "user-1", "user", "Hello");
-      store.storeMessage("conv-1", "user-1", "assistant", "Hi there!");
-
-      const history = store.getConversationHistory("conv-1");
-
-      expect(history).toHaveLength(2);
-      expect(history[0].content).toBe("Hello");
-      expect(history[1].content).toBe("Hi there!");
-    });
-
-    it("limits history to last N messages", () => {
-      for (let i = 0; i < 5; i++) {
-        store.storeMessage("conv-1", "user-1", "user", `Message ${i}`);
-      }
-
-      const history = store.getConversationHistory("conv-1", 3);
-
-      expect(history).toHaveLength(3);
-      expect(history[0].content).toBe("Message 2");
-      expect(history[2].content).toBe("Message 4");
-    });
-
-    it("keeps only last 20 messages per conversation", () => {
-      for (let i = 0; i < 25; i++) {
-        store.storeMessage("conv-1", "user-1", "user", `Message ${i}`);
-      }
-
-      const history = store.getConversationHistory("conv-1", 100);
-
-      expect(history).toHaveLength(20);
-      expect(history[0].content).toBe("Message 5");
-      expect(history[19].content).toBe("Message 24");
-    });
-  });
 });
 
 describe("Integration tests (requires running Shodh)", () => {
