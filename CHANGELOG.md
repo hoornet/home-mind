@@ -2,6 +2,15 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.12.0] - 2026-02-17
+
+### Added
+- **Persistent conversation history** — SQLite-backed conversation storage that survives server restarts. Set `CONVERSATION_STORAGE=sqlite` to enable. Max 20 messages per conversation with automatic trimming. In-memory mode remains the default.
+- **Memory cleanup job** — runs every 6 hours, removes low-confidence facts and common LLM extraction artifacts (transient states, too-short facts). Pattern-based filtering in `fact-patterns.ts`.
+
+### Removed
+- `wiki-drafts/` directory — wiki is now published on GitHub
+
 ## [0.11.2] - 2026-02-15
 
 ### Fixed

@@ -1,7 +1,7 @@
 # Home Mind
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/Version-0.11.1-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.12.0-brightgreen.svg)]()
 [![Status](https://img.shields.io/badge/Status-Voice%20Working-success.svg)]()
 
 AI assistant for Home Assistant with cognitive memory. Adds learning capabilities, persistent memory, and voice control to your smart home.
@@ -177,7 +177,7 @@ In those tools, the system prompt **is** the entire system prompt — you contro
 
 ## Project Status
 
-**Current Version:** v0.11.0
+**Current Version:** v0.12.0
 
 - [x] Voice control via HA Assist
 - [x] Cognitive memory with Shodh
@@ -186,11 +186,14 @@ In those tools, the system prompt **is** the entire system prompt — you contro
 - [x] Multi-LLM provider support (Anthropic, OpenAI, Ollama)
 - [x] Local inference via Ollama (no API key needed)
 - [x] Custom system prompt (AI personality customization)
+- [x] Persistent conversation history (SQLite)
+- [x] Automatic memory cleanup (low-confidence fact pruning)
 - [ ] Multi-user support (OIDC)
 - [ ] HA Add-on packaging
 
 ## Documentation
 
+- [Wiki](https://github.com/hoornet/home-mind/wiki) - Full documentation
 - [CHANGELOG.md](CHANGELOG.md) - Version history
 - [CLAUDE.md](CLAUDE.md) - Development guide
 - [docs/MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) - Memory system examples
