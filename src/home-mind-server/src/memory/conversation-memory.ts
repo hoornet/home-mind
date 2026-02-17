@@ -4,7 +4,7 @@
  * Conversations are lost on server restart.
  */
 
-import type { ConversationMessage, IConversationStore } from "./types.js";
+import type { ConversationMessage, ConversationSummary, IConversationStore } from "./types.js";
 
 export class InMemoryConversationStore implements IConversationStore {
   private conversations = new Map<string, ConversationMessage[]>();
@@ -43,6 +43,36 @@ export class InMemoryConversationStore implements IConversationStore {
   ): ConversationMessage[] {
     const messages = this.conversations.get(conversationId) || [];
     return messages.slice(-limit);
+  }
+
+  listConversations(userId: string): ConversationSummary[] {
+    const results: ConversationSummary[] = [];
+
+    for (const [convId, messages] of this.conversations.entries()) {
+      // Only include conversations belonging to this user
+      const userMessages = messages.filter((m) => m.userId === userId);
+      if (userMessages.length === 0) continue;
+
+      const lastMsg = userMessages[userMessages.length - 1];
+      results.push({
+        conversationId: convId,
+        lastMessage: lastMsg.content,
+        lastMessageAt: lastMsg.createdAt,
+        messageCount: messages.length,
+      });
+    }
+
+    // Sort by most recent first
+    results.sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime());
+    return results;
+  }
+
+  deleteConversation(conversationId: string): number {
+    const messages = this.conversations.get(conversationId);
+    if (!messages) return 0;
+    const count = messages.length;
+    this.conversations.delete(conversationId);
+    return count;
   }
 
   getKnownUsers(): string[] {

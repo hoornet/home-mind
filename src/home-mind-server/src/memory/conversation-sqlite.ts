@@ -5,7 +5,7 @@
  */
 
 import Database from "better-sqlite3";
-import type { ConversationMessage, IConversationStore } from "./types.js";
+import type { ConversationMessage, ConversationSummary, IConversationStore } from "./types.js";
 
 export class SqliteConversationStore implements IConversationStore {
   private db: Database.Database;
@@ -29,6 +29,7 @@ export class SqliteConversationStore implements IConversationStore {
       );
       CREATE INDEX IF NOT EXISTS idx_messages_conv_id ON messages(conversation_id);
       CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
+      CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages(user_id);
     `);
   }
 
@@ -87,6 +88,43 @@ export class SqliteConversationStore implements IConversationStore {
       content: row.content,
       createdAt: new Date(row.created_at),
     }));
+  }
+
+  listConversations(userId: string): ConversationSummary[] {
+    const rows = this.db.prepare(
+      `SELECT
+        m.conversation_id,
+        m.content AS last_message,
+        m.created_at AS last_message_at,
+        counts.cnt AS message_count
+      FROM messages m
+      JOIN (
+        SELECT conversation_id, COUNT(*) AS cnt, MAX(rowid) AS max_rowid
+        FROM messages
+        WHERE user_id = ?
+        GROUP BY conversation_id
+      ) counts ON m.conversation_id = counts.conversation_id AND m.rowid = counts.max_rowid
+      ORDER BY m.created_at DESC`
+    ).all(userId) as Array<{
+      conversation_id: string;
+      last_message: string;
+      last_message_at: string;
+      message_count: number;
+    }>;
+
+    return rows.map((row) => ({
+      conversationId: row.conversation_id,
+      lastMessage: row.last_message,
+      lastMessageAt: new Date(row.last_message_at),
+      messageCount: row.message_count,
+    }));
+  }
+
+  deleteConversation(conversationId: string): number {
+    const result = this.db.prepare(
+      `DELETE FROM messages WHERE conversation_id = ?`
+    ).run(conversationId);
+    return result.changes;
   }
 
   getKnownUsers(): string[] {

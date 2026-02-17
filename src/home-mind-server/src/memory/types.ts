@@ -33,6 +33,13 @@ export interface ConversationMessage {
   createdAt: Date;
 }
 
+export interface ConversationSummary {
+  conversationId: string;
+  lastMessage: string;
+  lastMessageAt: Date;
+  messageCount: number;
+}
+
 export interface IConversationStore {
   storeMessage(
     conversationId: string,
@@ -44,6 +51,10 @@ export interface IConversationStore {
     conversationId: string,
     limit?: number
   ): ConversationMessage[] | Promise<ConversationMessage[]>;
+  listConversations(
+    userId: string
+  ): ConversationSummary[] | Promise<ConversationSummary[]>;
+  deleteConversation(conversationId: string): number | Promise<number>;
   getKnownUsers(): string[];
   cleanupOldConversations(hoursOld?: number): number | Promise<number>;
   close(): void;
