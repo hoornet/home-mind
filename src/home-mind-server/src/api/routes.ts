@@ -1,7 +1,12 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
+import multer from "multer";
 import type { IChatEngine } from "../llm/interface.js";
 import type { IMemoryStore } from "../memory/interface.js";
+import type { IConversationStore } from "../memory/types.js";
+import type { ISttService } from "../stt/stt-service.js";
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
 
 // Request validation schemas
 const ChatRequestSchema = z.object({
@@ -29,7 +34,9 @@ export function createRouter(
   memory: IMemoryStore,
   memoryBackend: "sqlite" | "shodh" = "sqlite",
   version: string = "0.0.0",
-  defaultCustomPrompt?: string
+  defaultCustomPrompt?: string,
+  conversations?: IConversationStore,
+  stt?: ISttService
 ): Router {
   const router = Router();
 
@@ -195,6 +202,97 @@ export function createRouter(
       }
     }
   );
+
+  /**
+   * GET /api/conversations/:userId
+   * List all conversations for a user
+   */
+  router.get("/conversations/:userId", async (req: Request, res: Response) => {
+    if (!conversations) {
+      return res.status(501).json({ error: "Conversation store not available" });
+    }
+
+    try {
+      const userId = req.params.userId as string;
+      const list = await conversations.listConversations(userId);
+      res.json(list);
+    } catch (error) {
+      console.error("List conversations error:", error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ error: message });
+    }
+  });
+
+  /**
+   * GET /api/conversations/:userId/:conversationId
+   * Get full conversation history
+   */
+  router.get("/conversations/:userId/:conversationId", async (req: Request, res: Response) => {
+    if (!conversations) {
+      return res.status(501).json({ error: "Conversation store not available" });
+    }
+
+    try {
+      const conversationId = req.params.conversationId as string;
+      const messages = await conversations.getConversationHistory(conversationId, 20);
+      res.json({ conversationId, messages });
+    } catch (error) {
+      console.error("Get conversation error:", error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ error: message });
+    }
+  });
+
+  /**
+   * DELETE /api/conversations/:userId/:conversationId
+   * Delete a conversation
+   */
+  router.delete("/conversations/:userId/:conversationId", async (req: Request, res: Response) => {
+    if (!conversations) {
+      return res.status(501).json({ error: "Conversation store not available" });
+    }
+
+    try {
+      const conversationId = req.params.conversationId as string;
+      const deleted = await conversations.deleteConversation(conversationId);
+
+      if (deleted > 0) {
+        res.json({ message: `Deleted ${deleted} messages`, deleted });
+      } else {
+        res.status(404).json({ error: "Conversation not found" });
+      }
+    } catch (error) {
+      console.error("Delete conversation error:", error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ error: message });
+    }
+  });
+
+  /**
+   * POST /api/stt
+   * Transcribe audio to text using Whisper (HomeMind App only).
+   * Accepts multipart/form-data with an "audio" field.
+   * Returns 501 when STT_PROVIDER is not configured.
+   */
+  router.post("/stt", upload.single("audio"), async (req: Request, res: Response) => {
+    if (!stt) {
+      return res.status(501).json({ error: "STT is not enabled on this server" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No audio file provided (field name: audio)" });
+    }
+
+    try {
+      const { buffer, mimetype, originalname } = req.file;
+      const text = await stt.transcribe(buffer, mimetype, originalname || "audio.webm");
+      res.json({ text });
+    } catch (error) {
+      console.error("STT error:", error);
+      const message = error instanceof Error ? error.message : "Transcription failed";
+      res.status(500).json({ error: message });
+    }
+  });
 
   /**
    * GET /api/health

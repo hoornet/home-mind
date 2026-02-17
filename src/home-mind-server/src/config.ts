@@ -38,6 +38,16 @@ const ConfigSchema = z
 
     // Custom prompt
     customPrompt: z.string().optional(),
+
+    // App / API access
+    corsOrigins: z.string().optional(), // Comma-separated origins, e.g. "http://localhost:5173,https://app.example.com"
+    apiToken: z.string().optional(), // Bearer token for API auth (when unset, no auth enforced)
+
+    // Speech-to-text (for HomeMind App)
+    sttProvider: z.enum(["openai", "none"]).default("none"),
+    sttApiKey: z.string().optional(), // Overrides openaiApiKey for STT; falls back to openaiApiKey if unset
+    sttBaseUrl: z.string().url().optional(), // Custom Whisper-compatible endpoint
+    sttModel: z.string().default("whisper-1"),
   })
   .superRefine((data, ctx) => {
     if (data.llmProvider === "anthropic" && !data.anthropicApiKey) {
@@ -82,6 +92,12 @@ export function loadConfig(): Config {
     conversationStorage: emptyToUndefined(process.env.CONVERSATION_STORAGE),
     conversationDbPath: emptyToUndefined(process.env.CONVERSATION_DB_PATH),
     customPrompt: emptyToUndefined(process.env.CUSTOM_PROMPT),
+    corsOrigins: emptyToUndefined(process.env.CORS_ORIGINS),
+    apiToken: emptyToUndefined(process.env.API_TOKEN),
+    sttProvider: emptyToUndefined(process.env.STT_PROVIDER),
+    sttApiKey: emptyToUndefined(process.env.STT_API_KEY),
+    sttBaseUrl: emptyToUndefined(process.env.STT_BASE_URL),
+    sttModel: emptyToUndefined(process.env.STT_MODEL),
   });
 
   if (!result.success) {

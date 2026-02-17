@@ -54,6 +54,12 @@ services:
       - CONVERSATION_STORAGE=${CONVERSATION_STORAGE:-memory}
       - CONVERSATION_DB_PATH=/data/conversations.db
       - CUSTOM_PROMPT=${CUSTOM_PROMPT:-}
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
+      - API_TOKEN=${API_TOKEN:-}
+      - STT_PROVIDER=${STT_PROVIDER:-none}
+      - STT_API_KEY=${STT_API_KEY:-}
+      - STT_BASE_URL=${STT_BASE_URL:-}
+      - STT_MODEL=${STT_MODEL:-}
       - TZ=${TZ:-Europe/Prague}
     volumes:
       - conversation_data:/data

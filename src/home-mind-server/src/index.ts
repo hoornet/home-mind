@@ -1,7 +1,9 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import { createRequire } from "module";
 import { loadConfig } from "./config.js";
+import { createAuthMiddleware } from "./api/auth.js";
 
 // Read version from package.json
 const require = createRequire(import.meta.url);
@@ -11,6 +13,7 @@ import { createConversationStore } from "./memory/conversation-factory.js";
 import { HomeAssistantClient } from "./ha/client.js";
 import { createChatEngine, createFactExtractor } from "./llm/factory.js";
 import { createRouter } from "./api/routes.js";
+import { createSttService } from "./stt/stt-service.js";
 import { MemoryCleanupJob } from "./jobs/memory-cleanup.js";
 
 // Load configuration
@@ -48,9 +51,29 @@ console.log(`  Home Assistant: ${config.haUrl}`);
 const llm = createChatEngine(config, memory, conversations, extractor, ha);
 console.log(`  LLM client: ${config.llmProvider}/${config.llmModel}`);
 
+// Initialize STT (optional — only when STT_PROVIDER is set)
+const stt = createSttService(config);
+if (stt) {
+  console.log(`  STT: ${config.sttProvider} / ${config.sttModel}`);
+} else {
+  console.log("  STT: disabled");
+}
+
 // Create Express app
 const app = express();
+
+// CORS middleware (only when CORS_ORIGINS is configured)
+if (config.corsOrigins) {
+  const origins = config.corsOrigins.split(",").map((o) => o.trim());
+  app.use(cors({ origin: origins, credentials: true }));
+  console.log(`  CORS: ${origins.join(", ")}`);
+}
+
 app.use(express.json());
+
+// API token auth (only when API_TOKEN is configured)
+const authMiddleware = createAuthMiddleware(config.apiToken);
+app.use("/api", authMiddleware);
 
 // Add request logging
 app.use((req, res, next) => {
@@ -63,7 +86,7 @@ app.use((req, res, next) => {
 });
 
 // Mount API routes
-app.use("/api", createRouter(llm, memory, "shodh", version, config.customPrompt));
+app.use("/api", createRouter(llm, memory, "shodh", version, config.customPrompt, conversations, stt ?? undefined));
 
 // Root endpoint
 app.get("/", (_req, res) => {
