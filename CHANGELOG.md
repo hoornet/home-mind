@@ -2,6 +2,20 @@
 
 All notable changes to Home Mind are documented here.
 
+## [Unreleased]
+
+### Added
+- **Admin conversations endpoint** — `GET /api/admin/conversations` returns all known users and their conversation summaries in one call. Useful for reviewing stored conversations without screenshots. Auth-protected via existing bearer token middleware.
+
+### Fixed
+- **LLM tool narration** — LLM was outputting "Let me search...", "I found...", "Done!" text between tool calls which got concatenated into messy responses. Added explicit no-narration rule to both chat and voice prompt variants.
+
+### App (home-mind-app)
+- **Markdown rendering** — assistant messages now render bold, lists, code blocks, headings etc. via `react-markdown` + `@tailwindcss/typography`. User messages stay as plain text.
+- **Persistent login** — app auto-configures on first install without showing the setup screen. Set `VITE_DEFAULT_SERVER_URL` (and optionally `VITE_DEFAULT_API_TOKEN`) in `.env.local` before building. Settings are still saved to `localStorage` after first load, so subsequent installs on the same device skip setup entirely.
+
+---
+
 ## [0.12.0] - 2026-02-17
 
 ### Added
