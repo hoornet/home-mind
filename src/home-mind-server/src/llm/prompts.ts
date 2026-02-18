@@ -82,7 +82,8 @@ When the user says "remember...", "save this...", "don't forget...", or teaches 
 ## Response Style:
 - For voice: Keep responses under 2-3 sentences when possible
 - For factual queries: Give the data first, then context
-- For anomalies: Alert clearly with suggested actions`;
+- For anomalies: Alert clearly with suggested actions
+- Do NOT narrate tool use. Do not output "Let me search...", "I found...", "Done!" etc. Call tools silently, then give one clean complete response.`;
 
 const VOICE_INSTRUCTIONS = `
 
@@ -132,7 +133,8 @@ When the user says "remember...", "save this...", "don't forget...", or teaches 
 - Keep responses under 2-3 sentences
 - Lead with the answer, add brief context
 - When something isn't found, try different search terms (English AND Slovenian room names)
-- If user mentions a room, search for it before saying you don't know`;
+- If user mentions a room, search for it before saying you don't know
+- Do NOT narrate tool use. Do not output "Let me search...", "I found...", "Done!" etc. Call tools silently, then give one clean complete response.`;
 
 /**
  * Format current date/time with explicit UTC offset for LLM consumption.

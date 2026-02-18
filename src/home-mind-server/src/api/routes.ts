@@ -204,6 +204,31 @@ export function createRouter(
   );
 
   /**
+   * GET /api/admin/conversations
+   * Admin endpoint: lists all known users and their conversation summaries.
+   */
+  router.get("/admin/conversations", async (_req: Request, res: Response) => {
+    if (!conversations) {
+      return res.status(501).json({ error: "Conversation store not available" });
+    }
+
+    try {
+      const users = conversations.getKnownUsers();
+      const result = await Promise.all(
+        users.map(async (userId) => ({
+          userId,
+          conversations: await conversations!.listConversations(userId),
+        }))
+      );
+      res.json(result);
+    } catch (error) {
+      console.error("Admin conversations error:", error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ error: message });
+    }
+  });
+
+  /**
    * GET /api/conversations/:userId
    * List all conversations for a user
    */
