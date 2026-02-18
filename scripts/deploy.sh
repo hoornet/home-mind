@@ -49,14 +49,18 @@ if [ ! -f "$SHODH_BINARY" ]; then
     fi
 fi
 
-# Clone or update HomeMind App repo (sibling directory)
+# Ensure HomeMind App source is present (sibling directory)
 APP_DIR="$(dirname "$PROJECT_DIR")/home-mind-app"
 if [ -d "$APP_DIR/.git" ]; then
     echo "Updating home-mind-app..."
     git -C "$APP_DIR" pull
+elif [ -d "$APP_DIR" ]; then
+    echo "Using existing home-mind-app directory"
 else
-    echo "Cloning home-mind-app..."
-    git clone git@github.com:hoornet/home-mind-app.git "$APP_DIR"
+    echo "ERROR: home-mind-app not found at $APP_DIR"
+    echo "Sync it from your dev machine first:"
+    echo "  rsync -a --exclude node_modules --exclude dist ~/projects/home-mind-app/ ubuntuserver:~/home-mind-app/"
+    exit 1
 fi
 
 echo "Building and starting containers..."
