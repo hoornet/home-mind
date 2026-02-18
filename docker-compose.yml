@@ -28,6 +28,20 @@ services:
     networks:
       - home-mind
 
+  # Home Mind App - PWA frontend
+  app:
+    build:
+      context: ../home-mind-app
+      args:
+        VITE_DEFAULT_SERVER_URL: ${VITE_DEFAULT_SERVER_URL:-}
+        VITE_DEFAULT_API_TOKEN: ${VITE_DEFAULT_API_TOKEN:-}
+    container_name: home-mind-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-4174}:80"
+    networks:
+      - home-mind
+
   # Home Mind Server - API server
   server:
     build:
