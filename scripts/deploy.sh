@@ -56,7 +56,7 @@ if [ -d "$APP_DIR/.git" ]; then
     git -C "$APP_DIR" pull
 else
     echo "Cloning home-mind-app..."
-    git clone https://github.com/hoornet/home-mind-app "$APP_DIR"
+    git clone git@github.com:hoornet/home-mind-app.git "$APP_DIR"
 fi
 
 echo "Building and starting containers..."
