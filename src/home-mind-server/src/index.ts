@@ -49,7 +49,15 @@ console.log(`  Fact extractor: ${config.llmProvider}/${config.llmModel}`);
 const ha = new HomeAssistantClient(config);
 console.log(`  Home Assistant: ${config.haUrl}`);
 
-const scanner = new DeviceScanner(ha);
+let deviceOverrides = {};
+if (config.deviceOverrides) {
+  try {
+    deviceOverrides = JSON.parse(config.deviceOverrides);
+  } catch {
+    console.warn("  ⚠ DEVICE_OVERRIDES is not valid JSON — ignored");
+  }
+}
+const scanner = new DeviceScanner(ha, 30 * 60 * 1000, deviceOverrides);
 await scanner.scan();
 console.log(`  ✓ Device scanner: ${scanner.getProfiles().length} light profiles loaded`);
 

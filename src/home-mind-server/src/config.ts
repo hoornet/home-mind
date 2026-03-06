@@ -39,6 +39,9 @@ const ConfigSchema = z
     // Custom prompt
     customPrompt: z.string().optional(),
 
+    // Per-entity device capability overrides (JSON, for devices with incorrect HA-reported modes)
+    deviceOverrides: z.string().optional(),
+
     // App / API access
     corsOrigins: z.string().optional(), // Comma-separated origins, e.g. "http://localhost:5173,https://app.example.com"
     apiToken: z.string().optional(), // Bearer token for API auth (when unset, no auth enforced)
@@ -92,6 +95,7 @@ export function loadConfig(): Config {
     conversationStorage: emptyToUndefined(process.env.CONVERSATION_STORAGE),
     conversationDbPath: emptyToUndefined(process.env.CONVERSATION_DB_PATH),
     customPrompt: emptyToUndefined(process.env.CUSTOM_PROMPT),
+    deviceOverrides: emptyToUndefined(process.env.DEVICE_OVERRIDES),
     corsOrigins: emptyToUndefined(process.env.CORS_ORIGINS),
     apiToken: emptyToUndefined(process.env.API_TOKEN),
     sttProvider: emptyToUndefined(process.env.STT_PROVIDER),

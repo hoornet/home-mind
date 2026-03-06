@@ -1,6 +1,18 @@
 import type { HomeAssistantClient, EntityState } from "./client.js";
 
 /**
+ * Per-entity overrides for when HA reports incorrect capabilities
+ * (e.g. Gledopto firmware always reports color_temp+xy regardless of wiring).
+ * Keys are entity IDs; values override auto-detected methods.
+ */
+export type DeviceOverride = {
+  whiteMethod?: "color_temp" | "rgbw" | "rgb_white" | "none";
+  colorMethod?: "rgb_color" | "xy_color" | "hs_color" | "none";
+};
+
+export type DeviceOverrides = Record<string, DeviceOverride>;
+
+/**
  * How to set white light on a specific device.
  * This is pre-computed from supported_color_modes + known device quirks.
  */
@@ -45,10 +57,12 @@ export class DeviceScanner {
   private profiles: Map<string, DeviceCapabilityProfile> = new Map();
   private lastScanTime: number = 0;
   private readonly scanIntervalMs: number;
+  private readonly overrides: DeviceOverrides;
 
-  constructor(ha: HomeAssistantClient, scanIntervalMs = 30 * 60 * 1000) {
+  constructor(ha: HomeAssistantClient, scanIntervalMs = 30 * 60 * 1000, overrides: DeviceOverrides = {}) {
     this.ha = ha;
     this.scanIntervalMs = scanIntervalMs;
+    this.overrides = overrides;
   }
 
   /**
@@ -175,8 +189,18 @@ export class DeviceScanner {
     const hasBrightness =
       modes.some((m) => ["brightness", "color_temp", "rgb", "rgbw", "rgbww", "xy", "hs", "white"].includes(m));
 
-    const whiteMethod = this.computeWhiteMethod(entity.entity_id, modes, attrs);
-    const colorMethod = this.computeColorMethod(modes);
+    let whiteMethod = this.computeWhiteMethod(entity.entity_id, modes, attrs);
+    let colorMethod = this.computeColorMethod(modes);
+
+    const override = this.overrides[entity.entity_id];
+    if (override) {
+      if (override.whiteMethod) {
+        whiteMethod = this.applyWhiteOverride(override.whiteMethod, attrs);
+      }
+      if (override.colorMethod) {
+        colorMethod = this.applyColorOverride(override.colorMethod);
+      }
+    }
 
     return {
       entityId: entity.entity_id,
@@ -219,6 +243,28 @@ export class DeviceScanner {
     }
 
     return { type: "none" };
+  }
+
+  private applyWhiteOverride(type: string, attrs: Record<string, unknown>): WhiteMethod {
+    switch (type) {
+      case "rgbw": return { type: "rgbw", value: [0, 0, 0, 255] };
+      case "rgb_white": return { type: "rgb_white", value: [255, 255, 255] };
+      case "color_temp": {
+        const min = (attrs.min_color_temp_kelvin as number) ?? 2000;
+        const max = (attrs.max_color_temp_kelvin as number) ?? 6500;
+        return { type: "color_temp", defaultKelvin: Math.round((min + max) / 2 / 100) * 100, minKelvin: min, maxKelvin: max };
+      }
+      default: return { type: "none" };
+    }
+  }
+
+  private applyColorOverride(type: string): ColorMethod {
+    switch (type) {
+      case "rgb_color": return { type: "rgb_color" };
+      case "xy_color": return { type: "xy_color" };
+      case "hs_color": return { type: "hs_color" };
+      default: return { type: "none" };
+    }
   }
 
   /**
