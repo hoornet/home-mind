@@ -4,6 +4,7 @@ import type { IMemoryStore } from "../memory/interface.js";
 import type { IConversationStore } from "../memory/types.js";
 import { HomeAssistantClient } from "../ha/client.js";
 import { DeviceScanner } from "../ha/device-scanner.js";
+import { TopologyScanner } from "../ha/topology-scanner.js";
 import { buildSystemPrompt, type CachedSystemPrompt } from "./prompts.js";
 import { HA_TOOLS } from "./tools.js";
 import { handleToolCall, extractAndStoreFacts } from "./tool-handler.js";
@@ -24,6 +25,7 @@ export class LLMClient implements IChatEngine {
   private extractor: IFactExtractor;
   private ha: HomeAssistantClient;
   private scanner: DeviceScanner;
+  private topology: TopologyScanner;
   private config: Config;
 
   constructor(
@@ -32,7 +34,8 @@ export class LLMClient implements IChatEngine {
     conversations: IConversationStore,
     extractor: IFactExtractor,
     ha: HomeAssistantClient,
-    scanner: DeviceScanner
+    scanner: DeviceScanner,
+    topology: TopologyScanner
   ) {
     this.config = config;
     this.anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
@@ -41,6 +44,7 @@ export class LLMClient implements IChatEngine {
     this.extractor = extractor;
     this.ha = ha;
     this.scanner = scanner;
+    this.topology = topology;
   }
 
   /**
@@ -62,12 +66,13 @@ export class LLMClient implements IChatEngine {
     );
     const factContents = facts.map((f) => f.content);
 
-    // 2. Refresh device profiles if stale, then build system prompt
-    await this.scanner.refreshIfStale();
+    // 2. Refresh device profiles and home layout if stale, then build system prompt
+    await Promise.all([this.scanner.refreshIfStale(), this.topology.refreshIfStale()]);
     const deviceCheatSheet = this.scanner.hasProfiles()
       ? this.scanner.formatCheatSheet()
       : undefined;
-    const systemPrompt = buildSystemPrompt(factContents, isVoice, customPrompt, deviceCheatSheet);
+    const homeLayout = this.topology.hasLayout() ? this.topology.formatSection() : undefined;
+    const systemPrompt = buildSystemPrompt(factContents, isVoice, customPrompt, deviceCheatSheet, homeLayout);
 
     // 3. Load conversation history if we have a conversationId
     const messages: Anthropic.MessageParam[] = [];

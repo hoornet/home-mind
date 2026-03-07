@@ -171,7 +171,8 @@ export function buildSystemPrompt(
   facts: string[],
   isVoice: boolean = false,
   customPrompt?: string,
-  deviceCheatSheet?: string
+  deviceCheatSheet?: string,
+  homeLayout?: string
 ): CachedSystemPrompt {
   const factsText =
     facts.length > 0 ? facts.map((f) => `- ${f}`).join("\n") : "No memories yet.";
@@ -187,6 +188,7 @@ export function buildSystemPrompt(
   const instructions = isVoice ? VOICE_INSTRUCTIONS : SYSTEM_INSTRUCTIONS;
 
   // Dynamic content that changes per request
+  const layoutSection = homeLayout ? `\n\n${homeLayout}` : "";
   const deviceSection = deviceCheatSheet ? `\n\n${deviceCheatSheet}` : "";
   const dynamicContent = `
 ## Current Context:
@@ -194,7 +196,7 @@ export function buildSystemPrompt(
 - ISO Timestamp: ${isoTimestamp}
 
 ## What You Remember About This User:
-${factsText}${deviceSection}`;
+${factsText}${layoutSection}${deviceSection}`;
 
   // Build content blocks: identity + instructions (cached) + dynamic
   const blocks: Anthropic.TextBlockParam[] = [
@@ -219,7 +221,8 @@ export function buildSystemPromptText(
   facts: string[],
   isVoice: boolean = false,
   customPrompt?: string,
-  deviceCheatSheet?: string
+  deviceCheatSheet?: string,
+  homeLayout?: string
 ): string {
   const factsText =
     facts.length > 0 ? facts.map((f) => `- ${f}`).join("\n") : "No memories yet.";
@@ -234,6 +237,7 @@ export function buildSystemPromptText(
 
   const instructions = isVoice ? VOICE_INSTRUCTIONS : SYSTEM_INSTRUCTIONS;
 
+  const layoutSection = homeLayout ? `\n\n${homeLayout}` : "";
   const deviceSection = deviceCheatSheet ? `\n\n${deviceCheatSheet}` : "";
 
   return `${identity}${instructions}
@@ -243,5 +247,5 @@ export function buildSystemPromptText(
 - ISO Timestamp: ${isoTimestamp}
 
 ## What You Remember About This User:
-${factsText}${deviceSection}`;
+${factsText}${layoutSection}${deviceSection}`;
 }

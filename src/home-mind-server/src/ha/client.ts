@@ -182,6 +182,28 @@ export class HomeAssistantClient {
   }
 
   /**
+   * Fetch the entity registry (entity → area assignments).
+   * Not cached — only called by TopologyScanner on its own schedule.
+   */
+  async getEntityRegistry(): Promise<unknown[]> {
+    return this.fetch<unknown[]>("/api/config/entity_registry/list");
+  }
+
+  /**
+   * Fetch the area registry (area → floor assignments).
+   */
+  async getAreaRegistry(): Promise<unknown[]> {
+    return this.fetch<unknown[]>("/api/config/area_registry/list");
+  }
+
+  /**
+   * Fetch the floor registry.
+   */
+  async getFloorRegistry(): Promise<unknown[]> {
+    return this.fetch<unknown[]>("/api/config/floor_registry/list");
+  }
+
+  /**
    * Get historical states for an entity (not cached - historical data)
    */
   async getHistory(
