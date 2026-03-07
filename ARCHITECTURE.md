@@ -1,8 +1,8 @@
 # Home Mind Architecture
 
 **Version:** 0.13.0-dev
-**Last Updated:** March 7, 2026
-**Status:** Voice + Text + Memory + Multi-LLM Provider Support + Device Capability Index
+**Last Updated:** March 8, 2026
+**Status:** Voice + Text + Memory + Multi-LLM Provider Support + Device Capability Index + Home Layout Index + TTS
 
 ---
 
@@ -64,15 +64,22 @@ src/home-mind-server/
 │   │   ├── extractor.ts      # Anthropic fact extractor
 │   │   ├── openai-extractor.ts # OpenAI fact extractor
 │   │   └── types.ts          # Memory types
+│   ├── stt/
+│   │   └── stt-service.ts    # Whisper transcription (optional)
+│   ├── tts/
+│   │   └── tts-service.ts    # OpenAI TTS synthesis (optional)
 │   └── ha/
 │       ├── client.ts         # HA REST API client
-│       └── device-scanner.ts # Device capability index (light color modes)
+│       ├── device-scanner.ts # Device capability index (light color modes)
+│       └── topology-scanner.ts # Home layout index (floor/room/entity map)
 └── Dockerfile
 ```
 
 **Endpoints:**
 - `POST /api/chat` - Send message, get response
 - `POST /api/chat/stream` - SSE streaming response
+- `POST /api/stt` - Transcribe audio (multipart, requires `STT_PROVIDER`)
+- `POST /api/tts` - Synthesize speech (JSON `{text}`, requires `TTS_PROVIDER`)
 - `GET /api/health` - Health check
 
 ### 2. Shodh Memory
@@ -119,7 +126,9 @@ class HomeMindConversationAgent(ConversationEntity):
         ↓
 5b. Device scanner injects light capability cheat sheet into system prompt
         ↓
-6. Claude Haiku generates response (uses cheat sheet params, may call HA tools)
+5c. Topology scanner injects home layout (floor/room/entity map) into system prompt
+        ↓
+6. Claude Haiku generates response (uses cheat sheet + layout, may call HA tools)
         ↓
 7. Tools execute: search_entities → call_service
         ↓

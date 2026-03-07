@@ -22,6 +22,7 @@ Home Mind provides:
 - **Learning** from corrections and user preferences
 - **Voice control** via HA Assist (Wyoming protocol)
 - **Multi-LLM support** — Anthropic (Claude), OpenAI, or Ollama (local inference)
+- **Home Layout Index** — reads your HA floor/room assignments and injects them into every prompt, so the AI always knows which floor a device is on
 - **Device Capability Index** — pre-scans your lights at startup so the AI always uses the right color params on the first try
 - **Self-hosted** and privacy-focused
 
@@ -166,6 +167,19 @@ If a per-request prompt is provided, it overrides the server default. If neither
 
 In those tools, the system prompt **is** the entire system prompt — you control everything. Here, your custom prompt replaces the default identity line at the top of a larger prompt that also includes smart home tool instructions, memory guidelines, and dynamic context (time, remembered facts). You're defining the persona, not replacing the whole system.
 
+## Home Layout Index
+
+On startup, Home Mind reads three HA registries — entity registry (entity → room), area registry (room → floor), and floor registry — and builds a compact map injected into every system prompt:
+
+```
+Ground Floor
+- Living Room: climate.living_room_radiator, light.living_room_main, ...
+First Floor
+- Bedroom: climate.bedroom_radiator, light.bedroom_main, ...
+```
+
+This gives the AI spatial awareness without tool calls. It will never assume a device is on the wrong floor. Refreshes every 30 minutes automatically. Works automatically if you've assigned your devices to rooms and floors in Home Assistant — no configuration needed. Degrades gracefully if your HA version doesn't support the registry endpoints or if rooms/floors aren't set up.
+
 ## Device Capability Index
 
 On startup, Home Mind scans all `light.*` entities in Home Assistant, reads their `supported_color_modes` attributes, and builds a per-entity cheat sheet that is injected into every system prompt. This means the AI always knows the correct way to control each light without needing to call `search_entities` or `get_entities` on every request.
@@ -220,6 +234,8 @@ Only specify what needs changing — unspecified fields use auto-detected values
 - [x] Automatic memory cleanup (low-confidence fact pruning)
 - [x] Device Capability Index (pre-scanned light params, no per-request re-discovery)
 - [x] Per-entity device overrides (`DEVICE_OVERRIDES`) for firmware quirks
+- [x] Home Layout Index (floor/room awareness injected from HA registries)
+- [x] Server-side TTS (`POST /api/tts`, OpenAI TTS API)
 - [ ] Multi-user support (OIDC)
 - [ ] HA Add-on packaging
 

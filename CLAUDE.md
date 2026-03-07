@@ -10,6 +10,17 @@ HA Assist (Voice/Text) → HA Custom Component (Python) → Home Mind Server (Ex
 
 **Single path, no fallbacks.** All interactions flow through home-mind-server. Shodh Memory is the only memory backend (required, no SQLite fallback). LLM provider is selected via `LLM_PROVIDER` env var (default: `anthropic`).
 
+### Home Layout Index
+
+`TopologyScanner` (`ha/topology-scanner.ts`) runs at startup and every 30 minutes. It fetches three HA registry endpoints:
+- `/api/config/entity_registry/list` — entity → area assignments (skips disabled/hidden)
+- `/api/config/area_registry/list` — area → floor assignments
+- `/api/config/floor_registry/list` — floors with levels
+
+Builds a compact `floor → room → [entity_ids]` text section and injects it into every system prompt alongside the device cheat sheet. This gives the LLM spatial awareness without tool calls — it knows which floor and room every device belongs to before reasoning begins.
+
+If the registry endpoints fail (older HA, network error), the scanner logs a warning and injects nothing — the rest of the system works normally.
+
 ### Device Capability Index
 
 `DeviceScanner` (`ha/device-scanner.ts`) runs at startup and every 30 minutes. It fetches all `light.*` entities, reads `supported_color_modes` attributes, and builds `DeviceCapabilityProfile` objects with pre-computed `whiteMethod` and `colorMethod`. These are formatted as a markdown cheat sheet and injected into every system prompt via `buildSystemPrompt()` / `buildSystemPromptText()`.
@@ -21,7 +32,8 @@ HA Assist (Voice/Text) → HA Custom Component (Python) → Home Mind Server (Ex
 ### Request Flow (IChatEngine.chat)
 
 1. Load user's facts from Shodh via semantic search (query = current message)
-2. Build system prompt: static part (cached via `cache_control: ephemeral` for Anthropic, plain string for OpenAI) + dynamic part (facts + datetime)
+2. Refresh DeviceScanner + TopologyScanner if stale (both run in parallel via `Promise.all`)
+3. Build system prompt: static part (cached via `cache_control: ephemeral` for Anthropic, plain string for OpenAI) + dynamic part (facts + datetime + home layout + device cheat sheet)
 3. Load conversation history from `IConversationStore` (keyed by conversationId)
 4. Stream response with tool loop (parallel tool execution)
 5. Fire-and-forget fact extraction (extracts facts, replaces conflicting old ones)
@@ -132,17 +144,27 @@ LLM config:
 
 Optional: `PORT` (default 3100), `HA_SKIP_TLS_VERIFY`, `MEMORY_TOKEN_LIMIT` (default 1500), `LOG_LEVEL`, `CONVERSATION_STORAGE` (`memory` | `sqlite`, default `memory`), `CONVERSATION_DB_PATH` (default `/data/conversations.db`, only used when `CONVERSATION_STORAGE=sqlite`), `CUSTOM_PROMPT` (server-level default custom system prompt), `TZ` (timezone for the Docker container, default `Europe/Prague` in docker-compose; Node.js uses this for `toLocaleString()` so the LLM sees correct local time)
 
+STT (optional): `STT_PROVIDER` (`openai` | `none`, default `none`), `STT_API_KEY` (overrides `OPENAI_API_KEY`), `STT_BASE_URL` (custom Whisper-compatible endpoint), `STT_MODEL` (default `whisper-1`)
+
+TTS (optional): `TTS_PROVIDER` (`openai` | `none`, default `none`), `TTS_API_KEY` (overrides `OPENAI_API_KEY`), `TTS_BASE_URL` (custom OpenAI-compatible endpoint), `TTS_MODEL` (default `tts-1`), `TTS_VOICE` (default `alloy`)
+
 Integration tests: `SHODH_TEST_URL`, `SHODH_TEST_API_KEY`
 
 ## API Endpoints
 
 - `POST /api/chat` — Full response (uses streaming internally). Body: `{ message, userId?, conversationId?, isVoice?, customPrompt? }`
 - `POST /api/chat/stream` — SSE streaming (`event: chunk` then `event: done`). Same body as `/api/chat`
+- `POST /api/stt` — Transcribe audio. Multipart `audio` field. Returns `{ text }`. 501 if `STT_PROVIDER=none`.
+- `POST /api/tts` — Synthesize speech. Body `{ text, language? }`. Returns `audio/mpeg`. 501 if `TTS_PROVIDER=none`.
 - `GET /api/health` — Health check
 - `GET /api/memory/:userId` — List user's facts
 - `POST /api/memory/:userId/facts` — Add fact manually
 - `DELETE /api/memory/:userId` — Clear all facts
 - `DELETE /api/memory/:userId/facts/:factId` — Delete specific fact
+- `GET /api/conversations/:userId` — List conversations
+- `GET /api/conversations/:userId/:conversationId` — Get conversation messages
+- `DELETE /api/conversations/:userId/:conversationId` — Delete conversation
+- `GET /api/admin/conversations` — All users + conversation summaries (auth required)
 
 ## Deployment
 
