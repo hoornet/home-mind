@@ -319,7 +319,7 @@ If Home Mind is useful to you, consider supporting its development:
 ## Contact
 
 - **Issues & Feature Requests**: [GitHub Issues](https://github.com/hoornet/home-mind/issues)
-- **Author**: Jure Sršen ([@hoornet](https://github.com/hoornet))
+- **Author**: Jure Sršen ([@hoornet](https://github.com/jure))
 - **Email**: 44338+hoornet@users.noreply.github.com
 
 ## License
