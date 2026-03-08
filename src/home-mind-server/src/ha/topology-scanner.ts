@@ -7,20 +7,22 @@ import type { HomeAssistantClient } from "./client.js";
  * All available since HA 2024.4.
  */
 const LAYOUT_TEMPLATE = `
-{%- set ns = namespace(floors=[], orphans=[]) -%}
+{%- set ns = namespace(floors=[], assigned=[]) -%}
 {%- for fid in floors() -%}
   {%- set ans = namespace(areas=[]) -%}
   {%- for aid in floor_areas(fid) -%}
     {%- set ans.areas = ans.areas + [{"id": aid, "name": area_name(aid), "entities": area_entities(aid) | list}] -%}
+    {%- set ns.assigned = ns.assigned + [aid] -%}
   {%- endfor -%}
   {%- set ns.floors = ns.floors + [{"id": fid, "name": floor_name(fid), "areas": ans.areas}] -%}
 {%- endfor -%}
+{%- set orphans = namespace(areas=[]) -%}
 {%- for aid in areas() -%}
-  {%- if area_floor_id(aid) is none -%}
-    {%- set ns.orphans = ns.orphans + [{"id": aid, "name": area_name(aid), "entities": area_entities(aid) | list}] -%}
+  {%- if aid not in ns.assigned -%}
+    {%- set orphans.areas = orphans.areas + [{"id": aid, "name": area_name(aid), "entities": area_entities(aid) | list}] -%}
   {%- endif -%}
 {%- endfor -%}
-{{ {"floors": ns.floors, "unassigned": ns.orphans} | tojson }}
+{{ {"floors": ns.floors, "unassigned": orphans.areas} | tojson }}
 `.trim();
 
 interface AreaData {
