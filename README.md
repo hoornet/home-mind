@@ -314,7 +314,7 @@ docker compose logs -f shodh    # Shodh Memory
 
 If Home Mind is useful to you, consider supporting its development:
 
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b?logo=ko-fi)](https://ko-fi.com/hoornet)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b?logo=ko-fi)](https://ko-fi.com/jure)
 
 ## Contact
 
