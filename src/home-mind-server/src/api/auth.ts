@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import { timingSafeEqual } from "node:crypto";
 
 /**
  * Creates a bearer token auth middleware.
@@ -26,7 +27,10 @@ export function createAuthMiddleware(
     }
 
     const provided = authHeader.slice(7);
-    if (provided !== token) {
+    const providedBuf = Buffer.from(provided);
+    const tokenBuf = Buffer.from(token);
+
+    if (providedBuf.length !== tokenBuf.length || !timingSafeEqual(providedBuf, tokenBuf)) {
       return res.status(403).json({ error: "Invalid API token" });
     }
 

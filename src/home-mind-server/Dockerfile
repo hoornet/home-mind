@@ -29,5 +29,8 @@ EXPOSE 3100
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3100/api/health || exit 1
 
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 --ingroup nodejs nodeuser
+USER nodeuser
+
 # Start server
 CMD ["node", "dist/index.js"]
