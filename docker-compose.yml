@@ -4,8 +4,7 @@
 services:
   # Shodh Memory - Cognitive memory backend
   shodh:
-    build:
-      context: ./docker/shodh
+    image: varunshodh/shodh-memory:latest
     container_name: home-mind-shodh
     restart: unless-stopped
     environment:
@@ -13,10 +12,7 @@ services:
       - SHODH_PORT=3030
       - SHODH_DEV_API_KEY=${SHODH_API_KEY}
     volumes:
-      # Use SHODH_DATA_PATH env var for existing data, or default to named volume
       - ${SHODH_DATA_PATH:-shodh_data}:/data
-      # Persist model cache to avoid re-downloading ONNX Runtime
-      - shodh_cache:/home/appuser/.cache/shodh-memory
     ports:
       - "3030:3030"
     healthcheck:
@@ -97,8 +93,6 @@ services:
 
 volumes:
   shodh_data:
-    driver: local
-  shodh_cache:
     driver: local
   conversation_data:
     driver: local
