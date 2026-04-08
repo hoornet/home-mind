@@ -8,7 +8,14 @@ export class OpenAIFactExtractor implements IFactExtractor {
   private model: string;
 
   constructor(apiKey: string, model: string, baseUrl?: string) {
-    this.client = new OpenAI({ apiKey, baseURL: baseUrl });
+    this.client = new OpenAI({
+      apiKey,
+      baseURL: baseUrl,
+      defaultHeaders: {
+        "HTTP-Referer": "https://homemind.veganostr.com",
+        "X-Title": "HomeMind PRO",
+      },
+    });
     this.model = model;
   }
 

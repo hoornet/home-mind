@@ -43,6 +43,10 @@ export class OpenAIChatEngine implements IChatEngine {
     this.client = new OpenAI({
       apiKey: config.openaiApiKey,
       baseURL: config.openaiBaseUrl,
+      defaultHeaders: {
+        "HTTP-Referer": "https://homemind.veganostr.com",
+        "X-Title": "HomeMind PRO",
+      },
     });
     this.memory = memory;
     this.conversations = conversations;
