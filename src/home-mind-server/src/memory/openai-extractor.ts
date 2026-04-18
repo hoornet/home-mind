@@ -47,14 +47,27 @@ ${JSON.stringify(factsJson, null, 2)}`;
 
       const response = await this.client.chat.completions.create({
         model: this.model,
-        max_tokens: 500,
+        max_tokens: 1000,
         messages: [{ role: "user", content: prompt }],
       });
 
       const text = response.choices[0]?.message?.content ?? "";
 
-      // Strip markdown code fences if present (LLMs sometimes wrap JSON in ```json ... ```)
-      const cleaned = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+      // Strip reasoning-model <think>...</think> blocks (Qwen3, DeepSeek-R1, etc.)
+      // then markdown code fences (LLMs sometimes wrap JSON in ```json ... ```)
+      const cleaned = text
+        .replace(/<think>[\s\S]*?<\/think>/gi, "")
+        .trim()
+        .replace(/^```(?:json)?\s*\n?/i, "")
+        .replace(/\n?```\s*$/i, "")
+        .trim();
+
+      if (!cleaned) {
+        console.warn(
+          "Fact extractor returned empty content (possibly thinking-mode token cap). Try raising max_tokens or using a non-reasoning model."
+        );
+        return [];
+      }
 
       const facts = JSON.parse(cleaned);
 

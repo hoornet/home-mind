@@ -175,6 +175,77 @@ describe("OpenAIFactExtractor", () => {
     expect(result).toEqual([]);
   });
 
+  it("strips <think>...</think> reasoning blocks before parsing", async () => {
+    const json = JSON.stringify([
+      { content: "User has a dog named Rex", category: "identity", replaces: [] },
+    ]);
+    mockCreate.mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content:
+              "<think>\nThe user mentioned a pet. I should extract that.\n</think>\n" +
+              json,
+          },
+        },
+      ],
+    });
+
+    const result = await extractor.extract("msg", "resp", []);
+
+    expect(result).toEqual([
+      { content: "User has a dog named Rex", category: "identity", replaces: [] },
+    ]);
+  });
+
+  it("strips both <think> blocks and markdown fences in the same response", async () => {
+    const json = JSON.stringify([
+      { content: "Prefers tea", category: "preference", replaces: [] },
+    ]);
+    mockCreate.mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content:
+              "<think>reasoning here</think>\n```json\n" + json + "\n```",
+          },
+        },
+      ],
+    });
+
+    const result = await extractor.extract("msg", "resp", []);
+
+    expect(result).toEqual([
+      { content: "Prefers tea", category: "preference", replaces: [] },
+    ]);
+  });
+
+  it("returns empty array when content is only whitespace", async () => {
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: "   \n  " } }],
+    });
+
+    const result = await extractor.extract("msg", "resp", []);
+
+    expect(result).toEqual([]);
+  });
+
+  it("returns empty array when content is only a <think> block (token cap)", async () => {
+    mockCreate.mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content: "<think>Reasoning got truncated before emitting JSON</think>",
+          },
+        },
+      ],
+    });
+
+    const result = await extractor.extract("msg", "resp", []);
+
+    expect(result).toEqual([]);
+  });
+
   it("strips markdown code fences from JSON response", async () => {
     const json = JSON.stringify([
       { content: "Daughter name is TOTO", category: "identity", replaces: [] },
