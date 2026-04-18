@@ -25,8 +25,10 @@ services:
     networks:
       - home-mind
 
-  # Home Mind App - PWA frontend
+  # Home Mind App - PWA frontend (optional; source lives in a separate repo)
+  # Enabled only when the `app` profile is active, e.g. COMPOSE_PROFILES=app
   app:
+    profiles: ["app"]
     build:
       context: ../home-mind-app
       args:

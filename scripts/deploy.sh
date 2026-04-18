@@ -30,37 +30,19 @@ if [ -z "$SHODH_API_KEY" ] || [ "$SHODH_API_KEY" = "your-shodh-api-key" ]; then
     echo "Generated SHODH_API_KEY automatically"
 fi
 
-# Check for Shodh binary
-SHODH_BINARY="$PROJECT_DIR/docker/shodh/shodh-memory-server"
-if [ ! -f "$SHODH_BINARY" ]; then
-    echo "Shodh binary not found at: $SHODH_BINARY"
-    echo ""
-    
-    # Check if it exists in home directory
-    if [ -f "$HOME/shodh-memory-server" ]; then
-        echo "Found Shodh binary at ~/shodh-memory-server"
-        echo "Copying to docker/shodh/..."
-        cp "$HOME/shodh-memory-server" "$SHODH_BINARY"
-        chmod +x "$SHODH_BINARY"
-    else
-        echo "ERROR: Cannot find Shodh binary"
-        echo "Please place shodh-memory-server in docker/shodh/"
-        exit 1
-    fi
-fi
-
-# Ensure HomeMind App source is present (sibling directory)
+# Optional: HomeMind App source (sibling directory). When present, the PWA
+# frontend is built and started alongside the server via the `app` compose
+# profile. When missing, deployment proceeds with Shodh + server only.
 APP_DIR="$(dirname "$PROJECT_DIR")/home-mind-app"
 if [ -d "$APP_DIR/.git" ]; then
     echo "Updating home-mind-app..."
     git -C "$APP_DIR" pull
+    export COMPOSE_PROFILES="app"
 elif [ -d "$APP_DIR" ]; then
     echo "Using existing home-mind-app directory"
+    export COMPOSE_PROFILES="app"
 else
-    echo "ERROR: home-mind-app not found at $APP_DIR"
-    echo "Sync it from your dev machine first:"
-    echo "  rsync -a --exclude node_modules --exclude dist ~/projects/home-mind-app/ ubuntuserver:~/home-mind-app/"
-    exit 1
+    echo "home-mind-app not found at $APP_DIR (optional) — deploying server only"
 fi
 
 echo "Building and starting containers..."
