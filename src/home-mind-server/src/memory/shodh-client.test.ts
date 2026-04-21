@@ -466,6 +466,100 @@ describe("ShodhMemoryStore", () => {
       );
       expect(reinforceCall).toBeDefined();
     });
+
+    it("queries both tag-recall and proactive_context when currentContext is provided", async () => {
+      // First fetch: recallByTags
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          memories: [
+            { id: "tag-1", experience: { content: "Tag fact", memory_type: "Context", tags: ["preference"] }, importance: 0.5, created_at: "2026-01-25T10:00:00Z" },
+          ],
+          count: 1,
+        }),
+      });
+      // Second fetch: proactive_context (flat shape)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          memories: [
+            { id: "proactive-1", content: "Proactive fact", memory_type: "Context", tags: ["preference"], importance: 0.7, created_at: "2026-01-25T10:00:00Z" },
+          ],
+          memory_count: 1,
+        }),
+      });
+      // Third fetch: reinforce
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ memories_processed: 2 }),
+      });
+
+      const facts = await store.getFactsWithinTokenLimit("user-1", 1000, "what's my passkey?");
+
+      const urls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(urls).toContain("http://localhost:3030/api/recall/tags");
+      expect(urls).toContain("http://localhost:3030/api/proactive_context");
+      // Proactive fact should come first (query-relevant)
+      expect(facts.map((f) => f.id)).toEqual(["proactive-1", "tag-1"]);
+    });
+
+    it("deduplicates facts present in both proactive and tag results by id", async () => {
+      // recallByTags returns two facts
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          memories: [
+            { id: "dup", experience: { content: "Duplicate", memory_type: "Context", tags: [] }, importance: 0.5, created_at: "2026-01-25T10:00:00Z" },
+            { id: "tag-only", experience: { content: "Tag only", memory_type: "Context", tags: [] }, importance: 0.5, created_at: "2026-01-25T10:00:00Z" },
+          ],
+          count: 2,
+        }),
+      });
+      // proactive_context returns one fact also present in tag set
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          memories: [
+            { id: "dup", content: "Duplicate", memory_type: "Context", tags: [], importance: 0.7, created_at: "2026-01-25T10:00:00Z" },
+          ],
+          memory_count: 1,
+        }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ memories_processed: 2 }),
+      });
+
+      const facts = await store.getFactsWithinTokenLimit("user-1", 1000, "query");
+
+      expect(facts.map((f) => f.id)).toEqual(["dup", "tag-only"]);
+    });
+
+    it("falls back to tag-recall when proactive_context fails", async () => {
+      // recallByTags succeeds
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          memories: [
+            { id: "tag-1", experience: { content: "Tag fact", memory_type: "Context", tags: [] }, importance: 0.5, created_at: "2026-01-25T10:00:00Z" },
+          ],
+          count: 1,
+        }),
+      });
+      // proactive_context fails all 3 retries
+      mockFetch.mockRejectedValueOnce(new Error("shodh down"));
+      mockFetch.mockRejectedValueOnce(new Error("shodh down"));
+      mockFetch.mockRejectedValueOnce(new Error("shodh down"));
+      // reinforce
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ memories_processed: 1 }),
+      });
+
+      const facts = await store.getFactsWithinTokenLimit("user-1", 1000, "query");
+
+      expect(facts.map((f) => f.id)).toEqual(["tag-1"]);
+    });
   });
 
   describe("addFact", () => {

@@ -29,7 +29,7 @@ const ConfigSchema = z
     shodhApiKey: z.string().min(1, "SHODH_API_KEY is required"),
 
     // Memory settings
-    memoryTokenLimit: z.coerce.number().default(1500),
+    memoryTokenLimit: z.coerce.number().default(3000),
     memoryCleanupIntervalHours: z.coerce.number().min(0).default(6),
 
     // Conversation history

@@ -56,7 +56,7 @@ describe("loadConfig", () => {
     expect(config.haToken).toBe("test-token");
     expect(config.shodhUrl).toBe("http://localhost:3030");
     expect(config.shodhApiKey).toBe("test-shodh-key");
-    expect(config.memoryTokenLimit).toBe(1500);
+    expect(config.memoryTokenLimit).toBe(3000);
   });
 
   it("requires ANTHROPIC_API_KEY when provider is anthropic", async () => {

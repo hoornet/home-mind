@@ -363,24 +363,48 @@ export class ShodhMemoryStore {
   }
 
   /**
-   * Get facts within a token limit, using proactive context for relevance
+   * Get facts within a token limit using a hybrid recall strategy:
+   *   1. Always pull the user's tagged fact set (deterministic baseline).
+   *   2. If we have a current message, also pull proactive-context facts
+   *      (graph-based spreading activation) and promote them to the front
+   *      so the LLM sees query-relevant memories first.
+   *
+   * Rationale: proactive_context alone misses facts when the query has
+   * weak semantic links (typos, cold memories). Tag recall guarantees
+   * that any stored fact reaches the prompt as long as the budget allows.
    */
   async getFactsWithinTokenLimit(
     userId: string,
     maxTokens: number,
     currentContext?: string
   ): Promise<Fact[]> {
-    // Use proactive context if we have current context, otherwise use tag recall
-    const facts = currentContext
-      ? await this.shodh.getProactiveContext(userId, currentContext, 50)
-      : await this.shodh.recallByTags(userId, 50);
+    // Baseline: every fact tagged home-mind for this user
+    const tagFactsPromise = this.shodh.recallByTags(userId, 100);
+    // Relevance boost when we have a query (tolerate failure)
+    const proactivePromise = currentContext
+      ? this.shodh.getProactiveContext(userId, currentContext, 20).catch((err) => {
+          console.warn("[shodh] proactive_context failed, using tag recall only:", err);
+          return [] as Fact[];
+        })
+      : Promise.resolve([] as Fact[]);
 
-    // Trim to token limit
+    const [tagFacts, proactiveFacts] = await Promise.all([tagFactsPromise, proactivePromise]);
+
+    // Merge: proactive first (query-relevant), then remaining tagged facts; dedupe by id.
+    const seen = new Set<string>();
+    const merged: Fact[] = [];
+    for (const fact of [...proactiveFacts, ...tagFacts]) {
+      if (seen.has(fact.id)) continue;
+      seen.add(fact.id);
+      merged.push(fact);
+    }
+
+    // Trim to token budget (rough 4-char/token estimate)
     const result: Fact[] = [];
     let tokenCount = 0;
     const charsPerToken = 4;
 
-    for (const fact of facts) {
+    for (const fact of merged) {
       const factTokens = Math.ceil(fact.content.length / charsPerToken);
       if (tokenCount + factTokens > maxTokens) break;
       result.push(fact);

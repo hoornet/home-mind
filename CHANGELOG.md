@@ -2,6 +2,17 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.15.0] - 2026-04-21
+
+### Fixed
+- **Recall now reliably retrieves stored facts.** The chat path previously used Shodh's `proactive_context` (graph-based spreading activation) as the sole retrieval source when a user message was present. When activation didn't fire — typos in the query, cold memories, weak semantic links — facts were omitted from the system prompt and the LLM replied "I don't know" even though the fact was visible under `GET /api/memory/{userId}`. Retrieval now always pulls the user's tagged fact set via `/api/recall/tags` and, when a query is provided, merges in `proactive_context` results at the front as a relevance boost. Deduplicated by id, trimmed to token budget. If `proactive_context` fails, tag recall still delivers facts.
+
+### Changed
+- **`MEMORY_TOKEN_LIMIT` default raised from 1500 → 3000.** The static part of the system prompt is already cached via Anthropic prompt caching, so a larger fact budget costs essentially nothing on the hot path. Users with many memories now get more of them into context by default.
+
+### Added
+- **`[recall]` debug log** — when `LOG_LEVEL=debug`, each chat turn logs `userId`, fact count, and approximate token usage. Useful for diagnosing recall issues (e.g. distinguishing "facts weren't retrieved" from "LLM ignored the facts").
+
 ## [0.14.0] - 2026-04-11
 
 ### Added

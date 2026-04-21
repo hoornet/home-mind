@@ -70,6 +70,12 @@ export class OpenAIChatEngine implements IChatEngine {
       message
     );
     const factContents = facts.map((f) => f.content);
+    if (this.config.logLevel === "debug") {
+      const approxTokens = Math.ceil(factContents.join(" ").length / 4);
+      console.debug(
+        `[recall] userId=${userId} factCount=${factContents.length} tokens=${approxTokens}`
+      );
+    }
 
     // 2. Refresh device profiles and home layout if stale, then build system prompt
     await Promise.all([this.scanner.refreshIfStale(), this.topology.refreshIfStale()]);
