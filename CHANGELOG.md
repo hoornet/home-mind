@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.15.1] - 2026-04-29
+
+### Fixed
+- **More forgiving fact-extractor JSON parsing.** Some OpenAI-compatible models (notably `qwen3.6:27b`, but also a few Phi/Gemma variants and the occasional `gpt-4o-mini` response) emit either a single JSON object instead of a `[...]` array, or append trailing prose after the JSON. Strict `JSON.parse` + `Array.isArray` would drop every fact in those cases — silently, since extraction runs fire-and-forget. The extractor now (a) wraps a single object into a one-element array, and (b) falls back to a regex slice (`/\[[\s\S]*\]/`) when the raw response isn't pure JSON. Failures still log a one-line warning with the first 200 chars of the raw response so it's diagnosable from `LOG_LEVEL=debug`. All existing input shapes parse identically — the change is strictly additive. Thanks to @rgnyldz ([#20](https://github.com/hoornet/home-mind/issues/20)) for the diagnosis and the diff that motivated this fix.
+
 ## [0.15.0] - 2026-04-21
 
 ### Fixed

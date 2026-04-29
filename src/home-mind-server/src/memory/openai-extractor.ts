@@ -69,7 +69,30 @@ ${JSON.stringify(factsJson, null, 2)}`;
         return [];
       }
 
-      const facts = JSON.parse(cleaned);
+      // Some models (qwen3.6:27b, gpt-4o-mini, etc.) append trailing text after
+      // the JSON or return a single object instead of an array. Strict
+      // JSON.parse + Array.isArray would silently lose every fact in those cases.
+      let facts: unknown;
+      try {
+        const parsed = JSON.parse(cleaned);
+        facts = Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+        if (!arrayMatch) {
+          console.warn(
+            `Fact extractor: response not valid JSON and no array found. Raw: ${cleaned.slice(0, 200)}`
+          );
+          return [];
+        }
+        try {
+          facts = JSON.parse(arrayMatch[0]);
+        } catch {
+          console.warn(
+            `Fact extractor: regex-extracted JSON slice also failed to parse. Raw: ${cleaned.slice(0, 200)}`
+          );
+          return [];
+        }
+      }
 
       if (!Array.isArray(facts)) {
         return [];

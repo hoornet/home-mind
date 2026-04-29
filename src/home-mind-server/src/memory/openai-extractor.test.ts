@@ -271,7 +271,9 @@ describe("OpenAIFactExtractor", () => {
     expect(result).toEqual([]);
   });
 
-  it("returns empty array when response is not an array", async () => {
+  it("drops single objects that are not fact-shaped", async () => {
+    // {not: "array"} now wraps to [{not: "array"}] but fails the
+    // content/category filter — net result is still [].
     mockCreate.mockResolvedValue({
       choices: [{ message: { content: '{"not": "array"}' } }],
     });
@@ -279,6 +281,57 @@ describe("OpenAIFactExtractor", () => {
     const result = await extractor.extract("msg", "resp", []);
 
     expect(result).toEqual([]);
+  });
+
+  it("wraps a single fact object in an array (qwen3-style output)", async () => {
+    // Some models (e.g. qwen3.6:27b, certain Phi/Gemma variants) emit a single
+    // JSON object instead of an array. Strict Array.isArray would drop it.
+    mockCreate.mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              content: "User's LEGO Bubble passkey is 998877",
+              category: "identity",
+              replaces: [],
+            }),
+          },
+        },
+      ],
+    });
+
+    const result = await extractor.extract("msg", "resp", []);
+
+    expect(result).toEqual([
+      {
+        content: "User's LEGO Bubble passkey is 998877",
+        category: "identity",
+        replaces: [],
+      },
+    ]);
+  });
+
+  it("recovers a JSON array even when the model adds trailing text", async () => {
+    // Some models append a sentence or a closing bracket after the JSON.
+    // Regex fallback grabs the first [ ... ] slice and parses that.
+    const json = JSON.stringify([
+      { content: "Cat name is Mik", category: "identity", replaces: [] },
+    ]);
+    mockCreate.mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content: json + "\n\nThat's all I extracted.",
+          },
+        },
+      ],
+    });
+
+    const result = await extractor.extract("msg", "resp", []);
+
+    expect(result).toEqual([
+      { content: "Cat name is Mik", category: "identity", replaces: [] },
+    ]);
   });
 
   it("returns empty array when content is null", async () => {

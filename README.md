@@ -307,6 +307,7 @@ docker compose restart             # Restart both services
 1. Check Shodh is healthy: `curl http://localhost:3030/health`
 2. Look for "Extracted facts" in server logs
 3. Memory requires explicit statements like "remember that..." or corrections
+4. If running an OpenAI-compatible local model (Ollama, LM Studio) and facts aren't being stored, run with `LOG_LEVEL=debug` and look for `Fact extractor:` warnings — some models return JSON in shapes the extractor has to recover from (single object instead of array, trailing prose after the JSON). As of 0.15.1 the extractor handles both, but a warning here means the response shape was unrecoverable and it's worth opening an issue with the raw output.
 
 ### Voice commands not working
 
