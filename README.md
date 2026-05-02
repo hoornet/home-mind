@@ -1,7 +1,7 @@
 # Home Mind
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/Version-0.14.0-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.15.1-brightgreen.svg)]()
 [![Status](https://img.shields.io/badge/Status-Voice%20Working-success.svg)]()
 
 AI assistant for Home Assistant with cognitive memory. Adds learning capabilities, persistent memory, and voice control to your smart home.
@@ -231,7 +231,7 @@ The self-hosted Docker Compose setup below is for advanced users who want full c
 
 ## Project Status
 
-**Current Version:** v0.14.0
+**Current Version:** v0.15.1
 
 - [x] Voice control via HA Assist
 - [x] Cognitive memory with Shodh
@@ -308,6 +308,13 @@ docker compose restart             # Restart both services
 2. Look for "Extracted facts" in server logs
 3. Memory requires explicit statements like "remember that..." or corrections
 4. If running an OpenAI-compatible local model (Ollama, LM Studio) and facts aren't being stored, run with `LOG_LEVEL=debug` and look for `Fact extractor:` warnings — some models return JSON in shapes the extractor has to recover from (single object instead of array, trailing prose after the JSON). As of 0.15.1 the extractor handles both, but a warning here means the response shape was unrecoverable and it's worth opening an issue with the raw output.
+
+### Empty responses on qwen3.x and some OpenAI-compatible models
+
+If you're getting `"I received your request but got no response"` from the assistant when using a qwen3.x model (or another OpenAI-compatible model that's strict about JSON output), the model may need `response_format: { type: "json_object" }` set on the fact-extraction call. This isn't on by default because not all OpenAI-compatible providers accept the field — it's tracked in [#21](https://github.com/hoornet/home-mind/issues/21). Until that lands, you can either:
+
+- Switch to a model that doesn't need it (`llama3.1`, `qwen2.5`, or any Anthropic/OpenAI hosted model)
+- Build from source with `response_format: { type: "json_object" }` added to `src/llm/openai-fact-extractor.ts`
 
 ### Voice commands not working
 
