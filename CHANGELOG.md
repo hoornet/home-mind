@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.15.3] - 2026-05-11
+
+### Fixed
+- **`get_history` tool calls with explicit timezone offsets no longer 400.** When the LLM passed `start_time` / `end_time` containing a `+HH:MM` offset (e.g. `2026-05-11T09:46:47+02:00`), the `+` was interpolated raw into the request URL. HA's HTTP layer (aiohttp) decodes `+` as space in query strings, so the timestamp arrived as `2026-05-11T09:46:47 02:00` and HA rejected it with `400: Invalid end_time`. Any model smart enough to include its local TZ hit this — observed first with `mistralai/mistral-small-3.2-24b-instruct` retrying 8+ times before giving up. All interpolated values in `getHistory()` are now run through `encodeURIComponent`. Regression test added in `src/ha/client.test.ts`. Thanks @hoornet (real-HA pilot) for the smoking-gun log.
+
 ## [0.15.2] - 2026-05-11
 
 ### Security

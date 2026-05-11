@@ -233,10 +233,14 @@ export class HomeAssistantClient {
     endTime?: string
   ): Promise<HistoryEntry[]> {
     const start = startTime || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    let endpoint = `/api/history/period/${start}?filter_entity_id=${entityId}`;
+    // URL-encode every interpolated value. The `+` in `+HH:MM` tz offsets is
+    // otherwise decoded as a space in query strings by aiohttp (HA's HTTP
+    // layer), producing "Invalid end_time" 400s for any LLM that includes
+    // an explicit timezone offset in its history args.
+    let endpoint = `/api/history/period/${encodeURIComponent(start)}?filter_entity_id=${encodeURIComponent(entityId)}`;
 
     if (endTime) {
-      endpoint += `&end_time=${endTime}`;
+      endpoint += `&end_time=${encodeURIComponent(endTime)}`;
     }
 
     const result = await this.fetch<HistoryEntry[][]>(endpoint);
