@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.15.2] - 2026-05-11
+
+### Security
+- **Refreshed npm dependencies to pick up upstream security patches.** `npm audit fix` lifted `multer` (CVE: DoS via uncontrolled recursion / resource exhaustion / incomplete cleanup), `undici` (CVE: WebSocket parser overflow, CRLF injection, request smuggling, unbounded WebSocket/dedup memory consumption, server_max_window_bits validation), `path-to-regexp` (ReDoS, transitive via express), and `qs` (arrayLimit bypass, transitive via express) inside their existing semver ranges. Dev-only chains (`vite`, `postcss`, `rollup`, `picomatch` via vitest) were updated in the same pass. No `package.json` edits, no API or behaviour changes — pull this if you build the server locally and want a clean `npm audit`.
+
 ## [0.15.1] - 2026-04-29
 
 ### Fixed
