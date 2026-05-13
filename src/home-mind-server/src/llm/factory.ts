@@ -47,13 +47,17 @@ export function createFactExtractor(config: Config): IFactExtractor {
       return new OpenAIFactExtractor(
         config.openaiApiKey!,
         config.llmModel,
-        config.openaiBaseUrl
+        config.openaiBaseUrl,
+        config.openaiResponseFormat,
+        config.openaiMaxTokens
       );
     case "ollama":
       return new OpenAIFactExtractor(
         "ollama",
         config.llmModel,
-        config.ollamaBaseUrl ?? "http://localhost:11434/v1"
+        config.ollamaBaseUrl ?? "http://localhost:11434/v1",
+        config.openaiResponseFormat,
+        config.openaiMaxTokens
       );
     case "anthropic":
       return new FactExtractor(config.anthropicApiKey!, config.llmModel);

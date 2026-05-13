@@ -2,6 +2,17 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.15.4] - 2026-05-13
+
+### Added
+- **`OPENAI_RESPONSE_FORMAT` env var** (closes [#21](https://github.com/hoornet/home-mind/issues/21)). When set to `json_object`, the OpenAI-compatible fact extractor sends `response_format: { type: "json_object" }` on every extraction call. Required by some OpenAI-compatible providers (notably `qwen3.6:27b` via Ollama, per @rgnyldz's report) that otherwise return empty content. Unset by default → behaviour unchanged for providers that don't need it.
+- **`OPENAI_MAX_TOKENS` env var.** Override the fact extractor's `max_tokens` (default `1000`). Only affects the extractor — chat keeps its `isVoice`-based defaults (500/2048). Useful when a local model truncates JSON output at the default ceiling. Thanks to @rgnyldz for surfacing the underlying need.
+- **Structured `error` field on `ChatResponse`** — when chat returns no text and no tool calls, the server now emits `{ code, hint }` instead of a silent empty response. Codes: `EMPTY_CONTENT`, `MAX_TOKENS_TRUNCATED`, `CONTENT_FILTERED`.
+- **HA integration surfaces `error.hint` directly to the user** (`src/ha-integration/custom_components/home_mind/conversation.py`). The previous fallback string — "I received your request but got no response." — was indistinguishable across very different failure modes (model returned nothing, max_tokens truncation, content-filter block, shim/proxy returning non-streaming responses). Users now get a specific hint about what to check, surfaced directly in HA Assist.
+
+### Why
+The generic fallback string had been around since the first integration, and it hit at least two distinct failure modes we know of: @rgnyldz's qwen3.6:27b case (missing `response_format` hint) and our own FunctionGemma testing (shim returning non-streaming JSON instead of OpenAI SSE chunks). Both surfaced the same opaque message in HA Assist, making the problem far harder to diagnose than it needed to be. The shape now distinguishes failure modes and surfaces fixable hints to the user.
+
 ## [0.15.3] - 2026-05-11
 
 ### Fixed

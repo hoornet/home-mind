@@ -11,6 +11,7 @@ import { handleToolCall, extractAndStoreFacts } from "./tool-handler.js";
 import type {
   ChatRequest,
   ChatResponse,
+  ChatError,
   StreamCallback,
   IChatEngine,
   IFactExtractor,
@@ -150,10 +151,48 @@ export class OpenAIChatEngine implements IChatEngine {
       responseText
     ).catch((err) => console.error("Fact extraction failed:", err));
 
+    // 8. If the model produced no usable response, attach a structured error
+    // so the HA integration can surface a useful hint instead of the generic
+    // "I received your request but got no response." fallback. The `finish_reason`
+    // from the final stream tells us which diagnostic applies.
+    const error = responseText === "" && result.toolCalls.length === 0
+      ? this.classifyEmptyResponse(result.finishReason)
+      : undefined;
+
     return {
       response: responseText,
       toolsUsed,
       factsLearned: 0,
+      ...(error ? { error } : {}),
+    };
+  }
+
+  private classifyEmptyResponse(finishReason: string | null): ChatError {
+    if (finishReason === "length") {
+      return {
+        code: "MAX_TOKENS_TRUNCATED",
+        hint:
+          "Response was cut off at max_tokens before the model finished. " +
+          "If you're seeing this often, the conversation prompt may be too large " +
+          "for the model's output budget — try a model with more output tokens.",
+      };
+    }
+    if (finishReason === "content_filter") {
+      return {
+        code: "CONTENT_FILTERED",
+        hint:
+          "The provider blocked the response (content filter). " +
+          "If this happens on benign smart-home commands, try a different model.",
+      };
+    }
+    return {
+      code: "EMPTY_CONTENT",
+      hint:
+        "The model returned no text and no tool calls. " +
+        "If you're routing through an OpenAI-compatible shim/proxy, verify it streams " +
+        "OpenAI-format SSE chunks. For local models, ensure the model emits a final " +
+        "answer rather than just thinking. For the fact extractor specifically, set " +
+        "OPENAI_RESPONSE_FORMAT=json_object on picky providers (e.g. some Ollama models).",
     };
   }
 

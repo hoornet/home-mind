@@ -183,4 +183,13 @@ class HomeMindConversationAgent(ConversationEntity):
                 raise Exception(f"API error {response.status}: {error_text}")
 
             data = await response.json()
-            return data.get("response") or "I received your request but got no response."
+            response_text = data.get("response")
+            if response_text:
+                return response_text
+            error = data.get("error")
+            if isinstance(error, dict):
+                hint = error.get("hint")
+                code = error.get("code")
+                if hint:
+                    return f"{hint} [{code}]" if code else hint
+            return "I received your request but got no response."

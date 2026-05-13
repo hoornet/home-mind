@@ -361,4 +361,63 @@ describe("OpenAIFactExtractor", () => {
     );
     expect(ext).toBeDefined();
   });
+
+  describe("response_format and max_tokens wiring (added v0.15.4)", () => {
+    it("omits response_format when not configured (default behavior)", async () => {
+      mockCreate.mockResolvedValue({
+        choices: [{ message: { content: "[]" } }],
+      });
+      const ext = new OpenAIFactExtractor("key", "model");
+
+      await ext.extract("u", "a", []);
+
+      expect(mockCreate.mock.calls[0][0]).not.toHaveProperty("response_format");
+    });
+
+    it("sends response_format: { type: 'json_object' } when configured", async () => {
+      mockCreate.mockResolvedValue({
+        choices: [{ message: { content: "[]" } }],
+      });
+      const ext = new OpenAIFactExtractor(
+        "key",
+        "model",
+        undefined,
+        "json_object"
+      );
+
+      await ext.extract("u", "a", []);
+
+      expect(mockCreate.mock.calls[0][0].response_format).toEqual({
+        type: "json_object",
+      });
+    });
+
+    it("uses default max_tokens=1000 when not configured", async () => {
+      mockCreate.mockResolvedValue({
+        choices: [{ message: { content: "[]" } }],
+      });
+      const ext = new OpenAIFactExtractor("key", "model");
+
+      await ext.extract("u", "a", []);
+
+      expect(mockCreate.mock.calls[0][0].max_tokens).toBe(1000);
+    });
+
+    it("uses the configured max_tokens override", async () => {
+      mockCreate.mockResolvedValue({
+        choices: [{ message: { content: "[]" } }],
+      });
+      const ext = new OpenAIFactExtractor(
+        "key",
+        "model",
+        undefined,
+        undefined,
+        4096
+      );
+
+      await ext.extract("u", "a", []);
+
+      expect(mockCreate.mock.calls[0][0].max_tokens).toBe(4096);
+    });
+  });
 });

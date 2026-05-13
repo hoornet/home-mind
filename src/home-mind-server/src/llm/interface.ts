@@ -16,10 +16,26 @@ export interface ChatRequest {
   customPrompt?: string;
 }
 
+/**
+ * Structured failure information emitted when chat produces no usable
+ * response (no text and no tool call). The HA integration surfaces
+ * `hint` to the user instead of the generic "I received your request but
+ * got no response." fallback, so failures are diagnosable from HA Assist
+ * without needing server logs.
+ */
+export interface ChatError {
+  code:
+    | "EMPTY_CONTENT"
+    | "MAX_TOKENS_TRUNCATED"
+    | "CONTENT_FILTERED";
+  hint: string;
+}
+
 export interface ChatResponse {
   response: string;
   toolsUsed: string[];
   factsLearned: number;
+  error?: ChatError;
 }
 
 export type StreamCallback = (chunk: string) => void;

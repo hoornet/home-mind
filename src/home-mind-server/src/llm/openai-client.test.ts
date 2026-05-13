@@ -463,4 +463,53 @@ describe("OpenAIChatEngine", () => {
 
     expect(result.factsLearned).toBe(0);
   });
+
+  describe("empty-response diagnostics", () => {
+    it("attaches EMPTY_CONTENT error when finish_reason=stop with no text and no tool calls", async () => {
+      mockCreate.mockResolvedValue(
+        makeStream([{ choices: [{ delta: {}, finish_reason: "stop" }] }])
+      );
+
+      const result = await engine.chat({ message: "Hi", userId: "user-1" });
+
+      expect(result.response).toBe("");
+      expect(result.error).toBeDefined();
+      expect(result.error?.code).toBe("EMPTY_CONTENT");
+      expect(result.error?.hint).toMatch(/OpenAI-compatible|tool calls/);
+    });
+
+    it("attaches MAX_TOKENS_TRUNCATED error when finish_reason=length with empty text", async () => {
+      mockCreate.mockResolvedValue(
+        makeStream([{ choices: [{ delta: {}, finish_reason: "length" }] }])
+      );
+
+      const result = await engine.chat({ message: "Hi", userId: "user-1" });
+
+      expect(result.error?.code).toBe("MAX_TOKENS_TRUNCATED");
+      expect(result.error?.hint).toMatch(/max_tokens|cut off/);
+    });
+
+    it("attaches CONTENT_FILTERED error when finish_reason=content_filter with empty text", async () => {
+      mockCreate.mockResolvedValue(
+        makeStream([{ choices: [{ delta: {}, finish_reason: "content_filter" }] }])
+      );
+
+      const result = await engine.chat({ message: "Hi", userId: "user-1" });
+
+      expect(result.error?.code).toBe("CONTENT_FILTERED");
+    });
+
+    it("does NOT attach error when the model returns text", async () => {
+      mockCreate.mockResolvedValue(
+        makeStream([
+          { choices: [{ delta: { content: "Done" }, finish_reason: "stop" }] },
+        ])
+      );
+
+      const result = await engine.chat({ message: "Hi", userId: "user-1" });
+
+      expect(result.response).toBe("Done");
+      expect(result.error).toBeUndefined();
+    });
+  });
 });

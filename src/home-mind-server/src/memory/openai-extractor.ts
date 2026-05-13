@@ -6,8 +6,16 @@ import { EXTRACTION_PROMPT, VALID_CATEGORIES } from "./extraction-prompt.js";
 export class OpenAIFactExtractor implements IFactExtractor {
   private client: OpenAI;
   private model: string;
+  private responseFormat: "json_object" | undefined;
+  private maxTokens: number;
 
-  constructor(apiKey: string, model: string, baseUrl?: string) {
+  constructor(
+    apiKey: string,
+    model: string,
+    baseUrl?: string,
+    responseFormat?: "json_object",
+    maxTokens?: number
+  ) {
     this.client = new OpenAI({
       apiKey,
       baseURL: baseUrl,
@@ -17,6 +25,8 @@ export class OpenAIFactExtractor implements IFactExtractor {
       },
     });
     this.model = model;
+    this.responseFormat = responseFormat;
+    this.maxTokens = maxTokens ?? 1000;
   }
 
   async extract(
@@ -47,8 +57,11 @@ ${JSON.stringify(factsJson, null, 2)}`;
 
       const response = await this.client.chat.completions.create({
         model: this.model,
-        max_tokens: 1000,
+        max_tokens: this.maxTokens,
         messages: [{ role: "user", content: prompt }],
+        ...(this.responseFormat
+          ? { response_format: { type: this.responseFormat } }
+          : {}),
       });
 
       const text = response.choices[0]?.message?.content ?? "";
