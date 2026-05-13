@@ -2,6 +2,19 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.15.6] - 2026-05-13
+
+### Added (prompts.ts)
+- **`localMidnightIso` field** on `formatDateTimeWithOffset()`'s return shape. The dynamic prompt block now includes a `Local midnight today (UTC)` line with an unambiguous ISO timestamp the LLM should use as `start_time` for "today's X" history queries. Previously the model would infer "today" from the date string and end up sending `2026-05-13T00:00:00Z` — which is midnight UTC, **not** midnight local. For CEST that meant skipping the first 2 hours of the local day; for EST it would pull 5 hours of *yesterday* into "today". The injected value is computed from the runtime's local TZ, so it works correctly for every offset (including half-hour ones like UTC+5:30).
+
+### Changed (prompts.ts)
+- **Tightened the "when did X start today?" rule** to a prescriptive universal principle. Previously the prompt said *"the first non-zero reading is usually pre-dawn sensor noise; pick when the value crosses a meaningful threshold OR describe the ramp"* — which models interpreted as advisory and often did both (correctly describing the ramp **and** still naming the first non-zero datapoint). The new wording is:
+  > NEVER report the first non-zero datapoint as the start time. It is almost always idle current, sensor noise, or a recorder artifact — not real activity. Either find when the value first crossed ~10% of today's peak observed value, or describe the ramp shape without naming a specific start. The data's own shape — not absolute clock times — defines when something meaningfully started.
+- This generalizes to any rate/power/flow sensor (solar inverters, water meters, motion-cumulative, miners, HVAC, etc.) and avoids latitude/season-specific clock-time hardcoding.
+
+### Why
+Two distinct bugs surfaced in the same real-HA query: (1) the model querying with midnight UTC instead of local midnight, and (2) reporting an inverter idle reading at 4:14 AM as "solar started at 4:14 AM" despite the previous "describe the ramp" advisory. Fix #1 is structural (the model can no longer get the local-day boundary wrong). Fix #2 is prescriptive (the model cannot interpret "describe the ramp" as additive to naming a pre-dawn timestamp).
+
 ## [0.15.5] - 2026-05-13
 
 ### Added (system prompt)

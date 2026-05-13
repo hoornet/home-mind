@@ -54,7 +54,7 @@ If the user asks about something — energy, solar production, weather, security
 ## "TODAY'S X" AND PAST-DATA QUERIES
 
 - For **daily totals** ("how much solar today?", "energy used by miners today?", "total water use today?"): call **get_history** for that entity over today's range, not get_state. The current state of sensor.*_current_power is the **instantaneous** reading; the **daily total** lives in sensor.*_today_energy (or similar) or has to be derived from history.
-- For **"when did X start today?"** on noisy sensors (solar production, motion-cumulative, water meters): the first non-zero reading is usually pre-dawn sensor noise or inverter idle current, not the real start. Report the time the value crosses a **meaningful threshold** (e.g., solar production above ~500W) or describe the ramp in plain language ("ramped up around 6 AM") rather than naming the first non-zero datapoint.
+- For **"when did X start today?"** on rate/power/flow sensors (solar, water, energy, motion-cumulative, miners, HVAC, etc.): **NEVER report the first non-zero datapoint as the start time.** The first non-zero reading is almost always idle current, sensor noise, or a recorder artifact — not real activity. Instead either (a) find when the value first crossed ~10% of today's peak observed value and cite that time, or (b) describe the ramp shape without naming a specific start ("ramped up through the morning"). The data's own shape — not absolute clock times — defines when something meaningfully started.
 
 ## Your Capabilities:
 - Query Home Assistant device states (lights, sensors, switches, etc.)
@@ -130,7 +130,7 @@ If you don't see a matching entity, call **search_entities** with keywords (syst
 
 ## "TODAY'S X" / PAST-DATA QUERIES
 - Daily totals → **get_history** over today's range, NOT the current instantaneous sensor.
-- "When did X start today?" → first non-zero reading is often pre-dawn noise; pick when the value crosses a meaningful threshold or describe the ramp.
+- "When did X start today?" → NEVER the first non-zero datapoint (it's idle/noise/artifact). Cite when value crossed ~10% of today's peak, or describe the ramp.
 
 ## Light Control:
 - **For devices in Device Capability Reference**: use exact params shown, skip search_entities
@@ -157,9 +157,19 @@ If you don't see a matching entity, call **search_entities** with keywords (syst
 
 /**
  * Format current date/time with explicit UTC offset for LLM consumption.
- * Returns both a human-readable string and an ISO timestamp.
+ * Returns human-readable, ISO-now, and local-midnight-as-UTC strings.
+ *
+ * `localMidnightIso` is the unambiguous start of "today" in the user's local
+ * timezone, expressed in UTC. The LLM should use this directly when querying
+ * history for "today's X" rather than constructing 00:00:00Z from the date
+ * string (which is midnight UTC, not local midnight, and skews "today" by the
+ * user's offset — 2 hours late for CEST, 5 hours early for EST, etc.).
  */
-export function formatDateTimeWithOffset(): { display: string; iso: string } {
+export function formatDateTimeWithOffset(): {
+  display: string;
+  iso: string;
+  localMidnightIso: string;
+} {
   const now = new Date();
   const offsetMinutes = now.getTimezoneOffset();
   const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
@@ -181,7 +191,21 @@ export function formatDateTimeWithOffset(): { display: string; iso: string } {
 
   const iso = now.toISOString();
 
-  return { display, iso };
+  // Local midnight today, expressed in UTC ISO. Using the Date(y, m, d) form
+  // constructs the moment at local midnight regardless of TZ; .toISOString()
+  // converts back to UTC for unambiguous transport to HA's history API.
+  const localMidnight = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    0,
+    0,
+    0,
+    0
+  );
+  const localMidnightIso = localMidnight.toISOString();
+
+  return { display, iso, localMidnightIso };
 }
 
 // Type for system prompt with caching
@@ -201,7 +225,7 @@ export function buildSystemPrompt(
   const factsText =
     facts.length > 0 ? facts.map((f) => `- ${f}`).join("\n") : "No memories yet.";
 
-  const { display: dateTimeStr, iso: isoTimestamp } = formatDateTimeWithOffset();
+  const { display: dateTimeStr, iso: isoTimestamp, localMidnightIso } = formatDateTimeWithOffset();
 
   const identity = customPrompt
     ? customPrompt
@@ -217,7 +241,8 @@ export function buildSystemPrompt(
   const dynamicContent = `
 ## Current Context:
 - Date/Time: ${dateTimeStr}
-- ISO Timestamp: ${isoTimestamp}
+- ISO Timestamp (now, UTC): ${isoTimestamp}
+- Local midnight today (UTC): ${localMidnightIso}  ← use this as start_time for "today" history queries, NOT 00:00:00Z
 
 ## What You Remember About This User:
 ${factsText}${layoutSection}${deviceSection}`;
@@ -251,7 +276,7 @@ export function buildSystemPromptText(
   const factsText =
     facts.length > 0 ? facts.map((f) => `- ${f}`).join("\n") : "No memories yet.";
 
-  const { display: dateTimeStr, iso: isoTimestamp } = formatDateTimeWithOffset();
+  const { display: dateTimeStr, iso: isoTimestamp, localMidnightIso } = formatDateTimeWithOffset();
 
   const identity = customPrompt
     ? customPrompt
@@ -268,7 +293,8 @@ export function buildSystemPromptText(
 
 ## Current Context:
 - Date/Time: ${dateTimeStr}
-- ISO Timestamp: ${isoTimestamp}
+- ISO Timestamp (now, UTC): ${isoTimestamp}
+- Local midnight today (UTC): ${localMidnightIso}  ← use this as start_time for "today" history queries, NOT 00:00:00Z
 
 ## What You Remember About This User:
 ${factsText}${layoutSection}${deviceSection}`;
