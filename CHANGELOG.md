@@ -2,6 +2,19 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.15.5] - 2026-05-13
+
+### Added (system prompt)
+- **"Entity discovery — don't give up before searching"** section instructs the model to try `search_entities` with relevant keywords (system word, brand, domain, room name, device type) before declining to answer. Addresses a real-HA pattern observed during cheap-tier piloting where models would say "I don't have that tool" for things like solar production rather than searching for the entity first.
+- **"Today's X / past-data queries"** section gives explicit guidance on two failure shapes:
+  - For **daily totals**, use `get_history` over today's range — not the instantaneous current state of a `sensor.*_current_power` entity.
+  - For **"when did X start today?"** on noisy sensors (solar inverters, motion-cumulative, water meters), the first non-zero reading is often pre-dawn sensor noise or idle current. Report when the value crosses a meaningful threshold, or describe the ramp in plain language.
+
+Both new sections appear in `SYSTEM_INSTRUCTIONS` (full) and `VOICE_INSTRUCTIONS` (compact) in `src/llm/prompts.ts`. Total cost: ~250 extra tokens per conversation (cached via prompt caching where supported).
+
+### Why
+Observed failures during real-HA cheap-model piloting: (a) Mistral-Small declining solar production questions without trying `search_entities`; (b) cheap models reporting "0 produced today" because they read instantaneous power instead of daily history; (c) the "4:13 AM solar start" mistake (84W pre-dawn reading reported as the day's start). All three are addressable on the prompt side and lift any model running through Home Mind, not just one.
+
 ## [0.15.4] - 2026-05-13
 
 ### Added

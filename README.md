@@ -1,7 +1,7 @@
 # Home Mind
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/Version-0.15.4-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.15.5-brightgreen.svg)]()
 [![Status](https://img.shields.io/badge/Status-Voice%20Working-success.svg)]()
 
 AI assistant for Home Assistant with cognitive memory. Adds learning capabilities, persistent memory, and voice control to your smart home.
@@ -231,7 +231,7 @@ The self-hosted Docker Compose setup below is for advanced users who want full c
 
 ## Project Status
 
-**Current Version:** v0.15.4
+**Current Version:** v0.15.5
 
 - [x] Voice control via HA Assist
 - [x] Cognitive memory with Shodh
