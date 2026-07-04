@@ -45,8 +45,8 @@ export class OpenAIChatEngine implements IChatEngine {
       apiKey: config.openaiApiKey,
       baseURL: config.openaiBaseUrl,
       defaultHeaders: {
-        "HTTP-Referer": "https://homemind.veganostr.com",
-        "X-Title": "HomeMind PRO",
+        "HTTP-Referer": "https://github.com/hoornet/home-mind",
+        "X-Title": "Home Mind",
       },
     });
     this.memory = memory;

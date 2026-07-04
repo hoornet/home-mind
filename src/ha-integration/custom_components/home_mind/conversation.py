@@ -111,23 +111,23 @@ class HomeMindConversationAgent(ConversationEntity):
             )
 
         except UsageLimitError:
-            _LOGGER.warning("HomeMind PRO usage limit reached")
+            _LOGGER.warning("Home Mind: AI provider returned a usage/quota limit")
             await self.hass.services.async_call(
                 "persistent_notification",
                 "create",
                 {
-                    "title": "HomeMind PRO — Usage Limit Reached",
+                    "title": "Home Mind — Usage Limit Reached",
                     "message": (
-                        "Your monthly usage allowance is depleted. "
-                        "Visit homemind.veganostr.com to renew or upgrade."
+                        "Your AI provider returned a usage or quota limit. "
+                        "Check your provider account or API key balance."
                     ),
                     "notification_id": "homemind_usage_limit",
                 },
             )
             intent_response = intent.IntentResponse(language=user_input.language)
             intent_response.async_set_speech(
-                "Your monthly token allowance is depleted. "
-                "Please visit homemind.veganostr.com to renew or upgrade."
+                "Your AI provider's usage limit was reached. "
+                "Please check your provider account or API key balance."
             )
             return ConversationResult(
                 response=intent_response,
