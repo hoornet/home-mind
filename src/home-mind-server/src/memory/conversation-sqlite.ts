@@ -30,7 +30,22 @@ export class SqliteConversationStore implements IConversationStore {
       CREATE INDEX IF NOT EXISTS idx_messages_conv_id ON messages(conversation_id);
       CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
       CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages(user_id);
+
+      -- Users we have ever seen. Deliberately separate from messages: message
+      -- rows are pruned after 24h by cleanupOldConversations(), so deriving the
+      -- user list from them made getKnownUsers() return [] for anyone who had
+      -- not chatted that day — which silently disabled the fact-cleanup job.
+      -- Mirrors InMemoryConversationStore's knownUsers set, but durable.
+      CREATE TABLE IF NOT EXISTS users (
+        user_id TEXT PRIMARY KEY,
+        first_seen_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
     `);
+
+    // Backfill from any messages still present (upgrades from before the users table).
+    this.db.exec(
+      `INSERT OR IGNORE INTO users (user_id) SELECT DISTINCT user_id FROM messages`
+    );
   }
 
   storeMessage(
@@ -41,6 +56,10 @@ export class SqliteConversationStore implements IConversationStore {
   ): string {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
+
+    this.db.prepare(
+      `INSERT OR IGNORE INTO users (user_id) VALUES (?)`
+    ).run(userId);
 
     this.db.prepare(
       `INSERT INTO messages (id, conversation_id, user_id, role, content, created_at)
@@ -129,7 +148,7 @@ export class SqliteConversationStore implements IConversationStore {
 
   getKnownUsers(): string[] {
     const rows = this.db.prepare(
-      `SELECT DISTINCT user_id FROM messages`
+      `SELECT user_id FROM users ORDER BY first_seen_at`
     ).all() as Array<{ user_id: string }>;
 
     return rows.map((row) => row.user_id);

@@ -21,6 +21,15 @@ type FunctionToolCall = OpenAI.ChatCompletionMessageFunctionToolCall;
 
 const OPENAI_TOOLS = toOpenAITools(TOOL_DEFINITIONS);
 
+/**
+ * Hard cap on tool round-trips per user message. A model that loops (repeatedly
+ * re-searching entities, retrying a tool it misreads as failing) otherwise runs
+ * until the HA integration's 120s client timeout with nothing to show for it —
+ * and on a metered API, at the user's expense. On the last iteration we re-ask
+ * with tool calling disabled so there is still a written answer.
+ */
+const MAX_TOOL_ITERATIONS = 8;
+
 export class OpenAIChatEngine implements IChatEngine {
   private client: OpenAI;
   private memory: IMemoryStore;
@@ -108,7 +117,10 @@ export class OpenAIChatEngine implements IChatEngine {
     // 5. Stream and handle tool call loop
     let result = await this.streamCompletion(messages, isVoice, onChunk);
 
+    let iterations = 0;
     while (result.finishReason === "tool_calls" && result.toolCalls.length > 0) {
+      iterations++;
+
       // Add assistant message with tool calls
       messages.push({
         role: "assistant",
@@ -119,7 +131,28 @@ export class OpenAIChatEngine implements IChatEngine {
       // Execute all tool calls in parallel
       const toolPromises = result.toolCalls.map(async (tc: FunctionToolCall) => {
         toolsUsed.push(tc.function.name);
-        const args = JSON.parse(tc.function.arguments);
+
+        // Small local models routinely emit truncated or non-JSON arguments.
+        // Hand that back as a tool error the model can recover from — throwing
+        // here would reject the whole Promise.all and fail the user's request.
+        let args: Record<string, unknown>;
+        try {
+          args = tc.function.arguments ? JSON.parse(tc.function.arguments) : {};
+        } catch {
+          console.warn(
+            `[tool] ${tc.function.name} got unparseable arguments: ${tc.function.arguments}`
+          );
+          return {
+            role: "tool" as const,
+            tool_call_id: tc.id,
+            content: JSON.stringify({
+              error:
+                `Arguments for ${tc.function.name} were not valid JSON and could not be read. ` +
+                `Call the tool again with valid JSON arguments.`,
+            }),
+          };
+        }
+
         const toolResult = await handleToolCall(this.ha, tc.function.name, args);
         return {
           role: "tool" as const,
@@ -131,8 +164,16 @@ export class OpenAIChatEngine implements IChatEngine {
       const toolResults = await Promise.all(toolPromises);
       messages.push(...toolResults);
 
-      // Continue streaming
-      result = await this.streamCompletion(messages, isVoice, onChunk);
+      // Continue streaming. On the final allowed iteration, disable tool calling
+      // so the model has to answer in words rather than loop again.
+      const forceAnswer = iterations >= MAX_TOOL_ITERATIONS;
+      if (forceAnswer) {
+        console.warn(
+          `[llm] tool loop hit ${MAX_TOOL_ITERATIONS} iterations — forcing a final answer`
+        );
+      }
+      result = await this.streamCompletion(messages, isVoice, onChunk, forceAnswer);
+      if (forceAnswer) break;
     }
 
     const responseText = result.text;
@@ -199,7 +240,8 @@ export class OpenAIChatEngine implements IChatEngine {
   private async streamCompletion(
     messages: OpenAI.ChatCompletionMessageParam[],
     isVoice: boolean,
-    onChunk?: StreamCallback
+    onChunk?: StreamCallback,
+    disableTools = false
   ): Promise<{
     text: string;
     finishReason: string | null;
@@ -210,6 +252,9 @@ export class OpenAIChatEngine implements IChatEngine {
       max_tokens: isVoice ? 500 : 2048,
       messages,
       tools: OPENAI_TOOLS,
+      // Keep the tool list in the request (history already references it) but
+      // stop the model from issuing more calls.
+      ...(disableTools ? { tool_choice: "none" as const } : {}),
       stream: true,
     });
 

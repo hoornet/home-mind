@@ -18,6 +18,13 @@ import type {
 
 export type { ChatRequest, ChatResponse, StreamCallback };
 
+/**
+ * Hard cap on tool round-trips per user message — see the matching constant in
+ * openai-client.ts. On the last iteration we re-ask with tool_choice "none" so
+ * the user gets a written answer rather than a silent timeout.
+ */
+const MAX_TOOL_ITERATIONS = 8;
+
 export class LLMClient implements IChatEngine {
   private anthropic: Anthropic;
   private memory: IMemoryStore;
@@ -106,7 +113,9 @@ export class LLMClient implements IChatEngine {
     );
 
     // 4. Handle tool calls in a loop
+    let iterations = 0;
     while (response.stop_reason === "tool_use") {
+      iterations++;
       const assistantContent = response.content;
       messages.push({ role: "assistant", content: assistantContent });
 
@@ -136,13 +145,22 @@ export class LLMClient implements IChatEngine {
 
       messages.push({ role: "user", content: toolResults });
 
-      // Continue with streaming for the follow-up response
+      // Continue with streaming for the follow-up response. On the final allowed
+      // iteration, stop the model issuing more calls so it has to answer.
+      const forceAnswer = iterations >= MAX_TOOL_ITERATIONS;
+      if (forceAnswer) {
+        console.warn(
+          `[llm] tool loop hit ${MAX_TOOL_ITERATIONS} iterations — forcing a final answer`
+        );
+      }
       response = await this.streamMessage(
         systemPrompt,
         messages,
         isVoice,
-        onChunk
+        onChunk,
+        forceAnswer
       );
+      if (forceAnswer) break;
     }
 
     // 5. Extract final text response
@@ -180,13 +198,16 @@ export class LLMClient implements IChatEngine {
     systemPrompt: CachedSystemPrompt,
     messages: Anthropic.MessageParam[],
     isVoice: boolean,
-    onChunk?: StreamCallback
+    onChunk?: StreamCallback,
+    disableTools = false
   ): Promise<Anthropic.Message> {
     const stream = this.anthropic.messages.stream({
       model: this.config.llmModel,
       max_tokens: isVoice ? 500 : 2048,
       system: systemPrompt,
       tools: HA_TOOLS,
+      // Keep the tool list (history references it) but stop further calls.
+      ...(disableTools ? { tool_choice: { type: "none" as const } } : {}),
       messages,
     });
 

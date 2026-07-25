@@ -64,6 +64,24 @@ describe("SqliteConversationStore", () => {
     expect(users).toContain("user-2");
   });
 
+  it("still knows a user after their messages are pruned", () => {
+    // Regression: known users used to be SELECT DISTINCT user_id FROM messages,
+    // so a user who hadn't chatted in 24h vanished from the list the moment
+    // cleanupOldConversations() ran — silently disabling the fact-cleanup job.
+    const db = (store as unknown as { db: import("better-sqlite3").Database }).db;
+    const oldDate = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+    store.storeMessage("conv-old", "user-1", "user", "Hello");
+    db.prepare(`UPDATE messages SET created_at = ? WHERE conversation_id = ?`).run(
+      oldDate,
+      "conv-old"
+    );
+
+    store.cleanupOldConversations(24);
+
+    expect(store.getConversationHistory("conv-old")).toHaveLength(0);
+    expect(store.getKnownUsers()).toContain("user-1");
+  });
+
   it("cleans up old conversations", () => {
     // Insert a message with a backdated timestamp directly
     const db = (store as unknown as { db: import("better-sqlite3").Database }).db;

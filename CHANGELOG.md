@@ -2,6 +2,24 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.15.7] - 2026-07-25
+
+### Fixed (llm/client.ts, llm/openai-client.ts)
+- **Tool-call loops are now bounded.** Both chat engines looped on `stop_reason === "tool_use"` / `finish_reason === "tool_calls"` with no iteration cap. A model that gets stuck — re-searching entities, retrying a tool whose result it misreads as a failure — would keep calling until the HA integration's 120-second client timeout, producing nothing and, on a metered API, spending real money to do it. Capped at 8 round-trips (`MAX_TOOL_ITERATIONS`); the final pass re-issues the request with tool calling disabled (`tool_choice: "none"` / `{type: "none"}`) so the model has to answer in words instead of timing out silently.
+
+### Fixed (llm/openai-client.ts)
+- **Malformed tool arguments no longer fail the whole request.** `JSON.parse(tc.function.arguments)` ran unguarded inside a `Promise.all`, so a single truncated or non-JSON argument blob rejected the entire chat request as a 500. Small local models (the common Ollama case) emit these routinely. The parse failure now comes back as a normal tool error the model can recover from on the next turn.
+
+### Fixed (memory/conversation-sqlite.ts)
+- **The periodic fact-cleanup job no longer skips everyone.** `getKnownUsers()` was `SELECT DISTINCT user_id FROM messages`, but `cleanupOldConversations()` prunes messages older than 24 hours — so any user who hadn't chatted that day disappeared from the list, and `MemoryCleanupJob` logged "No known users" and did nothing. Users are now tracked in their own durable `users` table, matching what `InMemoryConversationStore` already did correctly with its `knownUsers` set. Existing databases are backfilled from whatever messages remain on first start. Affects `CONVERSATION_STORAGE=sqlite` only.
+
+### Security
+- Ships the dependency fixes that landed after 0.15.6 but were never tagged: **vitest 4.0.18 → 4.1.8** (critical, GHSA-5xrq-8626-4rwp), **tsx → ^4.22.4** pulling esbuild 0.28.1 (high-severity advisory), plus `undici`, `multer`, `uuid`, `qs`/`express` bumps. Anyone installing from the 0.15.6 tag was still on the vulnerable versions.
+- Additionally clears **postcss** path-traversal (high, GHSA-r28c-9q8g-f849) and **body-parser** DoS via silently-disabled size enforcement (GHSA-v422-hmwv-36x6). `npm audit` now reports 0 vulnerabilities.
+
+### Changed (docs)
+- Stale "HomeMind PRO" strings corrected to "Home Mind" (OpenRouter `X-Title`/referer, usage-limit notification), and the usage-limit copy reframed for OSS/BYOK rather than a paid service. Easy Install section now points at the Nives add-on instead of a dead repo URL.
+
 ## [0.15.6] - 2026-05-13
 
 ### Added (prompts.ts)
