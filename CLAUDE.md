@@ -47,6 +47,7 @@ Provider is selected at startup by `llm/factory.ts` based on `LLM_PROVIDER` conf
 
 - **Long-term facts**: Shodh Memory (external service, semantic search, Hebbian learning, natural decay)
 - **Conversation history**: `IConversationStore` with two backends: `InMemoryConversationStore` (default, lost on restart) and `SqliteConversationStore` (persistent via `better-sqlite3`). Controlled by `CONVERSATION_STORAGE` env var (`memory` | `sqlite`). Max 20 messages/conversation.
+- **Known users** live in their own `users` table (sqlite) / `knownUsers` set (memory) — deliberately *not* derived from conversation rows, which `cleanupOldConversations()` prunes after 24h. Deriving them from messages is what silently disabled `MemoryCleanupJob` before 0.15.7.
 - **Entity cache**: 10-second TTL in HomeAssistantClient (invalidated after service calls)
 - **Fact categories**: baseline, preference, identity, device, pattern, correction
 - **Smart replacement**: Extractor identifies existing facts that new facts supersede (via `replaces` field)
@@ -88,7 +89,9 @@ import { loadConfig } from "./config.js";
 
 **Zod validation** for all config and request schemas. Config loads from env vars via `loadConfig()` in `config.ts` — exits process on validation failure. Uses `emptyToUndefined()` helper because Docker Compose sets empty strings (not `undefined`) for unset env vars.
 
-**HA tool definitions** are provider-neutral `ToolDefinition[]` in `llm/tool-definitions.ts`, converted to provider format via `toAnthropicTools()` / `toOpenAITools()`. Five tools: `get_state`, `get_entities`, `search_entities`, `call_service`, `get_history`. Shared execution logic in `llm/tool-handler.ts`.
+**HA tool definitions** are provider-neutral `ToolDefinition[]` in `llm/tool-definitions.ts`, converted to provider format via `toAnthropicTools()` / `toOpenAITools()`. Five tools: `get_state`, `get_entities`, `search_entities`, `call_service`, `get_history`. Shared execution logic in `llm/tool-handler.ts`. (The Nives fork has ten — it adds the automation lifecycle and `list_services`. Those are deliberately not here.)
+
+**Tool loop is capped** at `MAX_TOOL_ITERATIONS` (8) in both engines. On the final iteration the request is re-issued with tool calling disabled (`tool_choice: "none"` / `{type: "none"}`) so a stuck model produces a written answer instead of running to the client's 120s timeout. Tool arguments are parsed defensively — malformed JSON becomes a tool error the model can retry, never an exception that fails the request.
 
 **Prompt caching**: System prompt split into static (cached) + dynamic (facts/datetime) blocks in `llm/prompts.ts`. Two variants: regular and voice (shorter). Custom prompt replaces the default identity line (opening sentence) rather than appending — this gives it maximum authority over persona. Dynamic block includes both human-readable datetime with UTC offset (e.g., `10:15 PM CET (UTC+1)`) and a raw ISO timestamp for unambiguous tool use.
 
@@ -139,11 +142,13 @@ LLM config:
 - `OPENAI_BASE_URL` — optional, for OpenAI-compatible APIs (Azure, local proxies)
 - `OLLAMA_BASE_URL` — optional, Ollama API endpoint (default: `http://localhost:11434/v1`)
 
-Optional: `PORT` (default 3100), `API_TOKEN` (bearer token for auth — when set, all endpoints except health require it), `HA_SKIP_TLS_VERIFY`, `MEMORY_TOKEN_LIMIT` (default 1500), `LOG_LEVEL`, `CONVERSATION_STORAGE` (`memory` | `sqlite`, default `memory`), `CONVERSATION_DB_PATH` (default `/data/conversations.db`, only used when `CONVERSATION_STORAGE=sqlite`), `CUSTOM_PROMPT` (server-level default custom system prompt), `TZ` (timezone for the Docker container, default `Europe/Prague` in docker-compose; Node.js uses this for `toLocaleString()` so the LLM sees correct local time)
+Optional: `PORT` (default 3100), `API_TOKEN` (bearer token for auth — when set, all endpoints except health require it), `HA_SKIP_TLS_VERIFY`, `MEMORY_TOKEN_LIMIT` (default 3000), `LOG_LEVEL`, `CONVERSATION_STORAGE` (`memory` | `sqlite`, default `memory`), `CONVERSATION_DB_PATH` (default `/data/conversations.db`, only used when `CONVERSATION_STORAGE=sqlite`), `CUSTOM_PROMPT` (server-level default custom system prompt), `TZ` (timezone for the Docker container, default `Europe/Prague` in docker-compose; Node.js uses this for `toLocaleString()` so the LLM sees correct local time)
 
-### Cloud Proxy Compatibility
+### OpenAI-Compatible Endpoint Compatibility
 
-The server is fully compatible with the Home Mind Cloud metering proxy. When deployed in cloud mode, the provisioner sets `LLM_PROVIDER=openai` + `OPENAI_BASE_URL=<proxy>/v1` + `OPENAI_API_KEY=<proxy_key>`. The server doesn't know it's talking to a proxy — it just sees an OpenAI-compatible API. This is by design: zero coupling between the OSS server and the closed-source proxy.
+The server works against any OpenAI-compatible endpoint: set `LLM_PROVIDER=openai` + `OPENAI_BASE_URL=<endpoint>/v1` + `OPENAI_API_KEY=<key>`. It doesn't know or care what's on the other end — OpenRouter, a local shim, LM Studio, a gateway. This is by design and is what keeps this repo model-agnostic.
+
+> Historical note: this section used to describe a "Home Mind Cloud metering proxy". That proxy was retired — the paid product (Nives) now talks to OpenRouter directly, with no middleman. Nothing in this repo ever depended on it, and nothing here should grow OpenRouter-, tier-, or preset-specific logic. See `PRODUCT_SEPARATION.md` in the project hub.
 
 STT (optional): `STT_PROVIDER` (`openai` | `none`, default `none`), `STT_API_KEY` (overrides `OPENAI_API_KEY`), `STT_BASE_URL` (custom Whisper-compatible endpoint), `STT_MODEL` (default `whisper-1`)
 

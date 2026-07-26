@@ -73,7 +73,7 @@ HA_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```bash
 PORT=3100                    # API port (default: 3100)
 HA_SKIP_TLS_VERIFY=true      # Set to true if HA uses HTTPS (required for self-signed certs)
-MEMORY_TOKEN_LIMIT=1500      # Max memory context tokens (default: 1500)
+MEMORY_TOKEN_LIMIT=3000      # Max memory context tokens (default: 3000)
 
 # Per-entity device capability overrides (JSON)
 # Use when HA reports incorrect color modes for a device (e.g. Gledopto wired as RGB-only)

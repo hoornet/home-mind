@@ -1,7 +1,7 @@
 # Home Mind
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/Version-0.15.6-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.15.7-brightgreen.svg)]()
 [![Status](https://img.shields.io/badge/Status-Voice%20Working-success.svg)]()
 
 AI assistant for Home Assistant with cognitive memory. Adds learning capabilities, persistent memory, and voice control to your smart home.
@@ -126,6 +126,12 @@ cd ../..
 cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 ```
 
+> **Use HACS if you've set `API_TOKEN` on the server.** The copy vendored in this
+> repo (v0.9.3) predates the token support in the HACS release (v0.10.0) and has
+> no field to enter one — with auth enabled on the server, every request from it
+> will fail with 401. The two copies have drifted apart and reconciling them is
+> tracked work; until then HACS is the current one.
+
 ### 4. Configure in Home Assistant
 
 1. Settings → Devices & Services → Add Integration → Home Mind
@@ -231,7 +237,7 @@ The self-hosted Docker Compose setup below is for advanced users who want full c
 
 ## Project Status
 
-**Current Version:** v0.15.6
+**Current Version:** v0.15.7
 
 - [x] Voice control via HA Assist
 - [x] Cognitive memory with Shodh
