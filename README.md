@@ -225,13 +225,16 @@ Only specify what needs changing — unspecified fields use auto-detected values
 | `call_service` | Control devices (turn_on, turn_off, etc.) |
 | `get_history` | Get historical state data |
 
-## Easy Install: Nives Add-on
+## Home Mind or Nives?
 
-If you're running Home Assistant and want a **one-click setup**, check out the **[Nives add-on](https://github.com/hoornet/nives)** (formerly HomeMind PRO).
+**[Nives](https://github.com/hoornet/nives)** (formerly HomeMind PRO) is this project's sister: it began as a fork of this server, so the core — conversation engine and memory layer — is shared heritage. They're now maintained as two independent products for two kinds of people:
 
-It bundles everything (server + Shodh Memory) into a single HA add-on — no Docker, no manual config, no terminal. Add the repository in HA Supervisor, install, and you're done. Supports both cloud mode (managed API key) and BYOK (bring your own key).
+- **Home Mind (this repo)** is the DIY path: Docker Compose, run the server and Shodh Memory yourself, install the integration, wire it together, pick every model. Full control by design. Also the right choice if you're running outside Home Assistant OS (Proxmox, a NAS, bare Docker).
+- **Nives** bundles the same stack into a **single HA add-on** — one container, self-installing companion integration, no terminal. It has also grown features this repo deliberately doesn't have: automation create/edit/delete by voice (behind a confirmation gate), an AI Task provider with camera-snapshot vision, Voice PE mic reopening, arm64 binaries for Raspberry Pi, and an optional managed-key subscription.
 
-The self-hosted Docker Compose setup below is for advanced users who want full control or are running Home Mind outside of Home Assistant.
+Both are AGPL-3.0 with open repos, and both are maintained. Nothing is locked behind the Nives subscription — its BYOK mode is free, exactly like Home Mind. Pick by temperament: own every moving part here, or have it just work there.
+
+The Docker Compose setup below is the Home Mind path.
 
 ---
 
