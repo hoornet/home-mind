@@ -61,19 +61,9 @@ See [docs/MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) for more examples.
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────┐
-│  HA Assist (Voice + Text)               │
-│              ↓                          │
-│  HA Custom Component                    │
-│              ↓                          │
-│  Home Mind API (home-mind-server)              │
-│              ↓                          │
-│  Shodh Memory (Cognitive Memory)        │
-│              ↓                          │
-│  LLM API (Anthropic/OpenAI/Ollama) + HA REST API │
-└─────────────────────────────────────────┘
-```
+![Home Mind architecture](docs/architecture-diagram.svg)
+
+The short path: **HA Assist (voice or text) → Home Mind integration → Home Mind server → LLM + Shodh Memory + HA REST API**. The server also exposes its full REST API to any client you write yourself.
 
 ## Quick Start
 

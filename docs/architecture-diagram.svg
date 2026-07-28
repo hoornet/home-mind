@@ -1,0 +1,356 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" font-family="'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="108%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.12"/>
+    </filter>
+    <filter id="shadowLight" x="-4%" y="-4%" width="108%" height="108%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.08"/>
+    </filter>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="haGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#18bcf2"/>
+      <stop offset="100%" stop-color="#0d8abf"/>
+    </linearGradient>
+    <linearGradient id="hmGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="shodhGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="llmGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="deviceGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <linearGradient id="userGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#db2777"/>
+    </linearGradient>
+    <linearGradient id="appGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <marker id="arrowGray" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrowPurple" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#18bcf2"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#10b981"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="900" fill="url(#bgGrad)" rx="0"/>
+
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" font-size="22" font-weight="700" fill="#1e293b">Home Mind — Smart Home Architecture</text>
+  <text x="600" y="62" text-anchor="middle" font-size="13" fill="#64748b">AI-powered smart home assistant with long-term memory</text>
+
+  <!-- ============================================================ -->
+  <!-- ZONE: User Interfaces (top) -->
+  <!-- ============================================================ -->
+
+  <!-- Voice / HA Assist -->
+  <g filter="url(#shadow)">
+    <rect x="60" y="100" width="180" height="90" rx="14" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+    <rect x="60" y="100" width="180" height="5" rx="3" fill="url(#userGrad)"/>
+    <text x="150" y="133" text-anchor="middle" font-size="13" font-weight="600" fill="#1e293b">Voice / HA Assist</text>
+    <text x="150" y="153" text-anchor="middle" font-size="11" fill="#64748b">Wyoming STT</text>
+    <text x="150" y="170" text-anchor="middle" font-size="11" fill="#64748b">Smart speakers</text>
+  </g>
+
+  <!-- HA Dashboard -->
+  <g filter="url(#shadow)">
+    <rect x="280" y="100" width="180" height="90" rx="14" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+    <rect x="280" y="100" width="180" height="5" rx="3" fill="url(#userGrad)"/>
+    <text x="370" y="133" text-anchor="middle" font-size="13" font-weight="600" fill="#1e293b">HA Dashboard</text>
+    <text x="370" y="153" text-anchor="middle" font-size="11" fill="#64748b">Web / Companion App</text>
+    <text x="370" y="170" text-anchor="middle" font-size="11" fill="#64748b">Automations</text>
+  </g>
+
+  <!-- Your Own Clients (REST) -->
+  <g filter="url(#shadow)">
+    <rect x="500" y="100" width="200" height="90" rx="14" fill="white" stroke="#c4b5fd" stroke-width="1.5"/>
+    <rect x="500" y="100" width="200" height="5" rx="3" fill="url(#appGrad)"/>
+    <text x="600" y="128" text-anchor="middle" font-size="13" font-weight="600" fill="#1e293b">Your Own Clients</text>
+    <text x="600" y="148" text-anchor="middle" font-size="11" fill="#6366f1">Open REST API</text>
+    <text x="600" y="165" text-anchor="middle" font-size="11" fill="#64748b">curl · scripts · dashboards</text>
+    <text x="600" y="180" text-anchor="middle" font-size="10" fill="#94a3b8">anything that speaks HTTP</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- ZONE: Home Assistant (center-left) -->
+  <!-- ============================================================ -->
+
+  <g filter="url(#shadow)">
+    <rect x="80" y="260" width="340" height="200" rx="18" fill="white" stroke="#18bcf2" stroke-width="2"/>
+    <rect x="80" y="260" width="340" height="7" rx="4" fill="url(#haGrad)"/>
+    <!-- HA icon circle -->
+    <circle cx="250" cy="297" r="18" fill="url(#haGrad)"/>
+    <text x="250" y="303" text-anchor="middle" font-size="18" fill="white" font-weight="700">HA</text>
+    <text x="250" y="330" text-anchor="middle" font-size="16" font-weight="700" fill="#1e293b">Home Assistant</text>
+    <text x="250" y="348" text-anchor="middle" font-size="11" fill="#64748b">Central Smart Home Hub</text>
+
+    <!-- Sub-components -->
+    <rect x="100" y="365" width="140" height="36" rx="8" fill="#e0f2fe" stroke="#bae6fd" stroke-width="1"/>
+    <text x="170" y="388" text-anchor="middle" font-size="11" font-weight="500" fill="#0369a1">Home Mind Integration</text>
+
+    <rect x="260" y="365" width="140" height="36" rx="8" fill="#e0f2fe" stroke="#bae6fd" stroke-width="1"/>
+    <text x="330" y="383" text-anchor="middle" font-size="11" font-weight="500" fill="#0369a1">Zigbee (ZHA)</text>
+    <text x="330" y="397" text-anchor="middle" font-size="10" fill="#0369a1">WiFi / MQTT</text>
+
+    <rect x="100" y="413" width="300" height="32" rx="8" fill="#f0f9ff" stroke="#bae6fd" stroke-width="1"/>
+    <text x="250" y="434" text-anchor="middle" font-size="11" fill="#0369a1">REST API + Template API + WebSocket</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- ZONE: Home Mind Server (center-right) -->
+  <!-- ============================================================ -->
+
+  <g filter="url(#shadow)">
+    <rect x="520" y="260" width="380" height="270" rx="18" fill="white" stroke="#8b5cf6" stroke-width="2"/>
+    <rect x="520" y="260" width="380" height="7" rx="4" fill="url(#hmGrad)"/>
+    <!-- HM icon circle -->
+    <circle cx="710" cy="297" r="18" fill="url(#hmGrad)"/>
+    <text x="710" y="303" text-anchor="middle" font-size="14" fill="white" font-weight="700">HM</text>
+    <text x="710" y="330" text-anchor="middle" font-size="16" font-weight="700" fill="#1e293b">Home Mind Server</text>
+    <text x="710" y="348" text-anchor="middle" font-size="11" fill="#64748b">Express + TypeScript (Docker, port 3100)</text>
+
+    <!-- Internal modules -->
+    <rect x="540" y="365" width="165" height="36" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1"/>
+    <text x="622" y="383" text-anchor="middle" font-size="11" font-weight="500" fill="#6d28d9">LLM Chat Engine</text>
+    <text x="622" y="396" text-anchor="middle" font-size="9" fill="#7c3aed">Streaming + Tool Loop</text>
+
+    <rect x="715" y="365" width="165" height="36" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1"/>
+    <text x="797" y="383" text-anchor="middle" font-size="11" font-weight="500" fill="#6d28d9">Fact Extractor</text>
+    <text x="797" y="396" text-anchor="middle" font-size="9" fill="#7c3aed">Async, non-blocking</text>
+
+    <rect x="540" y="413" width="165" height="36" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1"/>
+    <text x="622" y="431" text-anchor="middle" font-size="11" font-weight="500" fill="#6d28d9">Device Scanner</text>
+    <text x="622" y="444" text-anchor="middle" font-size="9" fill="#7c3aed">Light capabilities index</text>
+
+    <rect x="715" y="413" width="165" height="36" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1"/>
+    <text x="797" y="431" text-anchor="middle" font-size="11" font-weight="500" fill="#6d28d9">Topology Scanner</text>
+    <text x="797" y="444" text-anchor="middle" font-size="9" fill="#7c3aed">Floor/room layout</text>
+
+    <rect x="540" y="461" width="165" height="36" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1"/>
+    <text x="622" y="479" text-anchor="middle" font-size="11" font-weight="500" fill="#6d28d9">STT (Whisper)</text>
+    <text x="622" y="492" text-anchor="middle" font-size="9" fill="#7c3aed">Voice transcription</text>
+
+    <rect x="715" y="461" width="165" height="36" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1"/>
+    <text x="797" y="479" text-anchor="middle" font-size="11" font-weight="500" fill="#6d28d9">TTS (OpenAI)</text>
+    <text x="797" y="492" text-anchor="middle" font-size="9" fill="#7c3aed">Speech synthesis</text>
+
+    <!-- Tools badge -->
+    <rect x="540" y="505" width="340" height="16" rx="4" fill="#f5f3ff"/>
+    <text x="710" y="517" text-anchor="middle" font-size="10" fill="#7c3aed">Tools: get_state | get_entities | search_entities | call_service | get_history</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- ZONE: External Services (right side) -->
+  <!-- ============================================================ -->
+
+  <!-- Shodh Memory -->
+  <g filter="url(#shadow)">
+    <rect x="960" y="260" width="200" height="120" rx="14" fill="white" stroke="#f59e0b" stroke-width="1.5"/>
+    <rect x="960" y="260" width="200" height="5" rx="3" fill="url(#shodhGrad)"/>
+    <circle cx="1060" cy="293" r="14" fill="url(#shodhGrad)"/>
+    <text x="1060" y="298" text-anchor="middle" font-size="11" fill="white" font-weight="700">S</text>
+    <text x="1060" y="318" text-anchor="middle" font-size="14" font-weight="600" fill="#1e293b">Shodh Memory</text>
+    <text x="1060" y="336" text-anchor="middle" font-size="11" fill="#64748b">Semantic search</text>
+    <text x="1060" y="351" text-anchor="middle" font-size="11" fill="#64748b">Hebbian learning + decay</text>
+    <text x="1060" y="369" text-anchor="middle" font-size="10" fill="#94a3b8">Docker, port 3030</text>
+  </g>
+
+  <!-- LLM API -->
+  <g filter="url(#shadow)">
+    <rect x="960" y="410" width="200" height="120" rx="14" fill="white" stroke="#10b981" stroke-width="1.5"/>
+    <rect x="960" y="410" width="200" height="5" rx="3" fill="url(#llmGrad)"/>
+    <circle cx="1060" cy="443" r="14" fill="url(#llmGrad)"/>
+    <text x="1060" y="449" text-anchor="middle" font-size="10" fill="white" font-weight="700">AI</text>
+    <text x="1060" y="468" text-anchor="middle" font-size="14" font-weight="600" fill="#1e293b">LLM Provider</text>
+    <text x="1060" y="487" text-anchor="middle" font-size="11" fill="#64748b">Anthropic (Claude)</text>
+    <text x="1060" y="502" text-anchor="middle" font-size="11" fill="#64748b">OpenAI / Ollama</text>
+    <text x="1060" y="520" text-anchor="middle" font-size="10" fill="#94a3b8">Chat + Fact extraction</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- ZONE: Smart Devices (bottom) -->
+  <!-- ============================================================ -->
+
+  <!-- Zigbee Devices group -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="540" width="260" height="170" rx="14" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+    <rect x="40" y="540" width="260" height="5" rx="3" fill="url(#deviceGrad)"/>
+    <text x="170" y="570" text-anchor="middle" font-size="13" font-weight="600" fill="#1e293b">Zigbee Devices</text>
+    <text x="170" y="586" text-anchor="middle" font-size="10" fill="#94a3b8">via ZHA Coordinator</text>
+
+    <!-- Device items -->
+    <rect x="60" y="600" width="105" height="42" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="112" y="618" text-anchor="middle" font-size="10" font-weight="500" fill="#475569">RGB Lights</text>
+    <text x="112" y="632" text-anchor="middle" font-size="9" fill="#94a3b8">Gledopto</text>
+
+    <rect x="175" y="600" width="105" height="42" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="227" y="618" text-anchor="middle" font-size="10" font-weight="500" fill="#475569">Sensors</text>
+    <text x="227" y="632" text-anchor="middle" font-size="9" fill="#94a3b8">Temp / Humidity</text>
+
+    <rect x="60" y="650" width="105" height="42" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="112" y="668" text-anchor="middle" font-size="10" font-weight="500" fill="#475569">Switches</text>
+    <text x="112" y="682" text-anchor="middle" font-size="9" fill="#94a3b8">On/Off</text>
+
+    <rect x="175" y="650" width="105" height="42" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="227" y="668" text-anchor="middle" font-size="10" font-weight="500" fill="#475569">Motion / Door</text>
+    <text x="227" y="682" text-anchor="middle" font-size="9" fill="#94a3b8">Binary sensors</text>
+  </g>
+
+  <!-- WiFi Devices group -->
+  <g filter="url(#shadow)">
+    <rect x="330" y="540" width="260" height="170" rx="14" fill="white" stroke="#e2e8f0" stroke-width="1.5"/>
+    <rect x="330" y="540" width="260" height="5" rx="3" fill="url(#deviceGrad)"/>
+    <text x="460" y="570" text-anchor="middle" font-size="13" font-weight="600" fill="#1e293b">WiFi / Network Devices</text>
+
+    <rect x="350" y="590" width="105" height="42" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="402" y="608" text-anchor="middle" font-size="10" font-weight="500" fill="#475569">WLED Strips</text>
+    <text x="402" y="622" text-anchor="middle" font-size="9" fill="#94a3b8">RGBW LEDs</text>
+
+    <rect x="465" y="590" width="105" height="42" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="517" y="608" text-anchor="middle" font-size="10" font-weight="500" fill="#475569">Climate</text>
+    <text x="517" y="622" text-anchor="middle" font-size="9" fill="#94a3b8">Thermostats</text>
+
+    <rect x="350" y="642" width="105" height="42" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="402" y="660" text-anchor="middle" font-size="10" font-weight="500" fill="#475569">Media Players</text>
+    <text x="402" y="674" text-anchor="middle" font-size="9" fill="#94a3b8">Speakers / TVs</text>
+
+    <rect x="465" y="642" width="105" height="42" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="517" y="660" text-anchor="middle" font-size="10" font-weight="500" fill="#475569">Covers</text>
+    <text x="517" y="674" text-anchor="middle" font-size="9" fill="#94a3b8">Blinds / Shades</text>
+  </g>
+
+  <!-- Server Hardware -->
+  <g filter="url(#shadow)">
+    <rect x="640" y="600" width="280" height="110" rx="14" fill="white" stroke="#8b5cf6" stroke-width="1.5"/>
+    <rect x="640" y="600" width="280" height="5" rx="3" fill="#ddd6fe"/>
+    <text x="780" y="632" text-anchor="middle" font-size="13" font-weight="600" fill="#1e293b">Your Server</text>
+    <text x="780" y="652" text-anchor="middle" font-size="11" fill="#64748b">Docker Compose</text>
+    <text x="780" y="670" text-anchor="middle" font-size="11" fill="#64748b">Home Mind Server + Shodh Memory</text>
+    <text x="780" y="690" text-anchor="middle" font-size="10" fill="#94a3b8">any box that runs Docker</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- CONNECTION LINES -->
+  <!-- ============================================================ -->
+
+  <!-- Voice/HA Assist → HA -->
+  <line x1="150" y1="190" x2="200" y2="260" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="6,3" marker-end="url(#arrowGray)"/>
+
+  <!-- HA Dashboard → HA -->
+  <line x1="370" y1="190" x2="300" y2="260" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="6,3" marker-end="url(#arrowGray)"/>
+
+  <!-- Clients → HM Server (direct) -->
+  <line x1="600" y1="190" x2="660" y2="260" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowPurple)"/>
+  <text x="610" y="228" font-size="9" fill="#6366f1" transform="rotate(18, 610, 228)">HTTPS / REST</text>
+
+  <!-- HA ↔ HM Server (bidirectional) -->
+  <line x1="420" y1="340" x2="520" y2="340" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#arrowPurple)" marker-start="url(#arrowBlue)"/>
+  <text x="470" y="330" text-anchor="middle" font-size="9" fill="#64748b">REST API</text>
+
+  <!-- HA Integration label on arrow -->
+  <rect x="435" y="350" width="70" height="16" rx="4" fill="#ede9fe"/>
+  <text x="470" y="362" text-anchor="middle" font-size="9" fill="#6d28d9">Custom</text>
+
+  <!-- HM Server → Shodh -->
+  <line x1="900" y1="320" x2="960" y2="320" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowAmber)"/>
+  <text x="930" y="312" text-anchor="middle" font-size="9" fill="#d97706">Facts</text>
+
+  <!-- HM Server → LLM -->
+  <line x1="900" y1="470" x2="960" y2="470" stroke="#10b981" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <text x="930" y="462" text-anchor="middle" font-size="9" fill="#059669">Chat / Extract</text>
+
+  <!-- HA → Zigbee Devices -->
+  <line x1="170" y1="460" x2="170" y2="540" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#arrowGray)"/>
+  <rect x="130" y="492" width="80" height="16" rx="4" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="170" y="504" text-anchor="middle" font-size="9" fill="#64748b">Zigbee</text>
+
+  <!-- HA → WiFi Devices -->
+  <line x1="340" y1="460" x2="420" y2="540" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#arrowGray)"/>
+  <rect x="355" y="492" width="56" height="16" rx="4" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="383" y="504" text-anchor="middle" font-size="9" fill="#64748b">WiFi</text>
+
+  <!-- HM Server → host (dashed, "runs on") -->
+  <line x1="710" y1="530" x2="750" y2="600" stroke="#c4b5fd" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <text x="742" y="572" font-size="9" fill="#a78bfa">runs on</text>
+
+  <!-- ============================================================ -->
+  <!-- LEGEND / DATA FLOW -->
+  <!-- ============================================================ -->
+
+  <g transform="translate(640, 740)">
+    <text x="0" y="0" font-size="12" font-weight="600" fill="#1e293b">Data Flow</text>
+
+    <!-- Row 1 -->
+    <circle cx="10" cy="22" r="5" fill="#ec4899"/>
+    <text x="22" y="26" font-size="10" fill="#64748b">User speaks or types</text>
+
+    <circle cx="200" cy="22" r="5" fill="#18bcf2"/>
+    <text x="212" y="26" font-size="10" fill="#64748b">HA routes to Home Mind</text>
+
+    <!-- Row 2 -->
+    <circle cx="10" cy="44" r="5" fill="#8b5cf6"/>
+    <text x="22" y="48" font-size="10" fill="#64748b">Server queries LLM + Memory</text>
+
+    <circle cx="200" cy="44" r="5" fill="#10b981"/>
+    <text x="212" y="48" font-size="10" fill="#64748b">LLM reasons + calls HA tools</text>
+
+    <!-- Row 3 -->
+    <circle cx="10" cy="66" r="5" fill="#f59e0b"/>
+    <text x="22" y="70" font-size="10" fill="#64748b">Facts stored/recalled from memory</text>
+
+    <circle cx="200" cy="66" r="5" fill="#64748b"/>
+    <text x="212" y="70" font-size="10" fill="#64748b">Response spoken or displayed</text>
+  </g>
+
+  <!-- Version / branding -->
+  <text x="1160" y="880" text-anchor="end" font-size="10" fill="#cbd5e1">AGPL-3.0 · open source</text>
+  <text x="40" y="880" font-size="10" fill="#cbd5e1">github.com/hoornet/home-mind</text>
+
+  <!-- ============================================================ -->
+  <!-- FLOW NUMBERS (circled) -->
+  <!-- ============================================================ -->
+
+  <!-- 1: User → HA -->
+  <circle cx="135" cy="225" r="11" fill="#ec4899"/>
+  <text x="135" y="229" text-anchor="middle" font-size="10" font-weight="700" fill="white">1</text>
+
+  <!-- 2: HA → HM Server -->
+  <circle cx="470" cy="380" r="11" fill="#18bcf2"/>
+  <text x="470" y="384" text-anchor="middle" font-size="10" font-weight="700" fill="white">2</text>
+
+  <!-- 3: HM → LLM -->
+  <circle cx="930" cy="480" r="11" fill="#10b981"/>
+  <text x="930" y="484" text-anchor="middle" font-size="10" font-weight="700" fill="white">3</text>
+
+  <!-- 4: HM → Shodh -->
+  <circle cx="930" cy="330" r="11" fill="#f59e0b"/>
+  <text x="930" y="334" text-anchor="middle" font-size="10" font-weight="700" fill="white">4</text>
+
+  <!-- 5: LLM → HA tools (back arrow implied) -->
+  <circle cx="470" cy="303" r="11" fill="#8b5cf6"/>
+  <text x="470" y="307" text-anchor="middle" font-size="10" font-weight="700" fill="white">5</text>
+
+</svg>

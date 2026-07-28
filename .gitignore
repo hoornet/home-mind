@@ -292,3 +292,7 @@ publicity/
 
 # Private / personal docs
 jure-private/
+
+# Local tool state
+.omc/
+.playwright-mcp/
