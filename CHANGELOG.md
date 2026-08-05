@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.15.9] - 2026-08-05
+
+### Security
+- **undici 7.28.0 → 7.29.0**, clearing five advisories published this week (one high: cross-user information disclosure and parse-time crash via degenerate private cache directives; four moderate: CRLF injection via blob-like body type, cookie attribute injection, cache-control whitespace disclosure, retry-interceptor response desynchronization). undici is the HTTP client used for Home Assistant API calls. Lockfile-only change — the `^7.28.0` range already covered it. `npm audit` reports 0 vulnerabilities.
+
 ## [0.15.8] - 2026-08-05
 
 ### Fixed (memory/extraction-prompt.ts)
