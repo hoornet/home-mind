@@ -1,7 +1,7 @@
 export type FactCategory =
   | "baseline" // Sensor normal values ("NOx 100ppm is normal")
   | "preference" // User preferences ("prefers 22°C")
-  | "identity" // User info ("name is Jure")
+  | "identity" // User info ("name is Alex")
   | "device" // Device nicknames ("main light = light.wled_kitchen")
   | "pattern" // Routines ("usually home by 6pm")
   | "correction"; // Corrections ("actually X, not Y")

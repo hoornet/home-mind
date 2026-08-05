@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.15.8] - 2026-08-05
+
+### Fixed (memory/extraction-prompt.ts)
+- **Few-shot example names no longer leak into stored memory.** The extraction prompt's identity-category examples used real names ("my name is Jure", "I'm also called Hoornet"). Small local models sometimes copy a few-shot example verbatim into real output, so an Ollama-class extractor could store "User's name is Jure" as an actual fact — which then rides into every system prompt via memory injection and resists conversational correction, since nothing the user says outranks a "remembered" fact. Examples now use generic placeholders. Reported against the Nives fork (hoornet/nives#54); the same prompt text existed here.
+
 ## [0.15.7] - 2026-07-25
 
 ### Fixed (llm/client.ts, llm/openai-client.ts)

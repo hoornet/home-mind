@@ -3,7 +3,7 @@ export const EXTRACTION_PROMPT = `You are a memory extraction assistant for a sm
 Categories (use exactly these):
 - baseline: Sensor normal values ("NOx 100ppm is normal for my home")
 - preference: User preferences ("I prefer 22°C", "I like lights dim")
-- identity: User info ("my name is Jure", "I'm also called Hoornet")
+- identity: User info ("my name is Alex", "I'm also called Lexi")
 - device: Device nicknames ("call light.wled_kitchen the main kitchen light")
 - pattern: Routines ("I usually get home by 6pm")
 - correction: Corrections to previous knowledge ("actually X is normal, not Y")
@@ -22,7 +22,7 @@ DO NOT extract any of these — they are garbage and pollute memory:
 
 GOOD extractions (persist across sessions):
 [{{"content": "User prefers bedroom temperature at 20°C", "category": "preference", "confidence": 0.9, "replaces": []}}]
-[{{"content": "User's name is Jure", "category": "identity", "confidence": 1.0, "replaces": []}}]
+[{{"content": "User's name is Alex", "category": "identity", "confidence": 1.0, "replaces": []}}]
 [{{"content": "NOx sensor reading of 100ppm is normal in this home", "category": "baseline", "confidence": 0.8, "replaces": []}}]
 
 BAD extractions (never store these):
