@@ -30,6 +30,50 @@ const AddFactSchema = z.object({
   ]),
 });
 
+/**
+ * Remembers the last persona we announced, so the log line appears once and
+ * again only when it changes — not on every message.
+ */
+let lastPersonaSignature = "";
+
+/**
+ * Say out loud which persona a request will actually run with, and where it
+ * came from.
+ *
+ * TWO custom-prompt settings exist and only one wins: a client (the Home
+ * Assistant integration) can send `customPrompt` per request, and that
+ * overrides the server-level CUSTOM_PROMPT. Someone who fills in one while the
+ * other silently overrides it gets no signal at all, and the effective prompt
+ * is otherwise invisible from outside the process — which is exactly how a
+ * persona that "does nothing" turns into days of guessing.
+ *
+ * Exported for testing.
+ */
+export function describePersonaSource(
+  requestPrompt?: string,
+  serverDefault?: string
+): string {
+  const fromRequest = Boolean(requestPrompt?.trim());
+  const fromServer = Boolean(serverDefault?.trim());
+  const text = (fromRequest ? requestPrompt : fromServer ? serverDefault : "") ?? "";
+  const flat = text.replace(/\s+/g, " ").trim();
+  const preview = flat ? `: "${flat.slice(0, 60)}${flat.length > 60 ? "\u2026" : ""}"` : "";
+
+  if (fromRequest && fromServer) {
+    return `custom prompt from the client/integration${preview} \u2014 NOTE: the server's CUSTOM_PROMPT is also set and is being overridden by this one`;
+  }
+  if (fromRequest) return `custom prompt from the client/integration${preview}`;
+  if (fromServer) return `custom prompt from the server configuration (CUSTOM_PROMPT)${preview}`;
+  return "built-in default identity (no custom prompt set anywhere)";
+}
+
+function logPersonaSource(requestPrompt?: string, serverDefault?: string): void {
+  const signature = describePersonaSource(requestPrompt, serverDefault);
+  if (signature === lastPersonaSignature) return;
+  lastPersonaSignature = signature;
+  console.log(`[persona] ${signature}`);
+}
+
 export function createRouter(
   llm: IChatEngine,
   memory: IMemoryStore,
@@ -58,6 +102,8 @@ export function createRouter(
       }
 
       // Use streaming internally (no callback = just faster processing)
+      logPersonaSource(parsed.data.customPrompt, defaultCustomPrompt);
+
       const response = await llm.chat({
         ...parsed.data,
         customPrompt: parsed.data.customPrompt ?? defaultCustomPrompt,
@@ -95,6 +141,8 @@ export function createRouter(
       res.flushHeaders();
 
       // Stream chunks to client
+      logPersonaSource(parsed.data.customPrompt, defaultCustomPrompt);
+
       const response = await llm.chat({
         ...parsed.data,
         customPrompt: parsed.data.customPrompt ?? defaultCustomPrompt,

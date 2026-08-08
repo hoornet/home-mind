@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.16.1] - 2026-08-08
+
+### Added (api/routes.ts)
+- **The server now logs which custom prompt is actually in effect.** A client can send `customPrompt` per request and it overrides the server-level `CUSTOM_PROMPT` (`parsed.data.customPrompt ?? defaultCustomPrompt`), but nothing said which one won and the effective prompt was never logged at any level — so a correct value in one place could sit doing nothing while the other silently took precedence, invisible from outside the process. `[persona] …` now names the source, previews the first 60 characters, and says explicitly when the server-level prompt is being overridden. Logged once and again only when it changes, so it doesn't repeat per message.
+
 ## [0.16.0] - 2026-08-08
 
 ### Added (llm/tool-definitions.ts, llm/tool-handler.ts, memory/fact-resolution.ts, llm/forget-confirmations.ts)
