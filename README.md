@@ -342,6 +342,9 @@ If Home Mind is useful to you, consider supporting its development:
 
 ## License
 
+Home Mind — AI assistant for Home Assistant with cognitive memory.
+Copyright (c) 2026 Jure Sršen.
+
 GNU Affero General Public License v3.0 - see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
