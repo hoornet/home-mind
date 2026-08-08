@@ -113,6 +113,22 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       required: ["entity_id"],
     },
   },
+  {
+    name: "forget_memory",
+    description:
+      "Permanently forget ONE stored memory about the user. Use when the user asks you to forget, delete, or stop remembering a specific thing ('forget that…', 'delete the memory that…', 'that's no longer true'). Set 'query' to the EXACT text of the remembered fact as it appears in 'What You Remember About This User' — copied verbatim, never paraphrased and never translated. The FIRST call NEVER deletes anything: it returns a 'confirmation_required' preview quoting the memory, and relaying that preview IS how you ask the user. Only after the user agrees in their NEXT message do you call this again with the same query to actually forget it. One specific memory per call — NEVER loop it to wipe memories the user did not name. 'Don't forget to X' is a request to REMEMBER or remind, never a reason to call this tool. Your own name and personality are NOT memories and cannot be changed with this tool. Deletion is permanent.",
+    parameters: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description:
+            "The exact text of the remembered fact to forget, copied verbatim from 'What You Remember About This User' (or from a candidate returned by an earlier call).",
+        },
+      },
+      required: ["query"],
+    },
+  },
 ];
 
 export function toAnthropicTools(tools: ToolDefinition[]): Anthropic.Tool[] {

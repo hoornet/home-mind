@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { randomUUID } from "node:crypto";
 import type { Config } from "../config.js";
 import type { IMemoryStore } from "../memory/interface.js";
 import type { IConversationStore } from "../memory/types.js";
@@ -7,7 +8,7 @@ import { DeviceScanner } from "../ha/device-scanner.js";
 import { TopologyScanner } from "../ha/topology-scanner.js";
 import { buildSystemPromptText } from "./prompts.js";
 import { TOOL_DEFINITIONS, toOpenAITools } from "./tool-definitions.js";
-import { handleToolCall, extractAndStoreFacts } from "./tool-handler.js";
+import { handleToolCall, extractAndStoreFacts, type ToolContext } from "./tool-handler.js";
 import type {
   ChatRequest,
   ChatResponse,
@@ -71,6 +72,11 @@ export class OpenAIChatEngine implements IChatEngine {
     onChunk?: StreamCallback
   ): Promise<ChatResponse> {
     const { message, userId, conversationId, isVoice = false, customPrompt } = request;
+    // A nonce for this turn, and ONE shared context for the whole turn:
+    // forget_memory writes forgetTargets back onto it, so a fresh object per
+    // tool call would lose them.
+    const turnId = randomUUID();
+    const toolCtx: ToolContext = { conversationId, turnId, userId, memory: this.memory };
     const toolsUsed: string[] = [];
 
     // 1. Load user's memory
@@ -153,7 +159,7 @@ export class OpenAIChatEngine implements IChatEngine {
           };
         }
 
-        const toolResult = await handleToolCall(this.ha, tc.function.name, args);
+        const toolResult = await handleToolCall(this.ha, tc.function.name, args, toolCtx);
         return {
           role: "tool" as const,
           tool_call_id: tc.id,
@@ -189,7 +195,8 @@ export class OpenAIChatEngine implements IChatEngine {
       this.extractor,
       userId,
       message,
-      responseText
+      responseText,
+      toolCtx.forgetTargets
     ).catch((err) => console.error("Fact extraction failed:", err));
 
     // 8. If the model produced no usable response, attach a structured error

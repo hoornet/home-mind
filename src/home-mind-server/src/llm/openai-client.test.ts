@@ -188,9 +188,12 @@ describe("OpenAIChatEngine", () => {
 
     const result = await engine.chat({ message: "Is the light on?", userId: "user-1" });
 
-    expect(handleToolCall).toHaveBeenCalledWith(ha, "get_state", {
-      entity_id: "light.kitchen",
-    });
+    expect(handleToolCall).toHaveBeenCalledWith(
+      ha,
+      "get_state",
+      { entity_id: "light.kitchen" },
+      expect.objectContaining({ turnId: expect.any(String) })
+    );
     expect(result.response).toBe("The light is on");
     expect(result.toolsUsed).toEqual(["get_state"]);
   });
@@ -377,7 +380,8 @@ describe("OpenAIChatEngine", () => {
       extractor,
       "user-1",
       "Remember I like 22°C",
-      "Response"
+      "Response",
+      undefined // no forget_memory in this turn → nothing to filter out
     );
   });
 

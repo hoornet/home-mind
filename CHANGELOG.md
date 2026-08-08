@@ -2,6 +2,25 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.16.0] - 2026-08-08
+
+### Added (llm/tool-definitions.ts, llm/tool-handler.ts, memory/fact-resolution.ts, llm/forget-confirmations.ts)
+- **`forget_memory` — a sixth tool, so a memory can be removed by asking.** Until now deletion existed only as REST endpoints (`DELETE /api/memory/:userId/facts/:factId`), which nobody talking to Assist can reach, so "forget that I like 21°C" had nowhere to go. Now: *"forget that my canary word is bumblebee"* → the assistant quotes the exact stored fact back and waits → *"yes"* → deleted.
+
+  The tool takes a **content query, never a fact id**: ids are not shown to the model, and tool results are never persisted to conversation history, so an id could not come back on the confirming call anyway. Resolution is deterministic and server-side (`memory/fact-resolution.ts`) — exact normalized match first, then Dice similarity over token sets; several close matches return candidates and delete nothing.
+
+- **Server-enforced two-call confirmation (`llm/forget-confirmations.ts`).** The first call only previews; a later call in a *different* turn commits. This required threading conversation continuity into the tool layer for the first time: `handleToolCall` now takes a `ToolContext` carrying `conversationId`, a per-turn `turnId`, the `userId` and the memory store, and both engines create exactly one context per turn.
+
+  The gate keys on the **resolved fact's normalized content**, not on the model's wording (which it changes freely between turns) and not on the fact id (the extractor can delete and re-add the same text under a new id in between, which an id-keyed gate would read as a mismatch and re-preview forever). Without conversation continuity — a one-shot API call, say — the tool **refuses** rather than deleting, because there is nobody to confirm with and a deleted memory does not come back.
+
+### Fixed (llm/tool-handler.ts)
+- **Post-turn extraction no longer re-learns what was just forgotten.** The extractor runs over each turn's transcript, and "forget that my name is Alex" is a transcript containing "my name is Alex" — so the fact reappeared moments later under a fresh id. Extraction now filters against the memories the turn touched.
+
+  The filter asks *which words changed*, not *how similar are these*, because similarity cannot tell the two cases apart: a replacement ("…canary word is honeybee") and a restatement ("The user's canary word is bumblebee") score identically against the forgotten text. A replacement drops a meaningful word and puts another in its place; a restatement keeps them all. Digits count as meaningful however short, or swapping 21 for 23 reads as no change — and temperatures, times and thresholds are most of what this stores.
+
+### Notes
+- Ported deliberately from the sibling add-on rather than copied: the confirmation gate here is memory-scoped (there are no automations in this project), and the design carries the fixes that project learned in production — content-keyed identity, the numeric-aware filter, refusing without a conversation, and reporting "already forgotten" when the extractor removed the fact before the user confirmed.
+
 ## [0.15.9] - 2026-08-05
 
 ### Security

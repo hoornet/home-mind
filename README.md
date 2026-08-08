@@ -1,7 +1,7 @@
 # Home Mind
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/Version-0.15.7-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.16.0-brightgreen.svg)]()
 [![Status](https://img.shields.io/badge/Status-Voice%20Working-success.svg)]()
 
 AI assistant for Home Assistant with cognitive memory. Adds learning capabilities, persistent memory, and voice control to your smart home.
@@ -214,6 +214,7 @@ Only specify what needs changing — unspecified fields use auto-detected values
 | `search_entities` | Search entities by name |
 | `call_service` | Control devices (turn_on, turn_off, etc.) |
 | `get_history` | Get historical state data |
+| `forget_memory` | Forget a specific remembered fact (confirmed with the user first) |
 
 ## Home Mind or Nives?
 
@@ -223,6 +224,8 @@ Only specify what needs changing — unspecified fields use auto-detected values
 - **Nives** bundles the same stack into a **single HA add-on** — one container, self-installing companion integration, no terminal. It has also grown features this repo deliberately doesn't have: automation create/edit/delete by voice (behind a confirmation gate), an AI Task provider with camera-snapshot vision, Voice PE mic reopening, arm64 binaries for Raspberry Pi, and an optional managed-key subscription.
 
 Both are AGPL-3.0 with open repos, and both are maintained. Nothing is locked behind the Nives subscription — its BYOK mode is free, exactly like Home Mind. Pick by temperament: own every moving part here, or have it just work there.
+
+One thing worth knowing if you like this DIY setup but would rather not shop for a model or babysit an API key: a **[Nives Cloud](https://nives.house)** key works with Home Mind too. You keep this stack exactly as it is — your server, your Shodh, your data — and simply point it at a managed key instead of your own, with the model kept current for you. Entirely optional; BYOK stays free and always will.
 
 The Docker Compose setup below is the Home Mind path.
 

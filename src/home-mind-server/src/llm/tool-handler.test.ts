@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { handleToolCall, extractAndStoreFacts, filterExtractedFacts, normalizeTimestamp, truncateHistory } from "./tool-handler.js";
+import { handleToolCall, extractAndStoreFacts, filterExtractedFacts, normalizeTimestamp, truncateHistory, type ToolContext } from "./tool-handler.js";
+import { clearConversation } from "./forget-confirmations.js";
 import type { HomeAssistantClient } from "../ha/client.js";
 import type { IMemoryStore } from "../memory/interface.js";
 import type { IFactExtractor } from "./interface.js";
@@ -467,5 +468,174 @@ describe("truncateHistory", () => {
 
   it("returns empty array for empty input", () => {
     expect(truncateHistory([])).toEqual([]);
+  });
+});
+
+describe("handleToolCall forget_memory", () => {
+  const CONV = "conv-forget";
+  const ha = {} as unknown as HomeAssistantClient;
+  let memory: IMemoryStore;
+
+  const fact = (id: string, content: string) => ({
+    id, userId: "user-1", content,
+    category: "identity" as const, confidence: 1,
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    lastUsed: new Date("2026-01-01T00:00:00Z"),
+    useCount: 0,
+  });
+  const CANARY = "User's test canary word is bumblebee";
+  const ctx = (turnId: string): ToolContext => ({
+    conversationId: CONV, turnId, userId: "user-1", memory,
+  });
+
+  beforeEach(() => {
+    clearConversation(CONV);
+    memory = {
+      getFacts: vi.fn().mockResolvedValue([fact("f-1", CANARY)]),
+      deleteFact: vi.fn().mockResolvedValue(true),
+    } as unknown as IMemoryStore;
+  });
+
+  afterEach(() => vi.clearAllMocks());
+
+  it("errors without memory/userId and deletes nothing", async () => {
+    const r = (await handleToolCall(ha, "forget_memory", { query: CANARY }, { conversationId: CONV, turnId: "t1" })) as { error?: string };
+    expect(r.error).toBeDefined();
+    expect(memory.deleteFact).not.toHaveBeenCalled();
+  });
+
+  it("REFUSES when there is no conversation to confirm in", async () => {
+    // A one-shot caller has nobody to ask, and a deleted memory is not
+    // recoverable — so refuse rather than fall through to the delete.
+    const r = (await handleToolCall(ha, "forget_memory", { query: CANARY }, { userId: "user-1", memory })) as {
+      error?: string; success?: boolean;
+    };
+    expect(r.success).toBeUndefined();
+    expect(r.error).toMatch(/conversation/i);
+    expect(memory.deleteFact).not.toHaveBeenCalled();
+  });
+
+  it("first call previews with the exact content and deletes nothing", async () => {
+    const context = ctx("t1");
+    const r = (await handleToolCall(ha, "forget_memory", { query: CANARY }, context)) as {
+      confirmation_required?: boolean; memory_to_forget?: string;
+    };
+    expect(r.confirmation_required).toBe(true);
+    expect(r.memory_to_forget).toBe(CANARY);
+    expect(context.forgetTargets).toContain(CANARY);
+    expect(memory.deleteFact).not.toHaveBeenCalled();
+  });
+
+  it("re-calling in the SAME turn still previews", async () => {
+    await handleToolCall(ha, "forget_memory", { query: CANARY }, ctx("t1"));
+    const second = (await handleToolCall(ha, "forget_memory", { query: CANARY }, ctx("t1"))) as { confirmation_required?: boolean };
+    expect(second.confirmation_required).toBe(true);
+    expect(memory.deleteFact).not.toHaveBeenCalled();
+  });
+
+  it("commits on a later-turn re-call", async () => {
+    await handleToolCall(ha, "forget_memory", { query: CANARY }, ctx("t1"));
+    const second = (await handleToolCall(ha, "forget_memory", { query: CANARY }, ctx("t2"))) as { success?: boolean };
+    expect(memory.deleteFact).toHaveBeenCalledWith("user-1", "f-1");
+    expect(second.success).toBe(true);
+  });
+
+  it("commits on a later-turn REWORDED query resolving to the same fact", async () => {
+    await handleToolCall(ha, "forget_memory", { query: "my test canary word is bumblebee" }, ctx("t1"));
+    const second = (await handleToolCall(ha, "forget_memory", { query: "users test canary word is bumblebee" }, ctx("t2"))) as { success?: boolean };
+    expect(second.success).toBe(true);
+  });
+
+  it("returns no_match without deleting", async () => {
+    const r = (await handleToolCall(ha, "forget_memory", { query: "the weather in Ljubljana" }, ctx("t1"))) as { no_match?: boolean };
+    expect(r.no_match).toBe(true);
+    expect(memory.deleteFact).not.toHaveBeenCalled();
+  });
+
+  it("returns disambiguation candidates without deleting", async () => {
+    memory.getFacts = vi.fn().mockResolvedValue([
+      fact("f-bed", "User prefers the bedroom at 20 degrees"),
+      fact("f-bath", "User prefers the bathroom at 20 degrees"),
+    ]);
+    const r = (await handleToolCall(ha, "forget_memory", { query: "user prefers at 20 degrees" }, ctx("t1"))) as {
+      needs_disambiguation?: boolean; candidates?: string[];
+    };
+    expect(r.needs_disambiguation).toBe(true);
+    expect(r.candidates).toHaveLength(2);
+    expect(memory.deleteFact).not.toHaveBeenCalled();
+  });
+
+  it("reports already_gone instead of targeting the replacement", async () => {
+    // The extractor's replace-on-update can delete the previewed fact before
+    // the user says yes; re-resolving must not land on the new value.
+    memory.getFacts = vi.fn().mockResolvedValue([fact("f-old", "User's name is Alex")]);
+    await handleToolCall(ha, "forget_memory", { query: "User's name is Alex" }, ctx("t1"));
+    memory.getFacts = vi.fn().mockResolvedValue([fact("f-new", "User's name is HAL 9000")]);
+    const confirm = (await handleToolCall(ha, "forget_memory", { query: "User's name is Alex" }, ctx("t2"))) as {
+      already_gone?: boolean; confirmation_required?: boolean;
+    };
+    expect(confirm.already_gone).toBe(true);
+    expect(confirm.confirmation_required).toBeUndefined();
+    expect(memory.deleteFact).not.toHaveBeenCalled();
+  });
+
+  it("deletes every id of a duplicate-content group", async () => {
+    memory.getFacts = vi.fn().mockResolvedValue([fact("f-1", CANARY), fact("f-2", CANARY)]);
+    await handleToolCall(ha, "forget_memory", { query: CANARY }, ctx("t1"));
+    await handleToolCall(ha, "forget_memory", { query: CANARY }, ctx("t2"));
+    expect(memory.deleteFact).toHaveBeenCalledWith("user-1", "f-1");
+    expect(memory.deleteFact).toHaveBeenCalledWith("user-1", "f-2");
+  });
+});
+
+describe("extractAndStoreFacts forget filtering", () => {
+  let memory: IMemoryStore;
+  const extracted = (facts: ExtractedFact[]) =>
+    ({ extract: vi.fn().mockResolvedValue(facts) }) as unknown as IFactExtractor;
+
+  beforeEach(() => {
+    memory = {
+      getFacts: vi.fn().mockResolvedValue([]),
+      addFacts: vi.fn().mockResolvedValue(["new-1"]),
+      deleteFact: vi.fn().mockResolvedValue(true),
+    } as unknown as IMemoryStore;
+  });
+
+  afterEach(() => vi.clearAllMocks());
+
+  it("stores everything when no forget happened in the turn", async () => {
+    const n = await extractAndStoreFacts(
+      memory,
+      extracted([{ content: "User's name is HAL 9000", category: "identity", confidence: 1 }]),
+      "user-1", "call me HAL 9000", "Got it"
+    );
+    expect(n).toBe(1);
+  });
+
+  it("drops a restatement of the forgotten memory but keeps the replacement", async () => {
+    const n = await extractAndStoreFacts(
+      memory,
+      extracted([
+        { content: "User's test canary word is honeybee", category: "preference", confidence: 1 },
+        { content: "The user's canary word is bumblebee", category: "preference", confidence: 1 },
+      ]),
+      "user-1",
+      "forget that my canary word is bumblebee — it's honeybee now",
+      "Forgotten.",
+      ["User's test canary word is bumblebee"]
+    );
+    expect(n).toBe(1);
+    const stored = (memory.addFacts as ReturnType<typeof vi.fn>).mock.calls[0][1];
+    expect(stored[0].content).toContain("honeybee");
+  });
+
+  it("keeps an unrelated fact learned in the same turn", async () => {
+    const n = await extractAndStoreFacts(
+      memory,
+      extracted([{ content: "User prefers the bedroom at 20 degrees", category: "preference", confidence: 1 }]),
+      "user-1", "forget my canary word; also I like the bedroom at 20", "Done.",
+      ["User's test canary word is bumblebee"]
+    );
+    expect(n).toBe(1);
   });
 });
