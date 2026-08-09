@@ -16,6 +16,36 @@ export const COMMAND_ECHO_PATTERNS =
   /\b(was set to|was changed to|was turned|has been set|has been turned|has been changed)\b/i;
 
 /**
+ * Memory meta-facts — facts about the conversation rather than about the user's home.
+ *
+ * Most of these are tombstones left by a forget: the content is deleted, then the
+ * extractor reads the same turn ("forget that my canary word is bumblebee" / "Forgotten.")
+ * and stores a memory *about* the forgetting — "User no longer wants their canary word
+ * remembered", "User confirmed deletion of the bedroom cooling automation". Harmless
+ * individually, but they accumulate, they are recalled and read back to the user, and
+ * a memory asserting that something is not remembered is its own small absurdity.
+ *
+ * Deliberately narrow, for two reasons: this list is also applied retroactively by
+ * MemoryCleanupJob, so a loose pattern deletes real memories on every install; and a
+ * legitimate fact can be phrased in the same shape. "User asked me to remember that
+ * 100 ppm is normal" must survive — hence the positive verbs (remember/retain/store)
+ * only count when explicitly negated, and "asked … to" only counts with a delete verb.
+ */
+export const MEMORY_META_PATTERNS = new RegExp(
+  [
+    // "asked me to forget X", "requested deletion of Y", "told the assistant to remove Z"
+    String.raw`\b(?:asked|told|requested|instructed)\b[^.]{0,60}\b(?:forget|delete|remove|erase)\b`,
+    // "…not to retain…", "no longer wants X remembered", "stop remembering…"
+    String.raw`\b(?:not|never|no longer|stop)\b[^.]{0,60}\b(?:remember(?:ed|ing|s)?|retain(?:ed|ing|s)?|forgotten)\b`,
+    // "confirmed deletion of…", "confirms the removal of…"
+    String.raw`\bconfirm(?:ed|s)?\b[^.]{0,20}\b(?:deletion|removal)\b`,
+    // "deleted the memory…", "forgot the fact…"
+    String.raw`\b(?:deleted|removed|forgot|erased)\b[^.]{0,20}\b(?:memor(?:y|ies)|facts?)\b`,
+  ].join("|"),
+  "i"
+);
+
+/**
  * Check if a fact's content matches any garbage pattern.
  * Returns the reason string if it's garbage, or null if it's clean.
  */
@@ -34,6 +64,10 @@ export function matchesGarbagePattern(content: string, confidence?: number): str
 
   if (COMMAND_ECHO_PATTERNS.test(content)) {
     return "command echo (restating action)";
+  }
+
+  if (MEMORY_META_PATTERNS.test(content)) {
+    return "memory meta-fact (about forgetting, not about the home)";
   }
 
   if (typeof confidence === "number" && confidence < 0.5) {

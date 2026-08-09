@@ -1,7 +1,7 @@
 # Home Mind
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Version](https://img.shields.io/badge/Version-0.16.1-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.16.2-brightgreen.svg)]()
 [![Status](https://img.shields.io/badge/Status-Voice%20Working-success.svg)]()
 
 AI assistant for Home Assistant with cognitive memory. Adds learning capabilities, persistent memory, and voice control to your smart home.
@@ -246,7 +246,7 @@ The Quick Start above is the Home Mind path.
 
 ## Project Status
 
-**Current Version:** v0.16.1
+**Current Version:** v0.16.2
 
 - [x] Voice control via HA Assist
 - [x] Cognitive memory with Shodh

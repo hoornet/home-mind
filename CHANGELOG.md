@@ -2,6 +2,19 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.16.2] - 2026-08-09
+
+### Fixed (memory/fact-patterns.ts, memory/extraction-prompt.ts)
+- **Forgetting no longer leaves a tombstone behind.** Deleting a fact removed the content, but the turn that did it is itself extractable — "forget that my canary word is bumblebee" / "Forgotten." — so the extractor stored a *new* fact about the forgetting: `User no longer wants their test canary word remembered`, `User confirmed deletion of the bedroom cooling automation`. Observed live in a real memory store, where they had accumulated quietly and were being read back on recall. A memory asserting that something is not remembered is worse than no memory at all.
+
+  Two layers, because the prompt alone is not enough on small local models. The extraction prompt now states the rule as NEVER, with three worked BAD examples; `MEMORY_META_PATTERNS` catches them deterministically regardless of the model.
+
+  The pattern is deliberately narrow. `matchesGarbagePattern()` is also applied **retroactively** by `MemoryCleanupJob`, so anything it matches is deleted from every existing memory store on the next sweep — a loose pattern would silently destroy real facts. Positive verbs (remember/retain/store) only count when explicitly negated, and "asked … to" only counts alongside a delete verb, so `User asked me to remember that 100 ppm is normal` survives while `You previously asked me not to retain your canary word` does not. The test file pins a regression set of twelve real facts taken verbatim from a live store.
+
+  Existing tombstones are cleared by the cleanup job, which runs 30s after start and every 6h thereafter — no user action needed.
+
+254 tests, up from 233.
+
 ## [0.16.1] - 2026-08-08
 
 ### Added (api/routes.ts)

@@ -19,6 +19,7 @@ DO NOT extract any of these — they are garbage and pollute memory:
 - The assistant's own failures or workarounds: "I used rgb_color instead of color_temp", "the command failed"
 - Anything that would change in minutes/hours: weather, current time, who is home right now
 - Duplicates of existing facts (check the list below)
+- NEVER store a fact about the conversation itself, about memory, or about forgetting. If the user asked you to forget something, the correct output is to store NOTHING about that request — the memory is already gone, and a memory saying it is gone is worse than silence. This applies to every phrasing: what the user asked you to forget, what they no longer want remembered, what they confirmed you could delete, and what you deleted or removed.
 
 GOOD extractions (persist across sessions):
 [{{"content": "User prefers bedroom temperature at 20°C", "category": "preference", "confidence": 0.9, "replaces": []}}]
@@ -34,6 +35,9 @@ BAD extractions (never store these):
 [{{"content": "User prefers kitchen lights to be red", ...}}]  <- one-time command, NOT a stated preference
 [{{"content": "Corridor is called hodnik", ...}}]  <- from system prompt/room mappings, not user-stated
 [{{"content": "SNZB sensor is located in the living room", ...}}]  <- inferred from context, user never said this
+[{{"content": "User no longer wants their canary word remembered", ...}}]  <- a memory about forgetting
+[{{"content": "User confirmed deletion of the bedroom cooling automation", ...}}]  <- a memory about a deletion
+[{{"content": "User asked me to forget their preferred temperature", ...}}]  <- store nothing; the fact is already gone
 
 If in doubt, return [] — it is better to miss a fact than to store garbage.
 
