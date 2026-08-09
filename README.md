@@ -20,6 +20,7 @@ Home Mind provides:
 
 - **Cognitive memory** with semantic search and natural decay (via Shodh Memory)
 - **Learning** from corrections and user preferences
+- **Forgetting on request** — "forget that my canary word is bumblebee"; it quotes the exact memory back and waits for your yes
 - **Voice control** via HA Assist (Wyoming protocol)
 - **Multi-LLM support** — Anthropic (Claude), OpenAI, or Ollama (local inference)
 - **Home Layout Index** — reads your HA floor/room assignments and injects them into every prompt, so the AI always knows which floor a device is on
@@ -56,6 +57,20 @@ AI: The NOx sensor shows 98 ppm, which is within normal parameters for your home
 - Device nicknames and locations
 - User preferences and patterns
 - Corrections and clarifications
+
+### Changed Your Mind?
+
+Ask it to forget, and it confirms before deleting:
+
+```
+User: Forget that my canary word is bumblebee — it's honeybee now.
+AI:   I'll forget exactly this memory: "User's test canary word is bumblebee".
+      Shall I proceed?
+User: yes
+AI:   Forgotten. I'll remember that your canary word is now honeybee.
+```
+
+It only ever removes the one memory you named, and "don't forget to water the plants" is still a reminder, not a deletion. If several stored facts match what you said, it lists them and deletes nothing.
 
 See [docs/MEMORY_EXAMPLES.md](docs/MEMORY_EXAMPLES.md) for more examples.
 
@@ -233,7 +248,7 @@ The Docker Compose setup below is the Home Mind path.
 
 ## Project Status
 
-**Current Version:** v0.15.7
+**Current Version:** v0.16.1
 
 - [x] Voice control via HA Assist
 - [x] Cognitive memory with Shodh
@@ -248,6 +263,7 @@ The Docker Compose setup below is the Home Mind path.
 - [x] Device Capability Index (pre-scanned light params, no per-request re-discovery)
 - [x] Per-entity device overrides (`DEVICE_OVERRIDES`) for firmware quirks
 - [x] Home Layout Index (floor/room awareness via HA template API)
+- [x] Conversational forgetting (`forget_memory`, confirmed before deleting)
 - [x] Server-side STT (`POST /api/stt`, OpenAI Whisper)
 - [x] Server-side TTS (`POST /api/tts`, OpenAI TTS API)
 - [x] Nives HA Add-on (one-click install, cloud + BYOK; formerly HomeMind PRO)

@@ -89,7 +89,7 @@ import { loadConfig } from "./config.js";
 
 **Zod validation** for all config and request schemas. Config loads from env vars via `loadConfig()` in `config.ts` — exits process on validation failure. Uses `emptyToUndefined()` helper because Docker Compose sets empty strings (not `undefined`) for unset env vars.
 
-**HA tool definitions** are provider-neutral `ToolDefinition[]` in `llm/tool-definitions.ts`, converted to provider format via `toAnthropicTools()` / `toOpenAITools()`. Five tools: `get_state`, `get_entities`, `search_entities`, `call_service`, `get_history`. Shared execution logic in `llm/tool-handler.ts`. (The Nives fork has ten — it adds the automation lifecycle and `list_services`. Those are deliberately not here.)
+**HA tool definitions** are provider-neutral `ToolDefinition[]` in `llm/tool-definitions.ts`, converted to provider format via `toAnthropicTools()` / `toOpenAITools()`. Six tools: `get_state`, `get_entities`, `search_entities`, `call_service`, `get_history`, `forget_memory`. Shared execution logic in `llm/tool-handler.ts`. (The Nives fork has eleven — it adds the automation lifecycle and `list_services`. Those are deliberately not here.)
 
 **Tool loop is capped** at `MAX_TOOL_ITERATIONS` (8) in both engines. On the final iteration the request is re-issued with tool calling disabled (`tool_choice: "none"` / `{type: "none"}`) so a stuck model produces a written answer instead of running to the client's 120s timeout. Tool arguments are parsed defensively — malformed JSON becomes a tool error the model can retry, never an exception that fails the request.
 
