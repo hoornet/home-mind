@@ -327,10 +327,21 @@ docker compose restart             # Restart both services
 
 ### Empty responses on qwen3.x and some OpenAI-compatible models
 
-If you're getting `"I received your request but got no response"` from the assistant when using a qwen3.x model (or another OpenAI-compatible model that's strict about JSON output), the model may need `response_format: { type: "json_object" }` set on the fact-extraction call. This isn't on by default because not all OpenAI-compatible providers accept the field — it's tracked in [#21](https://github.com/hoornet/home-mind/issues/21). Until that lands, you can either:
+If you're getting `"I received your request but got no response"` from the assistant when using a qwen3.x model (or another OpenAI-compatible model that's strict about JSON output), set:
 
-- Switch to a model that doesn't need it (`llama3.1`, `qwen2.5`, or any Anthropic/OpenAI hosted model)
-- Build from source with `response_format: { type: "json_object" }` added to `src/llm/openai-fact-extractor.ts`
+```bash
+OPENAI_RESPONSE_FORMAT=json_object
+```
+
+That sends `response_format: { type: "json_object" }` on fact-extraction calls only — chat returns free-form text and ignores it. It's off by default because not all OpenAI-compatible providers accept the field, so turning it on globally would break them. Available since **v0.15.4** ([#21](https://github.com/hoornet/home-mind/issues/21)).
+
+If replies come back truncated on a local model, raise the completion cap too:
+
+```bash
+OPENAI_MAX_TOKENS=2048
+```
+
+Note that this error string is our own generic fallback in the HA integration — it fires for *any* empty response field, so it doesn't by itself prove the JSON format is the cause. Run with `LOG_LEVEL=debug` and look at what the model actually returned before changing settings.
 
 ### Voice commands not working
 

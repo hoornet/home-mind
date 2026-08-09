@@ -140,6 +140,8 @@ LLM config:
 - `ANTHROPIC_API_KEY` — required when `LLM_PROVIDER=anthropic`
 - `OPENAI_API_KEY` — required when `LLM_PROVIDER=openai`
 - `OPENAI_BASE_URL` — optional, for OpenAI-compatible APIs (Azure, local proxies)
+- `OPENAI_RESPONSE_FORMAT` — optional, `json_object`. Sends `response_format: {type:"json_object"}` on **fact-extraction calls only** (chat returns prose and ignores it). Off by default because not every OpenAI-compatible provider accepts the field. Fixes empty extractor responses on strict endpoints — qwen3.x in particular. Shipped v0.15.4 (#21)
+- `OPENAI_MAX_TOKENS` — optional completion cap. The default is tight enough to truncate some local models; #21 raised it to 2048 in practice
 - `OLLAMA_BASE_URL` — optional, Ollama API endpoint (default: `http://localhost:11434/v1`)
 
 Optional: `PORT` (default 3100), `API_TOKEN` (bearer token for auth — when set, all endpoints except health require it), `HA_SKIP_TLS_VERIFY`, `MEMORY_TOKEN_LIMIT` (default 3000), `LOG_LEVEL`, `CONVERSATION_STORAGE` (`memory` | `sqlite`, default `memory`), `CONVERSATION_DB_PATH` (default `/data/conversations.db`, only used when `CONVERSATION_STORAGE=sqlite`), `CUSTOM_PROMPT` (server-level default custom system prompt), `TZ` (timezone for the Docker container, default `Europe/Prague` in docker-compose; Node.js uses this for `toLocaleString()` so the LLM sees correct local time)
