@@ -121,21 +121,19 @@ cd ../..
 
 ### 3. Install HA Custom Component
 
-**HACS (Recommended):**
-1. Add `https://github.com/hoornet/home-mind-hacs` as custom repository in HACS (select **Integration** as the type)
+**HACS (recommended):**
+1. Add `https://github.com/hoornet/home-mind-hacs` as a custom repository in HACS (select **Integration** as the type)
 2. Install "Home Mind"
 3. Restart Home Assistant
 
-**Manual:**
+That repository is the current, maintained integration — v0.10.0+, with a field for your `API_TOKEN`.
+
+**Manual** (only if you don't use HACS):
 ```bash
 cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 ```
 
-> **Use HACS if you've set `API_TOKEN` on the server.** The copy vendored in this
-> repo (v0.9.3) predates the token support in the HACS release (v0.10.0) and has
-> no field to enter one — with auth enabled on the server, every request from it
-> will fail with 401. The two copies have drifted apart and reconciling them is
-> tracked work; until then HACS is the current one.
+> The copy vendored here is an older snapshot (v0.9.3) kept for offline installs. It predates API token support, so if you've set `API_TOKEN` on the server every request from it returns 401 — use HACS in that case.
 
 ### 4. Configure in Home Assistant
 
@@ -242,7 +240,7 @@ Both are AGPL-3.0 with open repos, and both are maintained. Nothing is locked be
 
 One thing worth knowing if you like this DIY setup but would rather not shop for a model or babysit an API key: a **[Nives Cloud](https://nives.house)** key works with Home Mind too. You keep this stack exactly as it is — your server, your Shodh, your data — and simply point it at a managed key instead of your own, with the model kept current for you. Entirely optional; BYOK stays free and always will.
 
-The Docker Compose setup below is the Home Mind path.
+The Quick Start above is the Home Mind path.
 
 ---
 
