@@ -34,13 +34,13 @@ Unlike stateless AI assistants, Home Mind **learns and remembers** across conver
 **First Conversation:**
 ```
 User: What's the NOx sensor reading?
-AI: The NOx sensor shows 100 ppm.
+AI: The NOx sensor shows 100 .
 
 User: Is that high?
-AI: Typically indoor NOx is 20-40 ppm, so this seems elevated...
+AI: Typically indoor NOx is 20-40 , so this seems elevated...
 
 User: Actually, 100 is normal for my home. Remember that.
-AI: I'll remember that 100 ppm is within normal parameters for your NOx levels.
+AI: I'll remember that 100  is within normal parameters for your NOx levels.
 ```
 
 **Next Day (New Conversation):**
