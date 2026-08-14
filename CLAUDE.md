@@ -150,7 +150,7 @@ Optional: `PORT` (default 3100), `API_TOKEN` (bearer token for auth — when set
 
 The server works against any OpenAI-compatible endpoint: set `LLM_PROVIDER=openai` + `OPENAI_BASE_URL=<endpoint>/v1` + `OPENAI_API_KEY=<key>`. It doesn't know or care what's on the other end — OpenRouter, a local shim, LM Studio, a gateway. This is by design and is what keeps this repo model-agnostic.
 
-> Historical note: this section used to describe a "Home Mind Cloud metering proxy". That proxy was retired — the paid product (Nives) now talks to OpenRouter directly, with no middleman. Nothing in this repo ever depended on it, and nothing here should grow OpenRouter-, tier-, or preset-specific logic. See `PRODUCT_SEPARATION.md` in the project hub.
+> Historical note: this section used to describe a metering proxy for the paid product. That proxy was retired and nothing in this repo ever depended on it. Nothing here should grow provider-, tier-, or preset-specific logic either — this repo is model-agnostic by design, and how the paid product is powered is deliberately not its concern. See `PRODUCT_SEPARATION.md` in the project hub for the specifics.
 
 STT (optional): `STT_PROVIDER` (`openai` | `none`, default `none`), `STT_API_KEY` (overrides `OPENAI_API_KEY`), `STT_BASE_URL` (custom Whisper-compatible endpoint), `STT_MODEL` (default `whisper-1`)
 
