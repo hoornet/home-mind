@@ -2,6 +2,22 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.16.3] - 2026-08-19
+
+### Fixed (llm/token-cap.ts, llm/openai-client.ts, memory/openai-extractor.ts)
+- **OpenAI's newer models work again.** GPT-5-family and o-series models reject `max_tokens` outright — `400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.` — and both OpenAI-backed paths sent the old spelling: the chat engine and the fact extractor. Pointing `LLM_PROVIDER=openai` at any of those models failed before the model was ever invoked.
+
+  Switching spellings globally was not an option: every other OpenAI-compatible endpoint Home Mind supports — Ollama, LM Studio, llama.cpp, Azure, gateways — still expects `max_tokens`, and being model-agnostic means never breaking the local path to fix the hosted one.
+
+  Matching on model names would have been wrong rather than merely brittle. The accepted parameter belongs to *whoever serves the model*, not to the model: a normalising gateway will accept `max_tokens` for a model that rejects it upstream, so the same model id needs different parameters at different base URLs. A name list would also need editing on every OpenAI launch.
+
+  So `withTokenCap()` negotiates instead. It sends `max_tokens`; if the endpoint objects, it sends the request again with `max_completion_tokens` and remembers the answer for that model for the life of the process. Endpoints that work today send byte-identical requests. Affected ones pay one rejected request per model per restart — no tokens are billed, since it fails before inference. Retrying is safe on the streaming path because the 400 arrives on the initial request, before any chunk reaches the caller. Detection is deliberately narrow (status 400 with `param: "max_tokens"` and `code: "unsupported_parameter"`, or a message naming `max_completion_tokens`), so an unrelated 400 — bad model id, malformed tool schema — still surfaces unchanged.
+
+### Changed (llm/openai-client.ts)
+- **A truncated reply on a reasoning model now says what actually happened.** On these models the output cap also covers hidden reasoning tokens, so a long deliberation can exhaust the budget before a single visible word is written. The `MAX_TOKENS_TRUNCATED` hint previously blamed prompt size in every case; when we know the endpoint wanted `max_completion_tokens`, it now points at reasoning effort instead. The cap itself is unchanged at 2048 (500 for voice).
+
+266 tests, up from 254.
+
 ## [0.16.2] - 2026-08-09
 
 ### Fixed (memory/fact-patterns.ts, memory/extraction-prompt.ts)

@@ -198,7 +198,7 @@ It has already gone wrong. On 2026-08-09 `main` was on 0.16.1 while GitHub's *La
 
 Every version bump, same commit or immediately after:
 
-1. Bump `src/home-mind-server/package.json`, add the `CHANGELOG.md` entry, and update **both** README version references (the badge on line ~4 and **Current Version** under Project Status — they drift silently).
+1. Bump `src/home-mind-server/package.json` (and `package-lock.json`) and add the `CHANGELOG.md` entry. The README needs no edit: its version badge reads `package.json` over raw.githubusercontent, and Project Status points at the badge — both derive from the source, so neither can drift. (They used to be hardcoded, and did drift; don't reintroduce a literal.)
 2. `npm test` — this is the only gate; there is no CI to catch a mistake.
 3. `git tag -a v<version> -m "…"` on the commit that *is* that version, not on whatever `main` happens to be later. If several versions were pushed untagged, tag each on its own commit — `git log --oneline` and match the CHANGELOG.
 4. `git push origin v<version>` then `gh release create v<version> --title "v<version> — <what changed, in plain words>" --notes-file …`.

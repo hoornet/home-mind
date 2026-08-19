@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import type { ExtractedFact, Fact } from "./types.js";
 import type { IFactExtractor } from "../llm/interface.js";
 import { EXTRACTION_PROMPT, VALID_CATEGORIES } from "./extraction-prompt.js";
+import { withTokenCap } from "../llm/token-cap.js";
 
 export class OpenAIFactExtractor implements IFactExtractor {
   private client: OpenAI;
@@ -55,14 +56,16 @@ ${JSON.stringify(factsJson, null, 2)}`;
         .replace("{user_message}", userMessage)
         .replace("{assistant_response}", assistantResponse);
 
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        max_tokens: this.maxTokens,
-        messages: [{ role: "user", content: prompt }],
-        ...(this.responseFormat
-          ? { response_format: { type: this.responseFormat } }
-          : {}),
-      });
+      const response = await withTokenCap(this.model, this.maxTokens, (cap) =>
+        this.client.chat.completions.create({
+          model: this.model,
+          ...cap,
+          messages: [{ role: "user", content: prompt }],
+          ...(this.responseFormat
+            ? { response_format: { type: this.responseFormat } }
+            : {}),
+        })
+      );
 
       const text = response.choices[0]?.message?.content ?? "";
 

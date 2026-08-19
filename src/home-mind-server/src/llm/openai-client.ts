@@ -9,6 +9,7 @@ import { TopologyScanner } from "../ha/topology-scanner.js";
 import { buildSystemPromptText } from "./prompts.js";
 import { TOOL_DEFINITIONS, toOpenAITools } from "./tool-definitions.js";
 import { handleToolCall, extractAndStoreFacts, type ToolContext } from "./tool-handler.js";
+import { withTokenCap, usesMaxCompletionTokens } from "./token-cap.js";
 import type {
   ChatRequest,
   ChatResponse,
@@ -217,13 +218,18 @@ export class OpenAIChatEngine implements IChatEngine {
 
   private classifyEmptyResponse(finishReason: string | null): ChatError {
     if (finishReason === "length") {
-      return {
-        code: "MAX_TOKENS_TRUNCATED",
-        hint:
-          "Response was cut off at max_tokens before the model finished. " +
+      // On OpenAI's newer models the output cap also covers hidden reasoning
+      // tokens, so a reasoning-heavy turn can exhaust it before writing a single
+      // visible word. That is a different problem from a prompt being too large,
+      // and it deserves a different instruction.
+      const hint = usesMaxCompletionTokens(this.config.llmModel)
+        ? "The model used its entire output budget on internal reasoning and had " +
+          "none left for the answer. Try a non-reasoning model, or a lower " +
+          "reasoning effort if your provider exposes one."
+        : "Response was cut off at max_tokens before the model finished. " +
           "If you're seeing this often, the conversation prompt may be too large " +
-          "for the model's output budget — try a model with more output tokens.",
-      };
+          "for the model's output budget — try a model with more output tokens.";
+      return { code: "MAX_TOKENS_TRUNCATED", hint };
     }
     if (finishReason === "content_filter") {
       return {
@@ -254,16 +260,21 @@ export class OpenAIChatEngine implements IChatEngine {
     finishReason: string | null;
     toolCalls: FunctionToolCall[];
   }> {
-    const stream = await this.client.chat.completions.create({
-      model: this.config.llmModel,
-      max_tokens: isVoice ? 500 : 2048,
-      messages,
-      tools: OPENAI_TOOLS,
-      // Keep the tool list in the request (history already references it) but
-      // stop the model from issuing more calls.
-      ...(disableTools ? { tool_choice: "none" as const } : {}),
-      stream: true,
-    });
+    const stream = await withTokenCap(
+      this.config.llmModel,
+      isVoice ? 500 : 2048,
+      (cap) =>
+        this.client.chat.completions.create({
+          model: this.config.llmModel,
+          ...cap,
+          messages,
+          tools: OPENAI_TOOLS,
+          // Keep the tool list in the request (history already references it) but
+          // stop the model from issuing more calls.
+          ...(disableTools ? { tool_choice: "none" as const } : {}),
+          stream: true,
+        })
+    );
 
     let text = "";
     let finishReason: string | null = null;

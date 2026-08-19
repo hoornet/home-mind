@@ -43,6 +43,7 @@ vi.mock("./tool-handler.js", () => ({
 }));
 
 import { OpenAIChatEngine } from "./openai-client.js";
+import { resetTokenCapCache } from "./token-cap.js";
 import { handleToolCall, extractAndStoreFacts } from "./tool-handler.js";
 
 describe("OpenAIChatEngine", () => {
@@ -54,6 +55,7 @@ describe("OpenAIChatEngine", () => {
   let config: Config;
 
   beforeEach(() => {
+    resetTokenCapCache();
     mockCreate.mockReset();
     vi.mocked(handleToolCall).mockReset();
     vi.mocked(extractAndStoreFacts).mockReset();
@@ -363,6 +365,29 @@ describe("OpenAIChatEngine", () => {
 
     const createCall = mockCreate.mock.calls[0][0];
     expect(createCall.max_tokens).toBe(2048);
+  });
+
+  it("retries with max_completion_tokens when the model rejects max_tokens", async () => {
+    const rejection = Object.assign(
+      new Error(
+        "400 Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead."
+      ),
+      { status: 400, param: "max_tokens", code: "unsupported_parameter" }
+    );
+    mockCreate.mockRejectedValueOnce(rejection).mockResolvedValue(
+      makeStream([
+        { choices: [{ delta: { content: "Hello" }, finish_reason: null }] },
+        { choices: [{ delta: {}, finish_reason: "stop" }] },
+      ])
+    );
+
+    const result = await engine.chat({ message: "Hi", userId: "user-1" });
+
+    expect(result.response).toBe("Hello");
+    expect(mockCreate.mock.calls[0][0].max_tokens).toBe(2048);
+    expect(mockCreate.mock.calls[0][0].max_completion_tokens).toBeUndefined();
+    expect(mockCreate.mock.calls[1][0].max_completion_tokens).toBe(2048);
+    expect(mockCreate.mock.calls[1][0].max_tokens).toBeUndefined();
   });
 
   it("fires extractAndStoreFacts after response", async () => {
