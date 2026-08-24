@@ -82,6 +82,11 @@ The short path: **HA Assist (voice or text) → Home Mind integration → Home M
 
 ## Quick Start
 
+> **Prefer a one-click install over Docker Compose?** This project's sister, the
+> [Nives add-on](https://github.com/hoornet/nives), packages the same heritage stack as a
+> single Home Assistant add-on — see [Home Mind or Nives?](#home-mind-or-nives) below for
+> an honest comparison. Home Mind itself is, and stays, the fully DIY path.
+
 ### Prerequisites
 
 - **Docker & Docker Compose** - [Install Docker](https://docs.docker.com/engine/install/) or run `curl -fsSL https://get.docker.com | sh`
