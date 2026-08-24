@@ -260,30 +260,43 @@ export function buildSystemPrompt(
 
   const instructions = isVoice ? VOICE_INSTRUCTIONS : SYSTEM_INSTRUCTIONS;
 
-  // Dynamic content that changes per request
   const layoutSection = homeLayout ? `\n\n${homeLayout}` : "";
   const deviceSection = deviceCheatSheet ? `\n\n${deviceCheatSheet}` : "";
-  const dynamicContent = `
+
+  // Prompt caching is a prefix match, so content is ordered least-volatile
+  // first: identity + instructions (changes on release/custom prompt), then
+  // the home description (changes on rescan, ~30 min), then the genuinely
+  // per-request parts — timestamps and retrieved facts. The home description
+  // gets its own cache breakpoint: a rescan invalidates it without touching
+  // the instruction block's cache entry.
+  const volatileContent = `
 ## Current Context:
 - Date/Time: ${dateTimeStr}
 - ISO Timestamp (now, UTC): ${isoTimestamp}
 - Local midnight today (UTC): ${localMidnightIso}  ← use this as start_time for "today" history queries, NOT 00:00:00Z
 
 ## What You Remember About This User:
-${factsText}${layoutSection}${deviceSection}`;
+${factsText}`;
 
-  // Build content blocks: identity + instructions (cached) + dynamic
   const blocks: Anthropic.TextBlockParam[] = [
     {
       type: "text" as const,
       text: identity + instructions,
       cache_control: { type: "ephemeral" as const },
     },
-    {
-      type: "text" as const,
-      text: dynamicContent,
-    },
   ];
+  const homeDescription = `${layoutSection}${deviceSection}`;
+  if (homeDescription) {
+    blocks.push({
+      type: "text" as const,
+      text: homeDescription,
+      cache_control: { type: "ephemeral" as const },
+    });
+  }
+  blocks.push({
+    type: "text" as const,
+    text: volatileContent,
+  });
 
   return blocks;
 }
@@ -314,7 +327,10 @@ export function buildSystemPromptText(
   const layoutSection = homeLayout ? `\n\n${homeLayout}` : "";
   const deviceSection = deviceCheatSheet ? `\n\n${deviceCheatSheet}` : "";
 
-  return `${identity}${instructions}
+  // Volatile-last, same reasoning as buildSystemPrompt: providers with
+  // automatic prefix caching can then reuse everything up to the home
+  // description, instead of missing from the first timestamp onward.
+  return `${identity}${instructions}${layoutSection}${deviceSection}
 
 ## Current Context:
 - Date/Time: ${dateTimeStr}
@@ -322,5 +338,5 @@ export function buildSystemPromptText(
 - Local midnight today (UTC): ${localMidnightIso}  ← use this as start_time for "today" history queries, NOT 00:00:00Z
 
 ## What You Remember About This User:
-${factsText}${layoutSection}${deviceSection}`;
+${factsText}`;
 }

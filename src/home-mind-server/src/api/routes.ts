@@ -10,10 +10,20 @@ import type { ITtsService } from "../tts/tts-service.js";
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
 
 // Request validation schemas
-const ChatRequestSchema = z.object({
+export const ChatRequestSchema = z.object({
   message: z.string().min(1, "Message is required"),
-  userId: z.string().default("default"),
-  conversationId: z.string().optional(),
+  // JSON callers send an explicit null for "no value" at least as often as
+  // they omit the key — HA's conversation.process without a conversation_id
+  // arrives as `"conversationId": null`. `.optional()`/`.default()` only
+  // cover ABSENT, so both fields accept null and normalize it here.
+  userId: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? "default"),
+  conversationId: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? undefined),
   isVoice: z.boolean().default(false),
   customPrompt: z.string().optional(),
 });

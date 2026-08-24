@@ -97,3 +97,44 @@ describe("buildSystemPromptText (OpenAI)", () => {
     expect(text).toContain("No memories yet.");
   });
 });
+
+describe("cache-friendly ordering", () => {
+  // Prompt caching is a prefix match: anything after the first per-request
+  // byte is uncacheable. The home layout and device cheat sheet change on
+  // rescan (~30 min), not per request, so they must sit BEFORE the
+  // timestamps and retrieved facts, not after.
+  const LAYOUT = "## Home Layout:\n- Ground floor: kitchen";
+  const DEVICES = "## Device Capabilities:\n- light.kitchen: rgbw";
+
+  it("puts the home description in its own cached block, ahead of the volatile one", () => {
+    const blocks = buildSystemPrompt(
+      ["fact1"], false, undefined, DEVICES, LAYOUT
+    ) as TextBlock[];
+
+    expect(blocks).toHaveLength(3);
+    expect(blocks[1]).toMatchObject({ cache_control: { type: "ephemeral" } });
+    expect(blocks[1].text).toContain("Home Layout");
+    expect(blocks[1].text).toContain("Device Capabilities");
+    expect(blocks[1].text).not.toContain("Date/Time");
+    expect(blocks[2]).not.toHaveProperty("cache_control");
+    expect(blocks[2].text).toContain("Date/Time");
+    expect(blocks[2].text).toContain("fact1");
+    expect(blocks[2].text).not.toContain("Home Layout");
+  });
+
+  it("emits no empty home block when there is no layout or cheat sheet", () => {
+    const blocks = buildSystemPrompt(["fact1"]) as TextBlock[];
+    expect(blocks).toHaveLength(2);
+    expect(blocks.every((b) => b.text.length > 0)).toBe(true);
+  });
+
+  it("keeps the plain-text prompt volatile-last for automatic prefix caching", () => {
+    const text = buildSystemPromptText(
+      ["fact1"], false, undefined, DEVICES, LAYOUT
+    );
+    const timestamp = text.indexOf("Date/Time");
+    expect(timestamp).toBeGreaterThan(text.indexOf("Home Layout"));
+    expect(timestamp).toBeGreaterThan(text.indexOf("Device Capabilities"));
+    expect(text.indexOf("fact1")).toBeGreaterThan(text.indexOf("Device Capabilities"));
+  });
+});

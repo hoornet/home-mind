@@ -2,6 +2,16 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.16.4] - 2026-08-24
+
+### Fixed (api/routes.ts)
+- **`conversation.process` without a `conversation_id` works now.** Home Assistant's integration serializes a missing conversation id as an explicit JSON `null`, and the request schema's `.optional()` covers an *absent* key but not a null one — so every such call was rejected with a 400 before the model was ever invoked. Voice and the Assist dialog always carry an id and were unaffected; service calls and automations were not. The schema now accepts `null` and treats it as "no conversation in flight" (`userId` had the same latent shape and is covered too), and any client that sends the key conditionally keeps working unchanged.
+
+### Changed (llm/prompts.ts)
+- **Repeat turns are cheaper: the unchanging parts of the prompt are now cacheable.** Prompt caching is a prefix match, and the per-request timestamp used to sit *ahead* of the home layout and device cheat sheet — the largest stable content in the prompt — so providers re-billed them on every turn. The prompt is now ordered least-volatile-first: identity and instructions, then the home description in its own cache block (Anthropic path) or ahead of the volatile tail (plain-text path for OpenAI-compatible endpoints), then timestamps and retrieved facts last. Same content, same answers; on providers with prompt caching the home description is now read from cache on repeat turns, and the saving grows with the size of your home.
+
+276 tests, up from 266.
+
 ## [0.16.3] - 2026-08-19
 
 ### Fixed (llm/token-cap.ts, llm/openai-client.ts, memory/openai-extractor.ts)
