@@ -2,7 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
-## [0.16.4] - 2026-08-24
+## [0.16.5] - 2026-08-29
+
+### Improved (llm/prompts.ts)
+- **The assistant keeps to your language on one-word messages.** A short message like "tv", a number, or a bare "ok" doesn't say what language you're speaking — and in a home where devices and rooms are named in another language, the model could take the device names as its cue and answer in that language. The prompt now spells it out: too short a message is not a language choice, entity names are data, and the conversation's language holds until you genuinely switch. Applies to both the chat and voice prompts.
+- **Short follow-ups stay on topic.** Ask about something, then follow with "what about now?" — the assistant re-checks that same thing and answers with fresh data, instead of offering a list of everything discussed so far. It asks which topic you meant only when its previous reply covered several.
 
 ### Fixed (api/routes.ts)
 - **`conversation.process` without a `conversation_id` works now.** Home Assistant's integration serializes a missing conversation id as an explicit JSON `null`, and the request schema's `.optional()` covers an *absent* key but not a null one — so every such call was rejected with a 400 before the model was ever invoked. Voice and the Assist dialog always carry an id and were unaffected; service calls and automations were not. The schema now accepts `null` and treats it as "no conversation in flight" (`userId` had the same latent shape and is covered too), and any client that sends the key conditionally keeps working unchanged.
