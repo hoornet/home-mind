@@ -1,0 +1,12 @@
+---
+build_from:
+  amd64: ghcr.io/home-assistant/amd64-base-debian:bookworm-2026.02.0
+args:
+  # Upstream Home Mind tag the server is built from. Bump together with
+  # `version` in config.yaml.
+  HOME_MIND_REF: v0.16.5
+  # Shodh Memory image the binary, ONNX runtime and models are taken from.
+  SHODH_IMAGE: varunshodh/shodh-memory:0.2.0
+labels:
+  org.opencontainers.image.source: https://github.com/hoornet/home-mind
+  org.opencontainers.image.licenses: AGPL-3.0-only

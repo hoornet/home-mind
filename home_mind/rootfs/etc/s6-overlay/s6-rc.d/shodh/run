@@ -1,0 +1,13 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Run Shodh Memory, the cognitive memory backend
+# ==============================================================================
+declare api_key
+api_key=$(</data/shodh_api_key)
+export SHODH_DEV_API_KEY="${api_key}"
+export RUST_LOG="$(bashio::config 'log_level')"
+
+bashio::log.info "Starting Shodh Memory on ${SHODH_HOST}:${SHODH_PORT}..."
+
+cd /data/shodh || bashio::exit.nok "Could not enter /data/shodh"
+exec /usr/local/bin/shodh-memory

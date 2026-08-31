@@ -1,0 +1,79 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Run the Home Mind API server
+# ==============================================================================
+
+# Export an environment variable only when the option actually has a value —
+# the server treats empty strings as "unset", but an empty URL still fails
+# its schema validation.
+export_option() {
+    local option="${1}"
+    local variable="${2}"
+    if bashio::config.has_value "${option}"; then
+        export "${variable}=$(bashio::config "${option}")"
+    fi
+}
+
+# Shodh exits the server on startup if it is unreachable, so wait for it.
+bashio::log.info "Waiting for Shodh Memory to become available..."
+for _ in $(seq 1 120); do
+    if curl -fsS "http://127.0.0.1:${SHODH_PORT}/health" > /dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+if ! curl -fsS "http://127.0.0.1:${SHODH_PORT}/health" > /dev/null 2>&1; then
+    bashio::exit.nok "Shodh Memory did not start within 120 seconds. See the log above for its error."
+fi
+bashio::log.info "Shodh Memory is up"
+
+export PORT="3100"
+export SHODH_URL="http://127.0.0.1:${SHODH_PORT}"
+export SHODH_API_KEY="$(</data/shodh_api_key)"
+export CONVERSATION_DB_PATH="/data/conversations.db"
+export TZ="$(bashio::info.timezone)"
+
+export LOG_LEVEL="$(bashio::config 'log_level')"
+export LLM_PROVIDER="$(bashio::config 'llm_provider')"
+export CONVERSATION_STORAGE="$(bashio::config 'conversation_storage')"
+export MEMORY_TOKEN_LIMIT="$(bashio::config 'memory_token_limit')"
+export MEMORY_CLEANUP_INTERVAL_HOURS="$(bashio::config 'memory_cleanup_interval_hours')"
+export STT_PROVIDER="$(bashio::config 'stt_provider')"
+export TTS_PROVIDER="$(bashio::config 'tts_provider')"
+
+export_option 'llm_model' 'LLM_MODEL'
+export_option 'anthropic_api_key' 'ANTHROPIC_API_KEY'
+export_option 'openai_api_key' 'OPENAI_API_KEY'
+export_option 'openai_base_url' 'OPENAI_BASE_URL'
+export_option 'openai_max_tokens' 'OPENAI_MAX_TOKENS'
+export_option 'ollama_base_url' 'OLLAMA_BASE_URL'
+export_option 'custom_prompt' 'CUSTOM_PROMPT'
+export_option 'device_overrides' 'DEVICE_OVERRIDES'
+export_option 'api_token' 'API_TOKEN'
+export_option 'cors_origins' 'CORS_ORIGINS'
+export_option 'stt_api_key' 'STT_API_KEY'
+export_option 'stt_base_url' 'STT_BASE_URL'
+export_option 'stt_model' 'STT_MODEL'
+export_option 'tts_api_key' 'TTS_API_KEY'
+export_option 'tts_base_url' 'TTS_BASE_URL'
+export_option 'tts_model' 'TTS_MODEL'
+export_option 'tts_voice' 'TTS_VOICE'
+
+# Without ha_url the add-on reaches Home Assistant through the Supervisor
+# proxy, which authenticates with the add-on's own token — no long-lived
+# access token needed.
+if bashio::config.has_value 'ha_url'; then
+    export HA_URL="$(bashio::config 'ha_url')"
+    export HA_TOKEN="$(bashio::config 'ha_token')"
+    bashio::log.info "Using the configured Home Assistant at ${HA_URL}"
+    if bashio::config.true 'ha_skip_tls_verify'; then
+        export HA_SKIP_TLS_VERIFY="true"
+    fi
+else
+    export HA_URL="http://supervisor/core"
+    export HA_TOKEN="${SUPERVISOR_TOKEN}"
+    bashio::log.info "Using this Home Assistant through the Supervisor proxy"
+fi
+
+cd /opt/home-mind || bashio::exit.nok "Could not enter /opt/home-mind"
+exec node dist/index.js

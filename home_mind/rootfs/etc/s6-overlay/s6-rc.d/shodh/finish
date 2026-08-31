@@ -1,0 +1,11 @@
+#!/usr/bin/env bashio
+# ==============================================================================
+# Halt the add-on when Shodh Memory stops — the server cannot run without it
+# ==============================================================================
+declare exit_code="${1}"
+
+if [[ "${exit_code}" -ne 0 ]] && [[ "${exit_code}" -ne 256 ]]; then
+    bashio::log.warning "Shodh Memory exited with code ${exit_code}"
+fi
+
+exec /run/s6/basedir/bin/halt

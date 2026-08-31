@@ -1,0 +1,37 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Validate the add-on options and prepare persistent state under /data
+# ==============================================================================
+
+# Shodh authenticates the server with a key that never leaves the container.
+# It is generated once and kept so memories survive restarts and updates.
+if ! bashio::fs.file_exists '/data/shodh_api_key'; then
+    head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n' > /data/shodh_api_key
+    chmod 600 /data/shodh_api_key
+    bashio::log.info "Generated a new Shodh Memory API key"
+fi
+
+mkdir -p /data/shodh
+
+case "$(bashio::config 'llm_provider')" in
+    anthropic)
+        bashio::config.require 'anthropic_api_key' \
+            "The Anthropic provider needs an API key from https://console.anthropic.com/"
+        ;;
+    openai)
+        bashio::config.require 'openai_api_key' \
+            "The OpenAI provider needs an API key from https://platform.openai.com/"
+        ;;
+    ollama)
+        bashio::config.require 'ollama_base_url' \
+            "The Ollama provider needs the base URL of your Ollama server, for example http://192.168.1.10:11434/v1"
+        ;;
+esac
+
+# A remote Home Assistant cannot use the Supervisor proxy, so it needs a token.
+if bashio::config.has_value 'ha_url' && ! bashio::config.has_value 'ha_token'; then
+    bashio::exit.nok \
+        "ha_url is set but ha_token is empty. A remote Home Assistant needs a long-lived access token."
+fi
+
+bashio::log.info "Configuration OK"
