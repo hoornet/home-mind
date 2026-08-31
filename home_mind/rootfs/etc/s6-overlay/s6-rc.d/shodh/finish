@@ -1,4 +1,4 @@
-#!/usr/bin/env bashio
+#!/usr/bin/with-contenv bashio
 # ==============================================================================
 # Halt the add-on when Shodh Memory stops — the server cannot run without it
 # ==============================================================================

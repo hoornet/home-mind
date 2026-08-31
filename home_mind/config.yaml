@@ -9,7 +9,9 @@ url: https://github.com/hoornet/home-mind
 arch:
   - amd64
 init: false
-startup: services
+# Started after Home Assistant: the server scans the home layout and the light
+# capabilities over the API on startup, and only rescans every 30 minutes.
+startup: application
 boot: auto
 # Talk to Home Assistant through the Supervisor proxy, so no long-lived
 # access token is needed.
