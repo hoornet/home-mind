@@ -1,4 +1,5 @@
-ARG BUILD_FROM
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-debian:bookworm-2026.02.0
+# Shodh Memory image the binary, ONNX runtime and models are taken from.
 ARG SHODH_IMAGE=varunshodh/shodh-memory:0.2.0
 
 # Shodh Memory: the server binary, the ONNX runtime and the bundled
@@ -8,6 +9,7 @@ FROM ${SHODH_IMAGE} AS shodh
 # Build the Home Mind server from a pinned upstream tag. The add-on build
 # context is the add-on folder, so the source is fetched rather than copied.
 FROM node:20-bookworm-slim AS builder
+# Upstream tag the server is built from. Bump with `version` in config.yaml.
 ARG HOME_MIND_REF=v0.16.5
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl python3 make g++ \
@@ -45,7 +47,6 @@ ENV ORT_DYLIB_PATH=/usr/local/lib/libonnxruntime.so \
     SHODH_HOST=127.0.0.1 \
     SHODH_PORT=3030 \
     SHODH_MEMORY_PATH=/data/shodh \
-    SHODH_OFFLINE=1 \
     NODE_ENV=production
 
 COPY rootfs /

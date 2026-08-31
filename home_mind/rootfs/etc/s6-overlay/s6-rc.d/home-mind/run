@@ -14,7 +14,29 @@ export_option() {
     fi
 }
 
-# Shodh exits the server on startup if it is unreachable, so wait for it.
+# Fail before the wait below, so a missing key is reported straight away.
+case "$(bashio::config 'llm_provider')" in
+    anthropic)
+        bashio::config.require 'anthropic_api_key' \
+            "The Anthropic provider needs an API key from https://console.anthropic.com/"
+        ;;
+    openai)
+        bashio::config.require 'openai_api_key' \
+            "The OpenAI provider needs an API key from https://platform.openai.com/"
+        ;;
+    ollama)
+        bashio::config.require 'ollama_base_url' \
+            "The Ollama provider needs the base URL of your Ollama server, for example http://192.168.1.10:11434/v1"
+        ;;
+esac
+
+# A remote Home Assistant cannot use the Supervisor proxy, so it needs a token.
+if bashio::config.has_value 'ha_url' && ! bashio::config.has_value 'ha_token'; then
+    bashio::exit.nok \
+        "ha_url is set but ha_token is empty. A remote Home Assistant needs a long-lived access token."
+fi
+
+# The server exits on startup when Shodh is unreachable, so wait for it.
 bashio::log.info "Waiting for Shodh Memory to become available..."
 for _ in $(seq 1 120); do
     if curl -fsS "http://127.0.0.1:${SHODH_PORT}/health" > /dev/null 2>&1; then
@@ -31,7 +53,9 @@ export PORT="3100"
 export SHODH_URL="http://127.0.0.1:${SHODH_PORT}"
 export SHODH_API_KEY="$(</data/shodh_api_key)"
 export CONVERSATION_DB_PATH="/data/conversations.db"
-export TZ="$(bashio::info.timezone)"
+# TZ is injected into the container by the Supervisor — Node reads it for the
+# local time it shows the model, so it must not be overwritten with an empty
+# value from an API the add-on may not be allowed to call.
 
 export LOG_LEVEL="$(bashio::config 'log_level')"
 export LLM_PROVIDER="$(bashio::config 'llm_provider')"
