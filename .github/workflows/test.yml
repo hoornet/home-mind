@@ -1,0 +1,32 @@
+name: Test
+
+# The only gate this project has ever had is a developer remembering to run
+# `npm test`. That is thinner than it looks: the sqlite tests need a compiled
+# native module, and a machine that blocks install scripts skips ten of them
+# without saying so. A clean runner does not.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/home-mind-server
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 20 on purpose: it is what home_mind/Dockerfile builds with, so CI
+      # tests the runtime that actually ships rather than whatever is newest.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: src/home-mind-server/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
