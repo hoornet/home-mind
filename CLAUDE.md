@@ -60,7 +60,6 @@ All commands run from `src/home-mind-server/`:
 npm run dev          # tsx watch (hot reload), starts at localhost:3100
 npm run build        # tsc → dist/
 npm run typecheck    # tsc --noEmit
-npm run lint         # eslint src/
 npm test             # vitest run
 npm run test:watch   # vitest (watch mode)
 npm run test:coverage # vitest with v8 coverage
