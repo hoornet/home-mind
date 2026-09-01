@@ -1,6 +1,6 @@
 ---
 name: Home Mind
-version: "0.16.5"
+version: "0.16.5-1"
 slug: home_mind
 description: >-
   AI assistant with cognitive memory for Home Assistant. Remembers your
@@ -47,9 +47,9 @@ schema:
   llm_model: str?
   anthropic_api_key: password?
   openai_api_key: password?
-  openai_base_url: url?
+  openai_base_url: str?
   openai_max_tokens: int(1,)?
-  ollama_base_url: url?
+  ollama_base_url: str?
   # Behaviour
   custom_prompt: str?
   device_overrides: str?
@@ -61,11 +61,11 @@ schema:
   # endpoints, for your own clients. HA Assist uses your pipeline's engines.
   stt_provider: list(none|openai)
   stt_api_key: password?
-  stt_base_url: url?
+  stt_base_url: str?
   stt_model: str?
   tts_provider: list(none|openai)
   tts_api_key: password?
-  tts_base_url: url?
+  tts_base_url: str?
   tts_model: str?
   tts_voice: str?
   # API access
@@ -73,6 +73,6 @@ schema:
   cors_origins: str?
   # Advanced: talk to a Home Assistant instance other than this one.
   # Leave both empty to use the Supervisor proxy (recommended).
-  ha_url: url?
+  ha_url: str?
   ha_token: password?
   ha_skip_tls_verify: bool?
