@@ -4,7 +4,9 @@
 # ==============================================================================
 declare api_key
 api_key=$(</data/shodh_api_key)
-export SHODH_DEV_API_KEY="${api_key}"
+# The dev key variant logs "not for production!" on every request.
+export SHODH_ENV="production"
+export SHODH_API_KEYS="${api_key}"
 export RUST_LOG="$(bashio::config 'log_level')"
 
 bashio::log.info "Starting Shodh Memory on ${SHODH_HOST}:${SHODH_PORT}..."
