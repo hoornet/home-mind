@@ -82,10 +82,45 @@ The short path: **HA Assist (voice or text) → Home Mind integration → Home M
 
 ## Quick Start
 
-> **Prefer a one-click install over Docker Compose?** This project's sister, the
-> [Nives add-on](https://github.com/hoornet/nives), packages the same heritage stack as a
-> single Home Assistant add-on — see [Home Mind or Nives?](#home-mind-or-nives) below for
-> an honest comparison. Home Mind itself is, and stays, the fully DIY path.
+There are two ways to run this:
+
+- **[Home Assistant add-on](#install-as-a-home-assistant-add-on)** — one container on Home Assistant OS. No separate Docker host, no `.env` file, and **no long-lived access token**.
+- **Docker Compose** — the original path, and the right one if you run outside Home Assistant OS (Proxmox, a NAS, bare Docker). It starts at [Prerequisites](#prerequisites) below.
+
+> This project's sister, the [Nives add-on](https://github.com/hoornet/nives), packages the
+> same heritage stack and has grown features this repo deliberately doesn't have — see
+> [Home Mind or Nives?](#home-mind-or-nives) below for an honest comparison.
+
+## Install as a Home Assistant add-on
+
+Requires Home Assistant OS or Supervised, on **amd64**. You still need an
+[LLM API key](https://console.anthropic.com/); everything else the add-on handles.
+
+1. **Add the repository.** Settings → Add-ons → Add-on store → ⋮ → Repositories,
+   paste `https://github.com/hoornet/home-mind`.
+2. **Install "Home Mind".** The first build takes several minutes — the server is
+   compiled from source on your machine.
+3. **Configure.** Open the Configuration tab, pick your provider and paste its API key.
+4. **Start it** and watch the Log tab for `Home Mind Server Started`.
+5. **Install the integration** through HACS as described in
+   [step 3 below](#3-install-ha-custom-component), then add it under Settings →
+   Devices & services. For the **API URL**, use the add-on's hostname, shown on its
+   page — `http://<hostname>:3100`. The default `http://localhost:3100` will *not*
+   work: Home Assistant and the add-on are separate containers.
+6. **Set it as your conversation agent** under Settings → Voice assistants.
+
+**No long-lived access token.** The server only ever talks to Home Assistant over
+REST, and the Supervisor proxies all of it, so the add-on authenticates with its
+own token. The `ha_url` / `ha_token` options exist only for pointing it at a
+*different* Home Assistant.
+
+Memory, conversation history and the generated Shodh key live in the add-on's
+`/data`, so Home Assistant backups cover them. Conversation history defaults to
+`sqlite` here, so it survives a restart.
+
+Full option reference: [`home_mind/DOCS.md`](home_mind/DOCS.md).
+
+## Docker Compose
 
 ### Prerequisites
 
@@ -241,14 +276,14 @@ Only specify what needs changing — unspecified fields use auto-detected values
 
 **[Nives](https://github.com/hoornet/nives)** (formerly HomeMind PRO) is this project's sister: it began as a fork of this server, so the core — conversation engine and memory layer — is shared heritage. They're now maintained as two independent products for two kinds of people:
 
-- **Home Mind (this repo)** is the DIY path: Docker Compose, run the server and Shodh Memory yourself, install the integration, wire it together, pick every model. Full control by design. Also the right choice if you're running outside Home Assistant OS (Proxmox, a NAS, bare Docker).
-- **Nives** bundles the same stack into a **single HA add-on** — one container, self-installing companion integration, no terminal. It has also grown features this repo deliberately doesn't have: automation create/edit/delete by voice (behind a confirmation gate), an AI Task provider with camera-snapshot vision, Voice PE mic reopening, arm64 binaries for Raspberry Pi, and an optional managed-key Cloud (pay-as-you-go tickets, no subscription).
+- **Home Mind (this repo)** is the DIY path: you pick every model, you can run it anywhere — Docker Compose on Proxmox, a NAS, bare Docker — and there is an add-on for Home Assistant OS if you'd rather not manage a Docker host. You still install the integration and wire it up yourself. Full control by design.
+- **Nives** is the batteries-included one: a self-installing companion integration, no terminal at any point, and features this repo deliberately doesn't have — automation create/edit/delete by voice (behind a confirmation gate), an AI Task provider with camera-snapshot vision, Voice PE mic reopening, arm64 for Raspberry Pi, and an optional managed-key Cloud (pay-as-you-go tickets, no subscription).
 
 Both are AGPL-3.0 with open repos, and both are maintained. Nothing is locked behind Nives's paid option — its BYOK mode is free, exactly like Home Mind. Pick by temperament: own every moving part here, or have it just work there.
 
 One thing worth knowing if you like this DIY setup but would rather not shop for a model or babysit an API key: a **[Nives Cloud](https://nives.house)** key works with Home Mind too. You keep this stack exactly as it is — your server, your Shodh, your data — and simply point it at a managed key instead of your own, with the model kept current for you. Entirely optional; BYOK stays free and always will.
 
-The Quick Start above is the Home Mind path.
+Both install paths for this repo — the add-on and Docker Compose — are in the [Quick Start](#quick-start) above.
 
 ---
 
@@ -272,6 +307,7 @@ The Quick Start above is the Home Mind path.
 - [x] Conversational forgetting (`forget_memory`, confirmed before deleting)
 - [x] Server-side STT (`POST /api/stt`, OpenAI Whisper)
 - [x] Server-side TTS (`POST /api/tts`, OpenAI TTS API)
+- [x] Home Assistant add-on (amd64; no long-lived access token, via the Supervisor proxy)
 - [x] Nives HA Add-on (one-click install, cloud + BYOK; formerly HomeMind PRO)
 - [ ] Multi-user support (OIDC)
 
