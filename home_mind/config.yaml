@@ -16,6 +16,8 @@ boot: auto
 # Talk to Home Assistant through the Supervisor proxy, so no long-lived
 # access token is needed.
 homeassistant_api: true
+# Only for POST /discovery, so the integration can be set up without a URL.
+hassio_api: true
 ports:
   3100/tcp: 3100
 ports_description:

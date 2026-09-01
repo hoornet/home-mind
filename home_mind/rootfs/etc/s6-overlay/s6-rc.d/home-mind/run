@@ -99,5 +99,25 @@ else
     bashio::log.info "Using this Home Assistant through the Supervisor proxy"
 fi
 
+# Announce the add-on to Home Assistant so the integration can be added without
+# typing a URL. Backgrounded on purpose: the server is not listening yet, and
+# the integration probes /api/health before it offers the discovery.
+(
+    for _ in $(seq 1 60); do
+        if curl -fsS "http://127.0.0.1:${PORT}/api/health" > /dev/null 2>&1; then
+            if bashio::discovery "home_mind" \
+                "{\"host\": \"$(hostname)\", \"port\": ${PORT}}" > /dev/null; then
+                bashio::log.info "Announced to Home Assistant for discovery"
+            else
+                bashio::log.warning \
+                    "Discovery announcement failed — add the integration manually with http://$(hostname):${PORT}"
+            fi
+            exit 0
+        fi
+        sleep 1
+    done
+    bashio::log.warning "Server did not answer in 60s — skipped the discovery announcement"
+) &
+
 cd /opt/home-mind || bashio::exit.nok "Could not enter /opt/home-mind"
 exec node dist/index.js
