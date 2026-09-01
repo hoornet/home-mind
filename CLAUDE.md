@@ -194,6 +194,14 @@ HA custom component installed via HACS from `https://github.com/hoornet/home-min
 
 This project has no CI and no published artifact: **the git tag and the GitHub release are the only way a user learns a version exists.** There is nothing else to notice. That makes the tag load-bearing here in a way it isn't for the Nives add-on, where HA updates from `config.yaml` regardless.
 
+**Since the add-on landed (2026-09-01, #29) the tag is load-bearing twice over.** `home_mind/Dockerfile` builds the server by fetching `https://codeload.github.com/hoornet/home-mind/tar.gz/refs/tags/${HOME_MIND_REF}`, defaulting to `v<version>`. An untagged version therefore **cannot be built at all** — the add-on install fails outright rather than quietly shipping stale code, which is the better failure, but it means ordering now matters:
+
+1. Bump `package.json`, CHANGELOG, `npm test`, commit.
+2. **Tag and push the tag.** The tag must exist before the next step can build.
+3. Only then bump `version` in `home_mind/config.yaml` and `HOME_MIND_REF` in `home_mind/Dockerfile` to match.
+
+Get that backwards and the add-on points at a tag that isn't there yet, and today nothing catches that but the build failing on a user's machine.
+
 It has already gone wrong. On 2026-08-09 `main` was on 0.16.1 while GitHub's *Latest release* still read **0.15.7** — four versions, including `forget_memory` (the headline feature of 0.16.0), invisible to everyone who wasn't reading commits. A Reddit post titled "Home Mind 0.16" would have sent people to a Releases page showing 0.15.x.
 
 Every version bump, same commit or immediately after:
