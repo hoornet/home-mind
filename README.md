@@ -20,11 +20,11 @@ Home Mind provides:
 
 - **Cognitive memory** with semantic search and natural decay (via Shodh Memory)
 - **Learning** from corrections and user preferences
-- **Forgetting on request** — "forget that my canary word is bumblebee"; it quotes the exact memory back and waits for your yes
+- **Forgetting on request.** "forget that my canary word is bumblebee"; it quotes the exact memory back and waits for your yes
 - **Voice control** via HA Assist (Wyoming protocol)
-- **Multi-LLM support** — Anthropic (Claude), OpenAI, or Ollama (local inference)
-- **Home Layout Index** — reads your HA floor/room assignments and injects them into every prompt, so the AI always knows which floor a device is on
-- **Device Capability Index** — pre-scans your lights at startup so the AI always uses the right color params on the first try
+- **Multi-LLM support.** Anthropic (Claude), OpenAI, or Ollama (local inference)
+- **Home Layout Index.** Reads your HA floor/room assignments and injects them into every prompt, so the AI always knows which floor a device is on
+- **Device Capability Index.** Pre-scans your lights at startup so the AI always uses the right color params on the first try
 - **Self-hosted** and privacy-focused
 
 ## Memory in Action
@@ -63,7 +63,7 @@ AI: The NOx sensor shows 98 ppm, which is within normal parameters for your home
 Ask it to forget, and it confirms before deleting:
 
 ```
-User: Forget that my canary word is bumblebee — it's honeybee now.
+User: Forget that my canary word is bumblebee. It's honeybee now.
 AI:   I'll forget exactly this memory: "User's test canary word is bumblebee".
       Shall I proceed?
 User: yes
@@ -84,11 +84,11 @@ The short path: **HA Assist (voice or text) → Home Mind integration → Home M
 
 There are two ways to run this:
 
-- **[Home Assistant add-on](#install-as-a-home-assistant-add-on)** — one container on Home Assistant OS. No separate Docker host, no `.env` file, and **no long-lived access token**.
-- **Docker Compose** — the original path, and the right one if you run outside Home Assistant OS (Proxmox, a NAS, bare Docker). It starts at [Prerequisites](#prerequisites) below.
+- **[Home Assistant add-on](#install-as-a-home-assistant-add-on).** One container on Home Assistant OS. No separate Docker host, no `.env` file, and **no long-lived access token**.
+- **Docker Compose.** The original path, and the right one if you run outside Home Assistant OS (Proxmox, a NAS, bare Docker). It starts at [Prerequisites](#prerequisites) below.
 
 > This project's sister, the [Nives add-on](https://github.com/hoornet/nives), packages the
-> same heritage stack and has grown features this repo deliberately doesn't have — see
+> same heritage stack and has grown features this repo deliberately doesn't have. See
 > [Home Mind or Nives?](#home-mind-or-nives) below for an honest comparison.
 
 ## Install as a Home Assistant add-on
@@ -98,14 +98,14 @@ Requires Home Assistant OS or Supervised, on **amd64**. You still need an
 
 1. **Add the repository.** Settings → Add-ons → Add-on store → ⋮ → Repositories,
    paste `https://github.com/hoornet/home-mind`.
-2. **Install "Home Mind".** The first build takes several minutes — the server is
+2. **Install "Home Mind".** The first build takes several minutes, because the server is
    compiled from source on your machine.
 3. **Configure.** Open the Configuration tab, pick your provider and paste its API key.
 4. **Start it** and watch the Log tab for `Home Mind Server Started`.
 5. **Install the integration** through HACS as described in
    [step 3 below](#3-install-ha-custom-component), then add it under Settings →
    Devices & services. For the **API URL**, use the add-on's hostname, shown on its
-   page — `http://<hostname>:3100`. The default `http://localhost:3100` will *not*
+   page, so `http://<hostname>:3100`. The default `http://localhost:3100` will *not*
    work: Home Assistant and the add-on are separate containers.
 6. **Set it as your conversation agent** under Settings → Voice assistants.
 
@@ -126,7 +126,7 @@ Full option reference: [`home_mind/DOCS.md`](home_mind/DOCS.md).
 
 - **Docker & Docker Compose** - [Install Docker](https://docs.docker.com/engine/install/) or run `curl -fsSL https://get.docker.com | sh`
 - **Home Assistant** with a [long-lived access token](https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token)
-- **LLM API key** — [Anthropic](https://console.anthropic.com/) (default), [OpenAI](https://platform.openai.com/), or [Ollama](https://ollama.com/) (local, no API key needed)
+- **LLM API key.** [Anthropic](https://console.anthropic.com/) (default), [OpenAI](https://platform.openai.com/), or [Ollama](https://ollama.com/) (local, no API key needed)
 
 ### 1. Clone and Configure
 
@@ -141,7 +141,7 @@ Edit `.env` with your credentials:
 # LLM provider (default: anthropic, also supports: openai, ollama)
 ANTHROPIC_API_KEY=sk-ant-api03-...
 # Or for OpenAI: LLM_PROVIDER=openai and OPENAI_API_KEY=sk-...
-# Or for Ollama: LLM_PROVIDER=ollama and LLM_MODEL=qwen2.5:14b (14B+ recommended — see Troubleshooting)
+# Or for Ollama: LLM_PROVIDER=ollama and LLM_MODEL=qwen2.5:14b (14B+ recommended, see Troubleshooting)
 HA_URL=https://your-ha-instance:8123
 HA_TOKEN=your-long-lived-access-token
 # SHODH_API_KEY is auto-generated by deploy.sh
@@ -150,7 +150,7 @@ HA_TOKEN=your-long-lived-access-token
 ### 2. Deploy with Docker Compose
 
 ```bash
-# Download the Shodh Memory binary (pinned — see note below)
+# Download the Shodh Memory binary (pinned, see note below)
 cd docker/shodh
 curl -sL https://github.com/varun29ankuS/shodh-memory/releases/download/v0.2.0/shodh-memory-linux-x64.tar.gz | tar -xz
 cd ../..
@@ -169,14 +169,14 @@ cd ../..
 2. Install "Home Mind"
 3. Restart Home Assistant
 
-That repository is the current, maintained integration — v0.10.0+, with a field for your `API_TOKEN`.
+That repository is the current, maintained integration: v0.10.1+, with a field for your `API_TOKEN`.
 
 **Manual** (only if you don't use HACS):
 ```bash
 cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 ```
 
-> The copy vendored here is an older snapshot (v0.9.3) kept for offline installs. It predates API token support, so if you've set `API_TOKEN` on the server every request from it returns 401 — use HACS in that case.
+> The copy vendored here is an older snapshot (v0.9.3) kept for offline installs. It predates API token support, so if you've set `API_TOKEN` on the server every request from it returns 401. Use HACS in that case.
 
 ### 4. Configure in Home Assistant
 
@@ -186,7 +186,7 @@ cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 
 ## Custom Prompt
 
-You can customize the AI's personality and behavior without touching the core system prompt. Your custom prompt **replaces the default identity** — it becomes the opening of the system prompt, giving it maximum authority over persona and tone. The built-in smart home capabilities (tool usage, memory, response style) are appended after your prompt. The AI still knows how to control devices, remember facts, and query sensors; your prompt shapes *who* it is and *how* it communicates.
+You can customize the AI's personality and behavior without touching the core system prompt. Your custom prompt **replaces the default identity**, so it becomes the opening of the system prompt, giving it maximum authority over persona and tone. The built-in smart home capabilities (tool usage, memory, response style) are appended after your prompt. The AI still knows how to control devices, remember facts, and query sensors; your prompt shapes *who* it is and *how* it communicates.
 
 ### Setting a Custom Prompt
 
@@ -211,13 +211,13 @@ If a per-request prompt is provided, it overrides the server default. If neither
 
 ### Tips for Effective Custom Prompts
 
-- **Lead with identity**: Start with "You are [name], ..." — this becomes the very first thing the AI reads
+- **Lead with identity**: Start with "You are [name], ...". This becomes the very first thing the AI reads
 - **Keep personality rules concise**: Shorter, punchier persona instructions work better than long rulebooks, especially on smaller models (Haiku, gpt-4o-mini)
 - **Separate concerns**: Put personality in the custom prompt; let the built-in prompt handle tool usage and memory
 
 ### How It Differs from Anthropic Console / OpenAI Playground
 
-In those tools, the system prompt **is** the entire system prompt — you control everything. Here, your custom prompt replaces the default identity line at the top of a larger prompt that also includes smart home tool instructions, memory guidelines, and dynamic context (time, remembered facts). You're defining the persona, not replacing the whole system.
+In those tools, the system prompt **is** the entire system prompt, and you control everything. Here, your custom prompt replaces the default identity line at the top of a larger prompt that also includes smart home tool instructions, memory guidelines, and dynamic context (time, remembered facts). You're defining the persona, not replacing the whole system.
 
 ## Home Layout Index
 
@@ -230,14 +230,14 @@ First Floor
 - Bedroom: climate.bedroom_radiator, light.bedroom_main, ...
 ```
 
-This gives the AI spatial awareness without tool calls. It will never assume a device is on the wrong floor. Refreshes every 30 minutes automatically. Works automatically if you've assigned your devices to rooms and floors in Home Assistant — no configuration needed. Degrades gracefully if your HA version doesn't support the registry endpoints or if rooms/floors aren't set up.
+This gives the AI spatial awareness without tool calls. It will never assume a device is on the wrong floor. Refreshes every 30 minutes automatically. Works automatically if you've assigned your devices to rooms and floors in Home Assistant, with no configuration needed. Degrades gracefully if your HA version doesn't support the registry endpoints or if rooms/floors aren't set up.
 
 ## Device Capability Index
 
 On startup, Home Mind scans all `light.*` entities in Home Assistant, reads their `supported_color_modes` attributes, and builds a per-entity cheat sheet that is injected into every system prompt. This means the AI always knows the correct way to control each light without needing to call `search_entities` or `get_entities` on every request.
 
 The cheat sheet tells the AI exactly what to use per device:
-- `rgbw_color: [0,0,0,255]` for RGBW strips (WLED, etc.) — uses the dedicated white LED channel
+- `rgbw_color: [0,0,0,255]` for RGBW strips (WLED, etc.), which uses the dedicated white LED channel
 - `color_temp_kelvin` with the actual min/max range for lights that support it
 - `rgb_color: [255,255,255]` for RGB-only lights without a white channel
 - `xy_color: [x,y]` for lights that use CIE xy coordinates
@@ -251,7 +251,7 @@ Some devices report capabilities that don't match their actual wiring. A common 
 Use `DEVICE_OVERRIDES` in your `.env` to pin the correct behavior for specific entities:
 
 ```bash
-# Gledopto wired as RGB-only — use rgb_color for white instead of color_temp_kelvin
+# Gledopto wired as RGB-only, so use rgb_color for white instead of color_temp_kelvin
 DEVICE_OVERRIDES={"light.gledopto_gl_c_008p": {"whiteMethod": "rgb_white"}}
 ```
 
@@ -259,7 +259,7 @@ Override fields:
 - `whiteMethod`: `"color_temp"` | `"rgbw"` | `"rgb_white"` | `"none"`
 - `colorMethod`: `"rgb_color"` | `"xy_color"` | `"hs_color"` | `"none"`
 
-Only specify what needs changing — unspecified fields use auto-detected values.
+Only specify what needs changing. Unspecified fields use auto-detected values.
 
 ## Available Tools
 
@@ -274,22 +274,22 @@ Only specify what needs changing — unspecified fields use auto-detected values
 
 ## Home Mind or Nives?
 
-**[Nives](https://github.com/hoornet/nives)** (formerly HomeMind PRO) is this project's sister: it began as a fork of this server, so the core — conversation engine and memory layer — is shared heritage. They're now maintained as two independent products for two kinds of people:
+**[Nives](https://github.com/hoornet/nives)** (formerly HomeMind PRO) is this project's sister: it began as a fork of this server, so the core (conversation engine and memory layer) is shared heritage. They're now maintained as two independent products for two kinds of people:
 
-- **Home Mind (this repo)** is the DIY path: you pick every model, you can run it anywhere — Docker Compose on Proxmox, a NAS, bare Docker — and there is an add-on for Home Assistant OS if you'd rather not manage a Docker host. You still install the integration and wire it up yourself. Full control by design.
-- **Nives** is the batteries-included one: a self-installing companion integration, no terminal at any point, and features this repo deliberately doesn't have — automation create/edit/delete by voice (behind a confirmation gate), an AI Task provider with camera-snapshot vision, Voice PE mic reopening, arm64 for Raspberry Pi, and an optional managed-key Cloud (pay-as-you-go tickets, no subscription).
+- **Home Mind (this repo)** is the DIY path: you pick every model, you can run it anywhere (Docker Compose on Proxmox, a NAS, bare Docker), and there is an add-on for Home Assistant OS if you'd rather not manage a Docker host. You still install the integration and wire it up yourself. Full control by design.
+- **Nives** is the batteries-included one: a self-installing companion integration, no terminal at any point, and features this repo deliberately doesn't have: automation create/edit/delete by voice (behind a confirmation gate), an AI Task provider with camera-snapshot vision, Voice PE mic reopening, arm64 for Raspberry Pi, and an optional managed-key Cloud (pay-as-you-go tickets, no subscription).
 
 Both are AGPL-3.0 with open repos, and both are maintained. Nives's assistant isn't gated either: its BYOK mode is free and does everything the paid path does, and the one Cloud-only extra is optional transcription, since that's billed per use. Pick by temperament: own every moving part here, or have it just work there.
 
-One thing worth knowing if you like this DIY setup but would rather not shop for a model or babysit an API key: a **[Nives Cloud](https://nives.house)** key works with Home Mind too. You keep this stack exactly as it is — your server, your Shodh, your data — and simply point it at a managed key instead of your own, with the model kept current for you. Entirely optional; BYOK stays free and always will.
+One thing worth knowing if you like this DIY setup but would rather not shop for a model or babysit an API key: a **[Nives Cloud](https://nives.house)** key works with Home Mind too. You keep this stack exactly as it is (your server, your Shodh, your data) and simply point it at a managed key instead of your own, with the model kept current for you. Entirely optional; BYOK stays free and always will.
 
-Both install paths for this repo — the add-on and Docker Compose — are in the [Quick Start](#quick-start) above.
+Both install paths for this repo, the add-on and Docker Compose, are in the [Quick Start](#quick-start) above.
 
 ---
 
 ## Project Status
 
-**Current version:** see the badge at the top, or [Releases](https://github.com/hoornet/home-mind/releases) — both read from the source, so neither can go stale.
+**Current version:** see the badge at the top, or [Releases](https://github.com/hoornet/home-mind/releases). Both read from the source, so neither can go stale.
 
 - [x] Voice control via HA Assist
 - [x] Cognitive memory with Shodh
@@ -353,23 +353,23 @@ docker compose restart             # Restart both services
 - First request after pull may be slow (model loading into memory)
 - Ensure `LLM_MODEL` matches an installed model: `ollama list`
 - If running Ollama on a different machine, set `OLLAMA_BASE_URL=http://<host>:11434/v1`
-- **Size matters more than family.** Small models tend to *narrate* tool calls rather than make them — `llama3.1:8b` will happily report "I've turned on the kitchen light" without ever calling the tool. Around 14B is where tool calling starts working reliably; `qwen2.5:14b` and up is a known-good starting point
+- **Size matters more than family.** Small models tend to *narrate* tool calls rather than make them. `llama3.1:8b` will happily report "I've turned on the kitchen light" without ever calling the tool. Around 14B is where tool calling starts working reliably; `qwen2.5:14b` and up is a known-good starting point
 - **Verify rather than trust**: ask it to change something you can see, then check the device actually changed. A convincing reply is not evidence of a tool call
-- Give it **8k context or more** — the system prompt plus tool definitions come to roughly 3,200 tokens before you've said anything, so a 4k window is full before the conversation starts
+- Give it **8k context or more**. The system prompt plus tool definitions come to roughly 3,200 tokens before you've said anything, so a 4k window is full before the conversation starts
 
 ### Slow responses (>30 seconds)
 
 - Queries with device control require multiple API round-trips
 - Check server logs for errors: `docker compose logs -f server`
 - Verify you're using Claude Haiku (default), not Sonnet
-- Ollama responses depend on your hardware — GPU acceleration recommended for 7B+ models
+- Ollama responses depend on your hardware. GPU acceleration is recommended for 7B+ models
 
 ### Memory not working
 
 1. Check Shodh is healthy: `curl http://localhost:3030/health`
 2. Look for "Extracted facts" in server logs
 3. Memory requires explicit statements like "remember that..." or corrections
-4. If running an OpenAI-compatible local model (Ollama, LM Studio) and facts aren't being stored, run with `LOG_LEVEL=debug` and look for `Fact extractor:` warnings — some models return JSON in shapes the extractor has to recover from (single object instead of array, trailing prose after the JSON). As of 0.15.1 the extractor handles both, but a warning here means the response shape was unrecoverable and it's worth opening an issue with the raw output.
+4. If running an OpenAI-compatible local model (Ollama, LM Studio) and facts aren't being stored, run with `LOG_LEVEL=debug` and look for `Fact extractor:` warnings. Some models return JSON in shapes the extractor has to recover from (single object instead of array, trailing prose after the JSON). As of 0.15.1 the extractor handles both, but a warning here means the response shape was unrecoverable and it's worth opening an issue with the raw output.
 
 ### Empty responses on qwen3.x and some OpenAI-compatible models
 
@@ -379,7 +379,7 @@ If you're getting `"I received your request but got no response"` from the assis
 OPENAI_RESPONSE_FORMAT=json_object
 ```
 
-That sends `response_format: { type: "json_object" }` on fact-extraction calls only — chat returns free-form text and ignores it. It's off by default because not all OpenAI-compatible providers accept the field, so turning it on globally would break them. Available since **v0.15.4** ([#21](https://github.com/hoornet/home-mind/issues/21)).
+That sends `response_format: { type: "json_object" }` on fact-extraction calls only. Chat returns free-form text and ignores it. It's off by default because not all OpenAI-compatible providers accept the field, so turning it on globally would break them. Available since **v0.15.4** ([#21](https://github.com/hoornet/home-mind/issues/21)).
 
 If replies come back truncated on a local model, raise the completion cap too:
 
@@ -387,7 +387,7 @@ If replies come back truncated on a local model, raise the completion cap too:
 OPENAI_MAX_TOKENS=2048
 ```
 
-Note that this error string is our own generic fallback in the HA integration — it fires for *any* empty response field, so it doesn't by itself prove the JSON format is the cause. Run with `LOG_LEVEL=debug` and look at what the model actually returned before changing settings.
+Note that this error string is our own generic fallback in the HA integration, and it fires for *any* empty response field, so it doesn't by itself prove the JSON format is the cause. Run with `LOG_LEVEL=debug` and look at what the model actually returned before changing settings.
 
 ### Voice commands not working
 
@@ -416,7 +416,7 @@ If Home Mind is useful to you, consider supporting its development:
 
 ## License
 
-Home Mind — AI assistant for Home Assistant with cognitive memory.
+Home Mind: an AI assistant for Home Assistant with cognitive memory.
 Copyright (c) 2026 Jure Sršen.
 
 GNU Affero General Public License v3.0 - see [LICENSE](LICENSE) for details.
