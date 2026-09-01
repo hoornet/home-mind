@@ -1,0 +1,110 @@
+---
+configuration:
+  llm_provider:
+    name: LLM provider
+    description: >-
+      Which model answers. Anthropic is Claude, Ollama runs locally on your own
+      hardware.
+  llm_model:
+    name: Model
+    description: Model name. Leave empty to use the provider's default.
+  anthropic_api_key:
+    name: Anthropic API key
+    description: Required for the Anthropic provider. Create one at console.anthropic.com.
+  openai_api_key:
+    name: OpenAI API key
+    description: Required for the OpenAI provider.
+  openai_base_url:
+    name: OpenAI base URL
+    description: Override for OpenAI-compatible endpoints. Leave empty for OpenAI itself.
+  openai_max_tokens:
+    name: OpenAI max tokens
+    description: Upper limit on the response length.
+  ollama_base_url:
+    name: Ollama base URL
+    description: >-
+      Required for the Ollama provider, for example
+      http://192.168.1.10:11434/v1.
+  custom_prompt:
+    name: Custom prompt
+    description: >-
+      Added to the system prompt. Use it to give the assistant a name and a
+      personality.
+  device_overrides:
+    name: Device overrides
+    description: >-
+      JSON of per-entity light capability overrides. Use when a light reports
+      the wrong colour modes to Home Assistant.
+  memory_token_limit:
+    name: Memory token limit
+    description: How many tokens of recalled memory may be added to a prompt.
+  memory_cleanup_interval_hours:
+    name: Memory cleanup interval
+    description: Hours between prunes of faded memories. 0 disables cleanup.
+  conversation_storage:
+    name: Conversation storage
+    description: >-
+      sqlite keeps conversation history across restarts, memory forgets it when
+      the add-on stops.
+  log_level:
+    name: Log level
+    description: Also controls how much Shodh Memory logs.
+  stt_provider:
+    name: Speech-to-text provider
+    description: >-
+      Only used by the HomeMind app. Voice through Home Assistant Assist does
+      not need this.
+  stt_api_key:
+    name: Speech-to-text API key
+    description: Falls back to the OpenAI API key when empty.
+  stt_base_url:
+    name: Speech-to-text base URL
+    description: For OpenAI-compatible transcription endpoints.
+  stt_model:
+    name: Speech-to-text model
+    description: Transcription model name.
+  tts_provider:
+    name: Text-to-speech provider
+    description: >-
+      Only used by the HomeMind app. Voice through Home Assistant Assist does
+      not need this.
+  tts_api_key:
+    name: Text-to-speech API key
+    description: Falls back to the OpenAI API key when empty.
+  tts_base_url:
+    name: Text-to-speech base URL
+    description: For OpenAI-compatible speech endpoints.
+  tts_model:
+    name: Text-to-speech model
+    description: Speech synthesis model name.
+  tts_voice:
+    name: Voice
+    description: Voice used for synthesised speech.
+  api_token:
+    name: API token
+    description: >-
+      Bearer token required on API requests. Leave empty only on a trusted
+      network.
+  cors_origins:
+    name: CORS origins
+    description: >-
+      Comma-separated origins allowed to call the API from a browser. Needed
+      when the HomeMind app is served from another origin.
+  ha_url:
+    name: Home Assistant URL
+    description: >-
+      Advanced. Leave empty to use this Home Assistant through the Supervisor
+      proxy. Set it only to control a different instance.
+  ha_token:
+    name: Home Assistant token
+    description: >-
+      Advanced. Long-lived access token, required only together with a Home
+      Assistant URL.
+  ha_skip_tls_verify:
+    name: Skip TLS verification
+    description: >-
+      Advanced. Accept self-signed certificates on the remote Home Assistant.
+network:
+  3100/tcp: >-
+    Home Mind API. Required by the Home Mind integration and the optional
+    HomeMind app.

@@ -1,0 +1,76 @@
+---
+name: Home Mind
+version: "0.16.5"
+slug: home_mind
+description: >-
+  AI assistant with cognitive memory for Home Assistant. Remembers your
+  corrections, preferences and sensor baselines across conversations.
+url: https://github.com/hoornet/home-mind
+arch:
+  - amd64
+init: false
+# Started after Home Assistant: the server scans the home layout and the light
+# capabilities over the API on startup, and only rescans every 30 minutes.
+startup: application
+boot: auto
+# Talk to Home Assistant through the Supervisor proxy, so no long-lived
+# access token is needed.
+homeassistant_api: true
+# Only for POST /discovery, so the integration can be set up without a URL.
+hassio_api: true
+# Services this add-on may announce. The Supervisor rejects a discovery message
+# for a service that is not declared here.
+discovery:
+  - home_mind
+ports:
+  3100/tcp: 3100
+ports_description:
+  3100/tcp: >-
+    Home Mind API. Required by the Home Mind integration and the optional
+    HomeMind PWA. Set to disabled to keep the API on the internal network only.
+watchdog: http://[HOST]:[PORT:3100]/api/health
+options:
+  llm_provider: anthropic
+  anthropic_api_key: ""
+  log_level: info
+  conversation_storage: sqlite
+  memory_token_limit: 3000
+  memory_cleanup_interval_hours: 6
+  stt_provider: none
+  tts_provider: none
+  tts_model: tts-1
+  tts_voice: alloy
+schema:
+  # LLM provider
+  llm_provider: list(anthropic|openai|ollama)
+  llm_model: str?
+  anthropic_api_key: password?
+  openai_api_key: password?
+  openai_base_url: url?
+  openai_max_tokens: int(1,)?
+  ollama_base_url: url?
+  # Behaviour
+  custom_prompt: str?
+  device_overrides: str?
+  memory_token_limit: int(100,)
+  memory_cleanup_interval_hours: int(0,)
+  conversation_storage: list(sqlite|memory)
+  log_level: list(debug|info|warn|error)
+  # Speech (optional, used by the HomeMind PWA — not by HA Assist)
+  stt_provider: list(none|openai)
+  stt_api_key: password?
+  stt_base_url: url?
+  stt_model: str?
+  tts_provider: list(none|openai)
+  tts_api_key: password?
+  tts_base_url: url?
+  tts_model: str?
+  tts_voice: str?
+  # API access
+  api_token: password?
+  cors_origins: str?
+  # Advanced: talk to a Home Assistant instance other than this one.
+  # Leave both empty to use the Supervisor proxy (recommended).
+  ha_url: url?
+  ha_token: password?
+  ha_skip_tls_verify: bool?

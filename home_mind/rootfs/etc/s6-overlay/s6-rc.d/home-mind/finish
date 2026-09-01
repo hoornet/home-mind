@@ -1,0 +1,11 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Halt the add-on when the Home Mind server stops
+# ==============================================================================
+declare exit_code="${1}"
+
+if [[ "${exit_code}" -ne 0 ]] && [[ "${exit_code}" -ne 256 ]]; then
+    bashio::log.warning "Home Mind server exited with code ${exit_code}"
+fi
+
+exec /run/s6/basedir/bin/halt
