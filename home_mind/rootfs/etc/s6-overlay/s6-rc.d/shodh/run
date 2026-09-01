@@ -5,7 +5,8 @@
 declare api_key
 api_key=$(</data/shodh_api_key)
 # The dev key variant logs "not for production!" on every request.
-export SHODH_ENV="production"
+# SHODH_ENV is a boolean bound to --production, not an environment name.
+export SHODH_ENV="true"
 export SHODH_API_KEYS="${api_key}"
 export RUST_LOG="$(bashio::config 'log_level')"
 
