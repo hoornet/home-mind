@@ -18,6 +18,10 @@ boot: auto
 homeassistant_api: true
 # Only for POST /discovery, so the integration can be set up without a URL.
 hassio_api: true
+# Services this add-on may announce. The Supervisor rejects a discovery message
+# for a service that is not declared here.
+discovery:
+  - home_mind
 ports:
   3100/tcp: 3100
 ports_description:
