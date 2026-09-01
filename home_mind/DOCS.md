@@ -67,8 +67,9 @@ Finally set Home Mind as the conversation agent under
 
 ### Speech
 
-Only used by the optional HomeMind PWA. Voice through Home Assistant Assist
-uses your existing Assist pipeline and needs none of this.
+These drive the server's own `/api/stt` and `/api/tts` endpoints, for clients
+you point at it yourself. Voice through Home Assistant Assist uses your
+existing Assist pipeline and needs none of this.
 
 | Option | Description |
 |---|---|
@@ -82,7 +83,7 @@ uses your existing Assist pipeline and needs none of this.
 | Option | Description |
 |---|---|
 | `api_token` | Bearer token required on `/api` requests. Leave empty and the API is unauthenticated — only do that on a trusted network. |
-| `cors_origins` | Comma-separated origins, needed when the PWA is served from another origin. |
+| `cors_origins` | Comma-separated origins, needed when a browser client calling the API is served from another origin. |
 
 ### Advanced: a different Home Assistant
 
@@ -102,7 +103,8 @@ Home Assistant backups:
 - `/data/conversations.db` — conversation history when `conversation_storage` is `sqlite`
 - `/data/shodh_api_key` — generated on first start, never leaves the container
 
-Port `3100` is published so the integration and the PWA can reach the API.
+Port `3100` is published so the integration, and anything else you point at the
+server, can reach the API.
 Shodh Memory listens on loopback inside the container only and is not exposed.
 
 ## Migrating from Docker Compose

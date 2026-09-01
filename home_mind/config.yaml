@@ -26,8 +26,9 @@ ports:
   3100/tcp: 3100
 ports_description:
   3100/tcp: >-
-    Home Mind API. Required by the Home Mind integration and the optional
-    HomeMind PWA. Set to disabled to keep the API on the internal network only.
+    Home Mind API. Required by the Home Mind integration, and by anything else
+    you point at the server yourself. Set to disabled to keep the API on the
+    internal network only.
 watchdog: http://[HOST]:[PORT:3100]/api/health
 options:
   llm_provider: anthropic
@@ -56,7 +57,8 @@ schema:
   memory_cleanup_interval_hours: int(0,)
   conversation_storage: list(sqlite|memory)
   log_level: list(debug|info|warn|error)
-  # Speech (optional, used by the HomeMind PWA — not by HA Assist)
+  # Speech (optional). These drive the server's own /api/stt and /api/tts
+  # endpoints, for your own clients. HA Assist uses your pipeline's engines.
   stt_provider: list(none|openai)
   stt_api_key: password?
   stt_base_url: url?
