@@ -16,6 +16,8 @@ HA Assist (Voice/Text) → HA Custom Component (Python) → Home Mind Server (Ex
 
 Builds a compact `floor → room → [entity_ids]` text section and injects it into every system prompt alongside the device cheat sheet. This gives the LLM spatial awareness without tool calls — it knows which floor and room every device belongs to before reasoning begins.
 
+**The layout is filtered by entity domain**, because it is re-sent with every request and `area_entities()` returns *everything*. On a 1,600-entity install the unfiltered layout measured 23,301 tokens — two thirds of the whole system prompt — and most of it was `button`, `update`, `number`, `select`, and `event` entities no one asks a voice assistant about. `DEFAULT_LAYOUT_DOMAINS` in `topology-scanner.ts` keeps the controllable domains plus the ones routinely read (`sensor`, `binary_sensor`, `device_tracker`, …); `LAYOUT_DOMAINS` overrides it with a comma-separated list, and `LAYOUT_DOMAINS=all` restores the unfiltered behaviour. Anything filtered out is still reachable through `search_entities` / `get_entities` — it just costs a tool call instead of prompt tokens on every request.
+
 If the template API fails (older HA, network error), the scanner logs a warning and injects nothing — the rest of the system works normally.
 
 ### Device Capability Index
@@ -143,7 +145,7 @@ LLM config:
 - `OPENAI_MAX_TOKENS` — optional completion cap. The default is tight enough to truncate some local models; #21 raised it to 2048 in practice
 - `OLLAMA_BASE_URL` — optional, Ollama API endpoint (default: `http://localhost:11434/v1`)
 
-Optional: `PORT` (default 3100), `API_TOKEN` (bearer token for auth — when set, all endpoints except health require it), `HA_SKIP_TLS_VERIFY`, `MEMORY_TOKEN_LIMIT` (default 3000), `LOG_LEVEL`, `CONVERSATION_STORAGE` (`memory` | `sqlite`, default `memory`), `CONVERSATION_DB_PATH` (default `/data/conversations.db`, only used when `CONVERSATION_STORAGE=sqlite`), `CUSTOM_PROMPT` (server-level default custom system prompt), `TZ` (timezone for the Docker container, default `Europe/Prague` in docker-compose; Node.js uses this for `toLocaleString()` so the LLM sees correct local time)
+Optional: `PORT` (default 3100), `API_TOKEN` (bearer token for auth — when set, all endpoints except health require it), `HA_SKIP_TLS_VERIFY`, `MEMORY_TOKEN_LIMIT` (default 3000), `LOG_LEVEL`, `CONVERSATION_STORAGE` (`memory` | `sqlite`, default `memory`), `CONVERSATION_DB_PATH` (default `/data/conversations.db`, only used when `CONVERSATION_STORAGE=sqlite`), `CUSTOM_PROMPT` (server-level default custom system prompt), `LAYOUT_DOMAINS` (comma-separated entity domains kept in the home layout; `all` disables filtering), `TZ` (timezone for the Docker container, default `Europe/Prague` in docker-compose; Node.js uses this for `toLocaleString()` so the LLM sees correct local time)
 
 ### OpenAI-Compatible Endpoint Compatibility
 
