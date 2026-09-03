@@ -92,6 +92,20 @@ describe("TopologyScanner layout filtering", () => {
     }
   });
 
+  it("keeps every input_* helper, since they are user-created controls", () => {
+    // input_boolean was in and the rest were out, which was an arbitrary split:
+    // they are the same kind of entity and none of them is ever diagnostic.
+    for (const domain of [
+      "input_boolean",
+      "input_number",
+      "input_select",
+      "input_text",
+      "input_datetime",
+    ]) {
+      expect(DEFAULT_LAYOUT_DOMAINS).toContain(domain);
+    }
+  });
+
   it("keeps the previous layout when a scan fails", async () => {
     const ha = makeHa();
     const scanner = new TopologyScanner(ha);

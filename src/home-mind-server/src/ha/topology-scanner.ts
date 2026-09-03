@@ -27,16 +27,34 @@ const LAYOUT_TEMPLATE = `
 
 /**
  * Domains worth putting in front of the model by default: everything it can
- * act on, plus the ones it is routinely asked to read. Deliberately excluded
- * are the config and diagnostic domains an integration creates by the dozen —
- * `button`, `update`, `number`, `select`, `event`, `text`, `automation` — which
- * on a large install are most of the entity count and none of the questions.
+ * act on, plus the ones it is routinely asked to read.
+ *
+ * This is a *proxy*. What we actually want to drop is everything Home Assistant
+ * marks `entity_category: config | diagnostic` — the knobs an integration
+ * creates for setup, not for daily use. That marker lives in the entity
+ * registry, and the registry is reachable over the websocket API only: it is
+ * neither in `/api/states` nor exposed to the template engine (there is no
+ * `entity_category()` template function, unlike `device_attr()` or
+ * `is_hidden_entity()`). This scanner is pure REST by design, so the domain is
+ * the best signal available here.
+ *
+ * How good a proxy, measured against the registry of a 7,612-entity install:
+ * of the entities this list drops, 80 % are genuinely `config`/`diagnostic`.
+ * It is not a substitute, though — an `entity_category` filter would drop
+ * about twice as many, because `sensor` and `switch` are full of diagnostic
+ * entities the domain cannot tell apart from real ones. If this ever moves to
+ * the websocket registry, filter on the category and delete this list.
+ *
+ * `automation` is left out for a different reason: an automation belongs to no
+ * room, and driving automations is a separate feature this server does not have.
  */
 export const DEFAULT_LAYOUT_DOMAINS = [
   // controllable
-  "alarm_control_panel", "climate", "cover", "fan", "humidifier", "input_boolean",
+  "alarm_control_panel", "climate", "cover", "fan", "humidifier",
   "lawn_mower", "light", "lock", "media_player", "remote", "scene", "script",
   "siren", "switch", "vacuum", "valve", "water_heater",
+  // helpers: user-created controls, never diagnostic
+  "input_boolean", "input_datetime", "input_number", "input_select", "input_text",
   // routinely asked about
   "binary_sensor", "camera", "device_tracker", "person", "sensor", "timer", "weather",
 ] as const;
