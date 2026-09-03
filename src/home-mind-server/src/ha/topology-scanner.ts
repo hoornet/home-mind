@@ -87,11 +87,16 @@ interface LayoutData {
  *
  * Runs at startup and refreshes every scanIntervalMs.
  */
+/** Reads the entities exposed to Assist; `null` when the list is unavailable. */
+export type ExposureProvider = () => Promise<Set<string> | null>;
+
 export class TopologyScanner {
   private ha: HomeAssistantClient;
   private lastScanTime: number = 0;
   private readonly scanIntervalMs: number;
   private readonly domains: Set<string> | null;
+  private readonly exposure: ExposureProvider | null;
+  private exposed: Set<string> | null = null;
   private layoutText: string = "";
 
   /**
@@ -100,24 +105,47 @@ export class TopologyScanner {
    *   wants. On a large install `area_entities()` returns everything, so the
    *   default filter drops the config and diagnostic domains nobody asks a
    *   voice assistant about (`button`, `update`, `number`, `select`, `event`).
+   * @param exposure Optional reader for the Assist exposure list. When it
+   *   returns entities they win over `domains`, because the user picking them
+   *   by hand beats any heuristic. Falls back to `domains` when it yields
+   *   nothing, so a home that exposes nothing still gets a layout.
    */
   constructor(
     ha: HomeAssistantClient,
     scanIntervalMs = 30 * 60 * 1000,
-    domains: readonly string[] | null = DEFAULT_LAYOUT_DOMAINS
+    domains: readonly string[] | null = DEFAULT_LAYOUT_DOMAINS,
+    exposure: ExposureProvider | null = null
   ) {
     this.ha = ha;
     this.scanIntervalMs = scanIntervalMs;
     this.domains = domains === null ? null : new Set(domains);
+    this.exposure = exposure;
   }
 
   private keep(entityId: string): boolean {
+    if (this.exposed) return this.exposed.has(entityId);
     if (this.domains === null) return true;
     return this.domains.has(entityId.slice(0, entityId.indexOf(".")));
   }
 
+  /** Which filter the last scan used — for the log line and for tests. */
+  private filterName(): string {
+    if (this.exposed) return `exposed to Assist`;
+    if (this.domains === null) return "unfiltered";
+    return "filtered by domain";
+  }
+
   async scan(): Promise<void> {
     try {
+      // Refreshed per scan: the user can expose an entity at any time, and a
+      // stale set would silently hide a device they just added.
+      if (this.exposure) {
+        const exposed = await this.exposure();
+        // An empty set means "exposed nothing", which must not empty the whole
+        // layout — fall back to the domain filter in that case.
+        this.exposed = exposed && exposed.size > 0 ? exposed : null;
+      }
+
       const raw = await this.ha.renderTemplate(LAYOUT_TEMPLATE);
       const data = JSON.parse(raw.trim()) as LayoutData;
       this.layoutText = this.buildLayout(data);
@@ -128,10 +156,10 @@ export class TopologyScanner {
       const total = areas.reduce((n, a) => n + a.entities.length, 0);
       const kept = areas.reduce((n, a) => n + a.entities.filter((e) => this.keep(e)).length, 0);
       // The layout ships in every system prompt, so its size is a running cost.
-      const filtered = kept === total ? "" : ` (${total - kept} filtered out by domain)`;
+      const dropped = kept === total ? "" : ` (${total - kept} dropped, ${this.filterName()})`;
       console.log(
         `[topology] Scanned home layout: ${floorCount} floors, ${areas.length} areas, ` +
-          `${kept} entities${filtered}`
+          `${kept} entities${dropped}`
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

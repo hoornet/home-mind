@@ -53,6 +53,13 @@ const ConfigSchema = z
     // in every system prompt. "all" keeps everything (the previous behaviour).
     layoutDomains: z.string().optional(),
 
+    // Build the layout from the entities exposed to Assist instead of guessing
+    // by domain. Needs the websocket API; falls back to layoutDomains.
+    layoutFromExposed: z
+      .string()
+      .transform((v) => v !== "false")
+      .default("true"),
+
     // App / API access
     corsOrigins: z.string().optional(), // Comma-separated origins, e.g. "http://localhost:5173,https://app.example.com"
     apiToken: z.string().optional(), // Bearer token for API auth (when unset, no auth enforced)
@@ -117,6 +124,7 @@ export function loadConfig(): Config {
     customPrompt: emptyToUndefined(process.env.CUSTOM_PROMPT),
     deviceOverrides: emptyToUndefined(process.env.DEVICE_OVERRIDES),
     layoutDomains: emptyToUndefined(process.env.LAYOUT_DOMAINS),
+    layoutFromExposed: emptyToUndefined(process.env.LAYOUT_FROM_EXPOSED),
     corsOrigins: emptyToUndefined(process.env.CORS_ORIGINS),
     apiToken: emptyToUndefined(process.env.API_TOKEN),
     sttProvider: emptyToUndefined(process.env.STT_PROVIDER),

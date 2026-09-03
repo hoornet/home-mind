@@ -106,6 +106,64 @@ describe("TopologyScanner layout filtering", () => {
     }
   });
 
+  it("prefers the Assist exposure list over the domain default", async () => {
+    // A button the user deliberately exposed, and a light they did not: the
+    // domain default would decide both the other way round.
+    const exposure = async () => new Set(["button.kitchen_identify", "cover.garage_door"]);
+    const scanner = new TopologyScanner(makeHa(), 30 * 60 * 1000, DEFAULT_LAYOUT_DOMAINS, exposure);
+    await scanner.scan();
+    const section = scanner.formatSection();
+
+    expect(section).toContain("button.kitchen_identify");
+    expect(section).toContain("cover.garage_door");
+    expect(section).not.toContain("light.kitchen");
+    expect(section).not.toContain("sensor.kitchen_temperature");
+  });
+
+  it("falls back to domains when nothing is exposed", async () => {
+    // Exposing nothing must not empty the layout — that would leave the model
+    // believing the house has no devices.
+    const scanner = new TopologyScanner(
+      makeHa(),
+      30 * 60 * 1000,
+      DEFAULT_LAYOUT_DOMAINS,
+      async () => new Set<string>()
+    );
+    await scanner.scan();
+
+    expect(scanner.formatSection()).toContain("light.kitchen");
+    expect(scanner.formatSection()).not.toContain("button.kitchen_identify");
+  });
+
+  it("falls back to domains when the exposure list cannot be read", async () => {
+    const scanner = new TopologyScanner(
+      makeHa(),
+      30 * 60 * 1000,
+      DEFAULT_LAYOUT_DOMAINS,
+      async () => null
+    );
+    await scanner.scan();
+
+    expect(scanner.formatSection()).toContain("light.kitchen");
+    expect(scanner.formatSection()).not.toContain("button.kitchen_identify");
+  });
+
+  it("picks up an entity exposed after the first scan", async () => {
+    let exposed = new Set(["light.kitchen"]);
+    const scanner = new TopologyScanner(
+      makeHa(),
+      30 * 60 * 1000,
+      DEFAULT_LAYOUT_DOMAINS,
+      async () => exposed
+    );
+    await scanner.scan();
+    expect(scanner.formatSection()).not.toContain("cover.garage_door");
+
+    exposed = new Set(["light.kitchen", "cover.garage_door"]);
+    await scanner.scan();
+    expect(scanner.formatSection()).toContain("cover.garage_door");
+  });
+
   it("keeps the previous layout when a scan fails", async () => {
     const ha = makeHa();
     const scanner = new TopologyScanner(ha);

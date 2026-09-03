@@ -13,6 +13,7 @@ import { createConversationStore } from "./memory/conversation-factory.js";
 import { HomeAssistantClient } from "./ha/client.js";
 import { DeviceScanner } from "./ha/device-scanner.js";
 import { DEFAULT_LAYOUT_DOMAINS, TopologyScanner } from "./ha/topology-scanner.js";
+import { fetchExposedEntities } from "./ha/exposed-entities.js";
 import { createChatEngine, createFactExtractor } from "./llm/factory.js";
 import { createRouter } from "./api/routes.js";
 import { createSttService } from "./stt/stt-service.js";
@@ -69,7 +70,13 @@ const layoutDomains =
     : config.layoutDomains
       ? config.layoutDomains.split(",").map((d) => d.trim()).filter(Boolean)
       : DEFAULT_LAYOUT_DOMAINS;
-const topology = new TopologyScanner(ha, 30 * 60 * 1000, layoutDomains);
+// The entities the user exposed to Assist are Home Assistant's own answer to
+// "what should the assistant see", so prefer them over the domain heuristic.
+// Reading them needs the websocket API; when that fails the domains apply.
+const exposureProvider = config.layoutFromExposed
+  ? () => fetchExposedEntities(config.haUrl, config.haToken)
+  : null;
+const topology = new TopologyScanner(ha, 30 * 60 * 1000, layoutDomains, exposureProvider);
 await Promise.all([scanner.scan(), topology.scan()]);
 console.log(`  ✓ Device scanner: ${scanner.getProfiles().length} light profiles loaded`);
 console.log(`  ✓ Topology scanner: home layout ${topology.hasLayout() ? "loaded" : "unavailable"}`);
