@@ -46,6 +46,10 @@ const ConfigSchema = z
     // Custom prompt
     customPrompt: z.string().optional(),
 
+    // Ceiling on one written reply, in tokens. Unset means the engine's own
+    // default (WRITTEN_OUTPUT_CAP). Spoken replies keep their short cap.
+    maxOutputTokens: z.coerce.number().int().min(1).optional(),
+
     // Per-entity device capability overrides (JSON, for devices with incorrect HA-reported modes)
     deviceOverrides: z.string().optional(),
 
@@ -122,6 +126,7 @@ export function loadConfig(): Config {
     conversationStorage: emptyToUndefined(process.env.CONVERSATION_STORAGE),
     conversationDbPath: emptyToUndefined(process.env.CONVERSATION_DB_PATH),
     customPrompt: emptyToUndefined(process.env.CUSTOM_PROMPT),
+    maxOutputTokens: emptyToUndefined(process.env.MAX_OUTPUT_TOKENS),
     deviceOverrides: emptyToUndefined(process.env.DEVICE_OVERRIDES),
     layoutDomains: emptyToUndefined(process.env.LAYOUT_DOMAINS),
     layoutFromExposed: emptyToUndefined(process.env.LAYOUT_FROM_EXPOSED),

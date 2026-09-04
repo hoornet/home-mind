@@ -2,6 +2,19 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.18.0] - 2026-09-04
+
+### Fixed (llm/history-summary.ts, llm/tool-handler.ts, ha/client.ts)
+- **Trend questions now see every reading.** `get_history` used to hand the model an even sample of at most 200 rows, one reading per 50 minutes across a week, so an hour-long spike contributed about one sample and a question like "why does the air quality spike every evening" could not be answered from the data with any output budget. Long ranges now come back as buckets that cover every reading (min, max and mean per interval for numeric sensors, dominant state and change count for on/off ones), sized so a week is hourly, at fewer tokens per sensor than the sample cost. Short ranges are still returned raw. The tool description tells the model which shape it is holding and how to zoom in. The history call also asks Home Assistant for `minimal_response`, since attributes were serialized onto tens of thousands of rows only to be discarded.
+
+### Fixed (llm/usage.ts, llm/client.ts, llm/openai-client.ts, config.ts)
+- **A cut-off answer says so, and long answers get room to finish.** The default written ceiling goes from 2048 to 8192 tokens. That budget is shared with a reasoning model's hidden thinking, and the thinking grows with the prompt: on a real house an analytical question across a dozen sensors built an 81k-token prompt and the model spent its entire allowance thinking, writing not one visible word. A ceiling is not a reservation, so short answers cost what they always did. `MAX_OUTPUT_TOKENS` (add-on option `max_output_tokens`) overrides it. A reply that ran out of room but had written something used to be delivered silently, because the integration returns text whenever there is any; both engines now end such a reply with a sentence saying so, kept to a few words when spoken. Streamed OpenAI-compatible calls now request the usage breakdown, so an empty reply can be blamed on reasoning only when the provider actually reports reasoning tokens, instead of on which spelling of the cap parameter the model accepted. Every cap hit is logged with the numbers (`[llm] output cap reached: cap= prompt= completion= reasoning= visible_chars= tool_calls=`), and at debug level so is every successful turn.
+
+### Fixed (src/ha-integration)
+- **A question typed into Assist is not a spoken one.** The integration decided "spoken" from `agent_id`, which modern Home Assistant sets on every routed request, so every question ran under the 500-token spoken ceiling and the brief voice persona regardless of how it arrived. It now keys on `satellite_id`, which Home Assistant sets only for voice satellite entities (Voice PE, ESPHome and Wyoming), the one case where the reply is certain to be read aloud. Speaking into the phone counts as written, so a long spoken answer is read out in full rather than cut short, as Home Assistant's own conversation integrations behave. The same fix ships in home-mind-hacs 0.10.2, which is what an installed integration actually runs.
+
+All three carried over from Nives 2.5.8 and 2.5.10, where they were found on a live house.
+
 ## [0.17.1] - 2026-09-04
 
 ### Fixed (ha/client.ts, llm/tool-definitions.ts)

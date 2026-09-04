@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.18.0
+
+- **Trend questions now see every reading.** Asking about a week of a sensor used to give the assistant a thin sample of the data, one reading per 50 minutes, so a short daily spike could vanish entirely. It now gets hourly summaries that cover every reading, at a lower cost than before.
+- **Long answers get room to finish, and a cut-off answer says so.** The written answer ceiling is four times what it was, and a new **Maximum answer length** option raises it further if you need to. An answer that still runs out of room ends with a sentence saying so instead of just stopping. Spoken answers stay short.
+- If you use the Home Mind integration from HACS, update it to 0.10.2 as well: it treated every question as spoken, so long typed answers were cut short. Server 0.18.0.
+
 ## 0.17.1
 
 - **Forecasts, calendars and to-do lists are now within reach.** Some Home Assistant services answer with data instead of changing a device: the weather forecast, calendar events, to-do items, media search. Home Assistant expects such a call to say up front that it wants the answer, and Home Mind now does that on its own, using Home Assistant's service catalog to tell which services return data. "Will it rain tomorrow?" is answered from the forecast your weather integration provides. Ordinary device commands are sent exactly as before. Server 0.17.1.

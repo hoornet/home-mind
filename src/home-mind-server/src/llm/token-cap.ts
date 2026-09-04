@@ -73,15 +73,6 @@ export async function withTokenCap<T>(
   }
 }
 
-/**
- * True once this model has told us it wants `max_completion_tokens` — i.e. it is
- * one of OpenAI's newer models, where the cap covers reasoning tokens as well as
- * the visible answer. Used only to explain a truncation accurately.
- */
-export function usesMaxCompletionTokens(model: string): boolean {
-  return needsMaxCompletionTokens.has(model);
-}
-
 /** Test seam — the learned set is process-global by design. */
 export function resetTokenCapCache(): void {
   needsMaxCompletionTokens.clear();

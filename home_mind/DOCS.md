@@ -59,6 +59,7 @@ Finally set Home Mind as the conversation agent under
 | Option | Default | Description |
 |---|---|---|
 | `custom_prompt` | — | Extra system prompt. Gives the assistant a name and personality. |
+| `max_output_tokens` | — | How much room one written answer gets, in tokens. Leave it empty and Home Mind chooses. Raise it if long answers stop before they finish, which is most likely when you ask about several sensors at once or over a long period. Spoken answers are not affected. |
 | `device_overrides` | — | JSON of per-entity light capability overrides, e.g. `{"light.kitchen": {"whiteMethod": "rgb_white"}}`. Use when a light reports the wrong colour modes. |
 | `memory_token_limit` | `3000` | Maximum tokens of recalled memory injected into a prompt. |
 | `memory_cleanup_interval_hours` | `6` | How often faded memories are pruned. `0` disables it. |

@@ -353,7 +353,7 @@ describe("OpenAIChatEngine", () => {
     expect(createCall.max_tokens).toBe(500);
   });
 
-  it("uses max_tokens 2048 for non-voice mode", async () => {
+  it("uses max_tokens 8192 for non-voice mode", async () => {
     mockCreate.mockResolvedValue(
       makeStream([
         { choices: [{ delta: { content: "Long" }, finish_reason: null }] },
@@ -364,7 +364,7 @@ describe("OpenAIChatEngine", () => {
     await engine.chat({ message: "Hi", userId: "user-1" });
 
     const createCall = mockCreate.mock.calls[0][0];
-    expect(createCall.max_tokens).toBe(2048);
+    expect(createCall.max_tokens).toBe(8192);
   });
 
   it("retries with max_completion_tokens when the model rejects max_tokens", async () => {
@@ -384,9 +384,9 @@ describe("OpenAIChatEngine", () => {
     const result = await engine.chat({ message: "Hi", userId: "user-1" });
 
     expect(result.response).toBe("Hello");
-    expect(mockCreate.mock.calls[0][0].max_tokens).toBe(2048);
+    expect(mockCreate.mock.calls[0][0].max_tokens).toBe(8192);
     expect(mockCreate.mock.calls[0][0].max_completion_tokens).toBeUndefined();
-    expect(mockCreate.mock.calls[1][0].max_completion_tokens).toBe(2048);
+    expect(mockCreate.mock.calls[1][0].max_completion_tokens).toBe(8192);
     expect(mockCreate.mock.calls[1][0].max_tokens).toBeUndefined();
   });
 
@@ -515,7 +515,98 @@ describe("OpenAIChatEngine", () => {
       const result = await engine.chat({ message: "Hi", userId: "user-1" });
 
       expect(result.error?.code).toBe("MAX_TOKENS_TRUNCATED");
-      expect(result.error?.hint).toMatch(/max_tokens|cut off/);
+      expect(result.error?.hint).toMatch(/ran out of room/);
+    });
+
+    it("blames reasoning only when the provider reports reasoning tokens", async () => {
+      mockCreate.mockResolvedValue(
+        makeStream([
+          { choices: [{ delta: {}, finish_reason: "length" }] },
+          {
+            choices: [],
+            usage: {
+              prompt_tokens: 45231,
+              completion_tokens: 4096,
+              completion_tokens_details: { reasoning_tokens: 3612 },
+            },
+          },
+        ])
+      );
+
+      const result = await engine.chat({ message: "Hi", userId: "user-1" });
+
+      expect(result.error?.code).toBe("MAX_TOKENS_TRUNCATED");
+      expect(result.error?.hint).toMatch(/working the problem out/);
+    });
+
+    it("does not blame reasoning when the count is absent", async () => {
+      // An endpoint that reports no reasoning tokens is not telling us there
+      // were none, so the answer must not claim the model was thinking.
+      mockCreate.mockResolvedValue(
+        makeStream([
+          { choices: [{ delta: {}, finish_reason: "length" }] },
+          { choices: [], usage: { prompt_tokens: 900, completion_tokens: 4096 } },
+        ])
+      );
+
+      const result = await engine.chat({ message: "Hi", userId: "user-1" });
+
+      expect(result.error?.hint).not.toMatch(/working the problem out/);
+      expect(result.error?.hint).toMatch(/ran out of room/);
+    });
+
+    it("says so when a written answer was cut off part way", async () => {
+      // The integration returns the text whenever there is any, so `error` never
+      // reaches the reader. Without this the sentence simply stops.
+      mockCreate.mockResolvedValue(
+        makeStream([
+          { choices: [{ delta: { content: "The kitchen sensor reads" }, finish_reason: "length" }] },
+        ])
+      );
+
+      const result = await engine.chat({ message: "Hi", userId: "user-1" });
+
+      expect(result.response).toContain("The kitchen sensor reads");
+      expect(result.response).toContain("ran out of room");
+      expect(result.error).toBeUndefined();
+    });
+
+    it("keeps the spoken version of that notice short", async () => {
+      mockCreate.mockResolvedValue(
+        makeStream([
+          { choices: [{ delta: { content: "It is 21 degrees" }, finish_reason: "length" }] },
+        ])
+      );
+
+      const result = await engine.chat({ message: "Hi", userId: "user-1", isVoice: true });
+
+      expect(result.response).toContain("It is 21 degrees");
+      expect(result.response).toContain("ran out of room");
+      expect(result.response).not.toContain("Home Mind settings");
+    });
+
+    it("leaves a complete answer untouched", async () => {
+      mockCreate.mockResolvedValue(
+        makeStream([
+          { choices: [{ delta: { content: "It is 21 degrees." }, finish_reason: "stop" }] },
+        ])
+      );
+
+      const result = await engine.chat({ message: "Hi", userId: "user-1" });
+
+      expect(result.response).toBe("It is 21 degrees.");
+    });
+
+    it("asks the endpoint for a usage breakdown on every streamed call", async () => {
+      mockCreate.mockResolvedValue(
+        makeStream([{ choices: [{ delta: { content: "hi" }, finish_reason: "stop" }] }])
+      );
+
+      await engine.chat({ message: "Hi", userId: "user-1" });
+
+      expect(mockCreate.mock.calls[0][0].stream_options).toEqual({
+        include_usage: true,
+      });
     });
 
     it("attaches CONTENT_FILTERED error when finish_reason=content_filter with empty text", async () => {

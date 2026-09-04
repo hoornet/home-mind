@@ -1,4 +1,5 @@
-import type { HomeAssistantClient, HistoryEntry } from "../ha/client.js";
+import type { HomeAssistantClient } from "../ha/client.js";
+import { summarizeHistory } from "./history-summary.js";
 import type { IMemoryStore } from "../memory/interface.js";
 import type { IFactExtractor } from "./interface.js";
 import type { ExtractedFact } from "../memory/types.js";
@@ -81,9 +82,6 @@ function alreadyGoneResult(
   return null;
 }
 
-/** Max history entries to return to the LLM to avoid blowing context window */
-const MAX_HISTORY_ENTRIES = 200;
-
 /**
  * Normalize a timestamp to ensure it has timezone info.
  * If the timestamp lacks a Z suffix or ±HH:MM offset, append Z (UTC).
@@ -95,34 +93,6 @@ export function normalizeTimestamp(ts: string | undefined): string | undefined {
     return ts;
   }
   return ts + "Z";
-}
-
-/**
- * Downsample history to avoid blowing the LLM context window.
- * Strips bulky attributes and evenly samples entries when over the limit.
- */
-export function truncateHistory(
-  entries: HistoryEntry[]
-): { entity_id: string; state: string; last_changed: string }[] {
-  // Strip attributes — they're huge (friendly_name, unit, icon, device_class, etc.)
-  // and the LLM only needs state + timestamp
-  const slim = entries.map((e) => ({
-    entity_id: e.entity_id,
-    state: e.state,
-    last_changed: e.last_changed,
-  }));
-
-  if (slim.length <= MAX_HISTORY_ENTRIES) return slim;
-
-  // Evenly sample, always keeping first and last
-  const step = (slim.length - 1) / (MAX_HISTORY_ENTRIES - 1);
-  const sampled: typeof slim = [];
-  for (let i = 0; i < MAX_HISTORY_ENTRIES; i++) {
-    sampled.push(slim[Math.round(i * step)]);
-  }
-
-  console.log(`[tool] get_history truncated ${entries.length} → ${sampled.length} entries`);
-  return sampled;
 }
 
 export async function handleToolCall(
@@ -162,12 +132,24 @@ export async function handleToolCall(
       case "get_history": {
         const startTime = normalizeTimestamp(input.start_time as string | undefined);
         const endTime = normalizeTimestamp(input.end_time as string | undefined);
-        const history = await ha.getHistory(
-          input.entity_id as string,
-          startTime,
-          endTime
+        const entityId = input.entity_id as string;
+        const history = await ha.getHistory(entityId, startTime, endTime);
+        const unit = history.find((e) => e.attributes?.unit_of_measurement)?.attributes
+          ?.unit_of_measurement;
+        const summary = summarizeHistory(
+          entityId,
+          history,
+          typeof unit === "string" ? unit : undefined
         );
-        result = truncateHistory(history);
+        if (summary.kind === "raw") {
+          console.log(`[tool] get_history ${entityId}: ${summary.points.length} readings`);
+        } else {
+          console.log(
+            `[tool] get_history ${entityId}: ${history.length} readings → ` +
+              `${summary.buckets.length} × ${summary.bucket_minutes}min ${summary.kind} buckets`
+          );
+        }
+        result = summary;
         break;
       }
 

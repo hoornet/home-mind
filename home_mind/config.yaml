@@ -52,6 +52,10 @@ schema:
   ollama_base_url: str?
   # Behaviour
   custom_prompt: str?
+  # Ceiling on one written reply, in tokens. Absent from `options:` on purpose:
+  # unset means the server's own default, which can improve without every
+  # existing install being pinned to today's number.
+  max_output_tokens: int(256,32768)?
   device_overrides: str?
   memory_token_limit: int(100,)
   memory_cleanup_interval_hours: int(0,)

@@ -30,6 +30,14 @@ configuration:
     description: >-
       Added to the system prompt. Use it to give the assistant a name and a
       personality.
+  max_output_tokens:
+    name: Maximum answer length
+    description: >-
+      How much room one written answer gets, counted in tokens. Leave this empty
+      and Home Mind chooses for you. Raise it if long answers stop before they
+      finish, which is most likely when you ask about several sensors at once or
+      over a long period. Longer answers cost a little more. Spoken answers are
+      not affected and stay short, because they are read out loud.
   device_overrides:
     name: Device overrides
     description: >-

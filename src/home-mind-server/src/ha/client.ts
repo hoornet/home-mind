@@ -8,12 +8,17 @@ export interface EntityState {
   last_updated: string;
 }
 
+/**
+ * One recorder row. Everything but `state` and `last_changed` is optional
+ * because we ask for `minimal_response`, under which HA returns those two alone
+ * for every entry other than the first and last.
+ */
 export interface HistoryEntry {
-  entity_id: string;
+  entity_id?: string;
   state: string;
-  attributes: Record<string, unknown>;
+  attributes?: Record<string, unknown>;
   last_changed: string;
-  last_updated: string;
+  last_updated?: string;
 }
 
 interface CacheEntry<T> {
@@ -304,7 +309,12 @@ export class HomeAssistantClient {
     // otherwise decoded as a space in query strings by aiohttp (HA's HTTP
     // layer), producing "Invalid end_time" 400s for any LLM that includes
     // an explicit timezone offset in its history args.
-    let endpoint = `/api/history/period/${encodeURIComponent(start)}?filter_entity_id=${encodeURIComponent(entityId)}`;
+    // `minimal_response` drops attributes from every entry except the first and
+    // last. We only ever read state + last_changed, so serializing icon,
+    // friendly_name and device_class onto fifty thousand rows was work HA did
+    // purely for us to discard: six of these calls took 15-23s each on a real
+    // house. The first entry stays complete, which is where the unit comes from.
+    let endpoint = `/api/history/period/${encodeURIComponent(start)}?filter_entity_id=${encodeURIComponent(entityId)}&minimal_response=true`;
 
     if (endTime) {
       endpoint += `&end_time=${encodeURIComponent(endTime)}`;

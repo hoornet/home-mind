@@ -96,7 +96,18 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "get_history",
     description:
-      "Get historical states for an entity over time (for trend analysis)",
+      "Historical states for one entity, for trend analysis. ALWAYS check the " +
+      "`kind` field before reading the result, which is one of exactly three shapes. " +
+      'kind="raw": `points` holds every reading as {state, last_changed}. ' +
+      'kind="numeric": `buckets` holds {t, n, min, max, mean} per interval, where ' +
+      "`t` is the start of the interval, `bucket_minutes` is its length, and `n` is " +
+      "how many readings fell in it. A short spike appears as a high `max` in one " +
+      "bucket while `mean` stays near normal. " +
+      'kind="state": `buckets` holds {t, n, state, changes}, where `state` is the ' +
+      "value held for most of the interval and `changes` counts transitions within it. " +
+      "Long ranges are ALWAYS returned as buckets and the individual readings are NOT " +
+      "available for them. To examine something more closely, call again with a " +
+      "narrower start_time and end_time, which yields smaller buckets or raw readings.",
     parameters: {
       type: "object",
       properties: {

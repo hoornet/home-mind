@@ -9,7 +9,17 @@ import { TopologyScanner } from "../ha/topology-scanner.js";
 import { buildSystemPromptText } from "./prompts.js";
 import { TOOL_DEFINITIONS, toOpenAITools } from "./tool-definitions.js";
 import { handleToolCall, extractAndStoreFacts, type ToolContext } from "./tool-handler.js";
-import { withTokenCap, usesMaxCompletionTokens } from "./token-cap.js";
+import { withTokenCap } from "./token-cap.js";
+import {
+  readUsage,
+  describeUsage,
+  spentBudgetOnReasoning,
+  WRITTEN_OUTPUT_CAP,
+  VOICE_OUTPUT_CAP,
+  TRUNCATION_NOTICE,
+  VOICE_TRUNCATION_NOTICE,
+  type TokenUsage,
+} from "./usage.js";
 import type {
   ChatRequest,
   ChatResponse,
@@ -205,30 +215,46 @@ export class OpenAIChatEngine implements IChatEngine {
     // "I received your request but got no response." fallback. The `finish_reason`
     // from the final stream tells us which diagnostic applies.
     const error = responseText === "" && result.toolCalls.length === 0
-      ? this.classifyEmptyResponse(result.finishReason)
+      ? this.classifyEmptyResponse(result.finishReason, result.usage)
       : undefined;
 
+    // A reply that ran out of room but did write something is the *common* case,
+    // and it used to be delivered silently: the integration returns the text
+    // whenever there is any, so `error` never reached the reader and a sentence
+    // stopping in the middle looked like the assistant's own choice. Say so in
+    // the reply itself, which is the only channel every caller shares.
+    const truncated = result.finishReason === "length" && responseText !== "";
+    const response = truncated
+      ? responseText + (isVoice ? VOICE_TRUNCATION_NOTICE : TRUNCATION_NOTICE)
+      : responseText;
+
     return {
-      response: responseText,
+      response,
       toolsUsed,
       factsLearned: 0,
       ...(error ? { error } : {}),
     };
   }
 
-  private classifyEmptyResponse(finishReason: string | null): ChatError {
+  private classifyEmptyResponse(
+    finishReason: string | null,
+    usage?: TokenUsage
+  ): ChatError {
     if (finishReason === "length") {
-      // On OpenAI's newer models the output cap also covers hidden reasoning
-      // tokens, so a reasoning-heavy turn can exhaust it before writing a single
-      // visible word. That is a different problem from a prompt being too large,
-      // and it deserves a different instruction.
-      const hint = usesMaxCompletionTokens(this.config.llmModel)
-        ? "The model used its entire output budget on internal reasoning and had " +
-          "none left for the answer. Try a non-reasoning model, or a lower " +
-          "reasoning effort if your provider exposes one."
-        : "Response was cut off at max_tokens before the model finished. " +
-          "If you're seeing this often, the conversation prompt may be too large " +
-          "for the model's output budget — try a model with more output tokens.";
+      // The output cap covers hidden reasoning as well as the visible answer, so
+      // a reasoning-heavy turn can exhaust it without writing a single word.
+      // That needs different advice from a prompt being too large, and the two
+      // are only distinguishable from the reported token counts. This used to be
+      // decided by which spelling of the cap parameter the model accepted, which
+      // told us nothing on providers that accept both.
+      const hint = spentBudgetOnReasoning(usage)
+        ? "Home Mind ran out of room before it could write the answer. The model " +
+          "spent this turn's budget working the problem out and had none left " +
+          "for the reply. A shorter time range, or fewer sensors in one " +
+          "question, will usually get it through."
+        : "Home Mind ran out of room before it could finish the answer. A shorter " +
+          "time range, or fewer sensors in one question, will usually get it " +
+          "through.";
       return { code: "MAX_TOKENS_TRUNCATED", hint };
     }
     if (finishReason === "content_filter") {
@@ -250,6 +276,11 @@ export class OpenAIChatEngine implements IChatEngine {
     };
   }
 
+  /** Ceiling on one reply; see WRITTEN_OUTPUT_CAP for why it is what it is. */
+  private maxOutputTokens(isVoice: boolean): number {
+    return this.config.maxOutputTokens ?? (isVoice ? VOICE_OUTPUT_CAP : WRITTEN_OUTPUT_CAP);
+  }
+
   private async streamCompletion(
     messages: OpenAI.ChatCompletionMessageParam[],
     isVoice: boolean,
@@ -259,25 +290,29 @@ export class OpenAIChatEngine implements IChatEngine {
     text: string;
     finishReason: string | null;
     toolCalls: FunctionToolCall[];
+    usage?: TokenUsage;
   }> {
-    const stream = await withTokenCap(
-      this.config.llmModel,
-      isVoice ? 500 : 2048,
-      (cap) =>
-        this.client.chat.completions.create({
-          model: this.config.llmModel,
-          ...cap,
-          messages,
-          tools: OPENAI_TOOLS,
-          // Keep the tool list in the request (history already references it) but
-          // stop the model from issuing more calls.
-          ...(disableTools ? { tool_choice: "none" as const } : {}),
-          stream: true,
-        })
+    const cap = this.maxOutputTokens(isVoice);
+    const stream = await withTokenCap(this.config.llmModel, cap, (capParam) =>
+      this.client.chat.completions.create({
+        model: this.config.llmModel,
+        ...capParam,
+        messages,
+        tools: OPENAI_TOOLS,
+        // Keep the tool list in the request (history already references it) but
+        // stop the model from issuing more calls.
+        ...(disableTools ? { tool_choice: "none" as const } : {}),
+        stream: true,
+        // Ask for the token breakdown. Without this a streamed call reports no
+        // usage at all, which is why a cap being spent entirely on reasoning
+        // looked identical to a prompt being too large.
+        stream_options: { include_usage: true },
+      })
     );
 
     let text = "";
     let finishReason: string | null = null;
+    let usage: TokenUsage | undefined;
 
     // Accumulate tool calls from streamed deltas, indexed by position
     const toolCallAccumulator = new Map<
@@ -286,6 +321,10 @@ export class OpenAIChatEngine implements IChatEngine {
     >();
 
     for await (const chunk of stream) {
+      // The usage chunk arrives last and carries no choices, so read it before
+      // the guard below skips it.
+      if (chunk.usage) usage = readUsage(chunk.usage);
+
       const choice = chunk.choices[0];
       if (!choice) continue;
 
@@ -337,6 +376,25 @@ export class OpenAIChatEngine implements IChatEngine {
       });
     }
 
-    return { text, finishReason, toolCalls };
+    // A cap that runs out is worth a line in the log whatever it interrupted.
+    // It cuts tool-call arguments mid-JSON as readily as it cuts an answer, and
+    // that case leaves no trace at all in the reply the user sees.
+    if (finishReason === "length") {
+      console.warn(
+        `[llm] output cap reached: cap=${cap} ${describeUsage(usage)} ` +
+          `visible_chars=${text.length} tool_calls=${toolCalls.length} ` +
+          `model=${this.config.llmModel}`
+      );
+    } else if (this.config.logLevel === "debug") {
+      // Knowing what a *successful* turn cost is what tells you how close the
+      // ceiling is. Reading usage only from failures shows the cases that
+      // already went wrong and nothing about the margin on the rest.
+      console.log(
+        `[llm] turn ok: cap=${cap} ${describeUsage(usage)} ` +
+          `finish=${finishReason ?? "none"} tool_calls=${toolCalls.length}`
+      );
+    }
+
+    return { text, finishReason, toolCalls, usage };
   }
 }

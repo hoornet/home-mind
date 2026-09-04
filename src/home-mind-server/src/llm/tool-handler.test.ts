@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { handleToolCall, extractAndStoreFacts, filterExtractedFacts, normalizeTimestamp, truncateHistory, type ToolContext } from "./tool-handler.js";
+import { handleToolCall, extractAndStoreFacts, filterExtractedFacts, normalizeTimestamp, type ToolContext } from "./tool-handler.js";
 import { clearConversation } from "./forget-confirmations.js";
 import type { HomeAssistantClient } from "../ha/client.js";
 import type { IMemoryStore } from "../memory/interface.js";
@@ -82,7 +82,13 @@ describe("handleToolCall", () => {
       "2026-01-01T00:00:00Z",
       "2026-01-02T00:00:00Z"
     );
-    expect(result).toEqual([{ state: "22" }]);
+    // A short history is summarized as raw points, keyed by entity so the model
+    // is not told the id on every row.
+    expect(result).toEqual({
+      entity_id: "sensor.temp",
+      kind: "raw",
+      points: [{ state: "22", last_changed: undefined }],
+    });
   });
 
   it("returns error for unknown tool", async () => {
@@ -436,40 +442,6 @@ describe("handleToolCall get_history normalization", () => {
   });
 });
 
-describe("truncateHistory", () => {
-  it("strips attributes and keeps all entries when under limit", () => {
-    const entries = [
-      { entity_id: "sensor.temp", state: "22", attributes: { unit: "°C", friendly_name: "Temperature", icon: "mdi:thermometer" }, last_changed: "2026-01-01T00:00:00Z", last_updated: "2026-01-01T00:00:00Z" },
-      { entity_id: "sensor.temp", state: "23", attributes: { unit: "°C", friendly_name: "Temperature", icon: "mdi:thermometer" }, last_changed: "2026-01-01T01:00:00Z", last_updated: "2026-01-01T01:00:00Z" },
-    ];
-
-    const result = truncateHistory(entries);
-    expect(result).toHaveLength(2);
-    expect(result[0]).toEqual({ entity_id: "sensor.temp", state: "22", last_changed: "2026-01-01T00:00:00Z" });
-    // No attributes in output
-    expect((result[0] as any).attributes).toBeUndefined();
-  });
-
-  it("downsamples to MAX_HISTORY_ENTRIES when over limit", () => {
-    const entries = Array.from({ length: 500 }, (_, i) => ({
-      entity_id: "sensor.temp",
-      state: String(20 + (i % 10)),
-      attributes: { unit: "°C" },
-      last_changed: `2026-01-01T${String(Math.floor(i / 60)).padStart(2, "0")}:${String(i % 60).padStart(2, "0")}:00Z`,
-      last_updated: `2026-01-01T${String(Math.floor(i / 60)).padStart(2, "0")}:${String(i % 60).padStart(2, "0")}:00Z`,
-    }));
-
-    const result = truncateHistory(entries);
-    expect(result.length).toBeLessThanOrEqual(200);
-    // First and last preserved
-    expect(result[0].state).toBe(entries[0].state);
-    expect(result[result.length - 1].state).toBe(entries[entries.length - 1].state);
-  });
-
-  it("returns empty array for empty input", () => {
-    expect(truncateHistory([])).toEqual([]);
-  });
-});
 
 describe("handleToolCall forget_memory", () => {
   const CONV = "conv-forget";

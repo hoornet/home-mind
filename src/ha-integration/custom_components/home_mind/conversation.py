@@ -87,8 +87,18 @@ class HomeMindConversationAgent(ConversationEntity):
         if user_input.context and user_input.context.user_id:
             user_id = str(user_input.context.user_id)
 
-        # Determine if this is a voice request
-        is_voice = user_input.agent_id is not None
+        # "Spoken" means the request came from a voice satellite entity (Voice
+        # PE, ESPHome and Wyoming satellites), which is the only case where the
+        # reply is certain to be read aloud and nothing else. Home Assistant sets
+        # satellite_id on exactly those requests. The server uses this to switch
+        # to its voice persona: shorter prompt, tighter token budget.
+        #
+        # This used to key on agent_id, which modern Home Assistant sets on
+        # every routed request, typed or spoken, so every question was answered
+        # under the 500-token spoken ceiling. Long analytical questions could
+        # not be answered at all, and the failure looked like a model problem.
+        # (getattr: satellite_id does not exist on older Cores.)
+        is_voice = getattr(user_input, "satellite_id", None) is not None
 
         # Generate conversation ID if not provided
         conversation_id = user_input.conversation_id or ulid.ulid_now()
