@@ -10,7 +10,7 @@ FROM ${SHODH_IMAGE} AS shodh
 # context is the add-on folder, so the source is fetched rather than copied.
 FROM node:20-bookworm-slim AS builder
 # Upstream tag the server is built from. Bump with `version` in config.yaml.
-ARG HOME_MIND_REF=v0.17.0
+ARG HOME_MIND_REF=v0.17.1
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
