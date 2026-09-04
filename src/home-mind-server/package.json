@@ -18,7 +18,7 @@
     "better-sqlite3": "^12.6.2",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
-    "express": "^4.22.2",
+    "express": "^5.2.1",
     "multer": "^2.2.0",
     "openai": "^6.18.0",
     "undici": "^7.28.0",
