@@ -2,6 +2,15 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.17.0] - 2026-09-04
+
+### Improved (ha/topology-scanner.ts, ha/exposed-entities.ts)
+- **The home layout now contains what you exposed to Assist, not every entity in the house.** The layout goes into every system prompt, and on a large install it was the single biggest recurring cost of a request: one 1,631-entity home measured 24,476 tokens of layout per message. Home Assistant already has the user's own answer to "what should the assistant see": the entities exposed under Settings, Voice assistants. The server now reads that list over one websocket call per scan and builds the layout from it, which took that same home to 992 tokens and 75 entities, the ones the user actually chose. When the list cannot be read (an older Home Assistant, a token without websocket access, or a home that exposes nothing) the layout falls back to a fixed set of device domains that people ask a voice assistant about, so it is never empty. `LAYOUT_FROM_EXPOSED=false` skips the websocket; `LAYOUT_DOMAINS=all` restores the old unfiltered layout, and a comma-separated list sets your own. One change in default behaviour to know about: config-style entities such as `button`, `number`, `select` and `update` are no longer in the layout unless you expose them or set `LAYOUT_DOMAINS`. Contributed by @PeterLinuxOSS (#33), with the scanner's first tests.
+- **An empty room no longer leaves an empty heading behind.** The layout decided whether it had anything to show before filtering, so a narrow filter could print the layout header with no rooms under it. Emptiness is now judged after filtering.
+
+### Maintenance
+- Dependency updates for `qs` and `express` (#32).
+
 ## [0.16.5] - 2026-08-29
 
 ### Improved (llm/prompts.ts)
