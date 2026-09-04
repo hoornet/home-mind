@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.17.1] - 2026-09-04
+
+### Fixed (ha/client.ts, llm/tool-definitions.ts)
+- **Services that answer with data now work through `call_service`: forecasts, calendar events, to-do items, media search.** Home Assistant expects a call to such a service to say up front that it wants the answer, by adding `?return_response`, and rejects the call otherwise; it equally rejects the parameter on a service that has no answer to give. Home Assistant's own service catalog declares which is which, so the client now reads it (cached for five minutes, best-effort) and adds the parameter exactly where a response is supported. The tool result then carries `service_response` alongside the changed states. "Will it rain tomorrow?" is answered from `weather.get_forecasts`, which on modern Home Assistant is the only place the forecast lives, rather than from today's cloud cover. Device commands are sent exactly as before, and a catalog that cannot be read falls back to the plain call. The tool description tells the model where forecasts live. Same fix as Nives 2.5.12 (nives#64).
+
 ## [0.17.0] - 2026-09-04
 
 ### Improved (ha/topology-scanner.ts, ha/exposed-entities.ts)

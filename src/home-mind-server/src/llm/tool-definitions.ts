@@ -62,7 +62,12 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "call_service",
     description:
-      "Call a Home Assistant service to control devices (turn on/off lights, set thermostat, etc.)",
+      "Call a Home Assistant service to control devices (turn on/off lights, set thermostat, etc.). " +
+      "Services that return data (weather.get_forecasts, calendar.get_events, todo.get_items, ...) " +
+      "work too: their result comes back in `service_response`, with no extra flag needed. " +
+      "FORECASTS: weather entities do NOT carry a forecast in their attributes. For tomorrow's " +
+      "weather, rain, or any forecast, call weather.get_forecasts with entity_id set to the weather " +
+      "entity and data {\"type\": \"daily\"} (or \"hourly\"), then read service_response.",
     parameters: {
       type: "object",
       properties: {

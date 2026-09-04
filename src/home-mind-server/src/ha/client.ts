@@ -21,6 +21,19 @@ interface CacheEntry<T> {
   timestamp: number;
 }
 
+/**
+ * What HA's services catalog says about a service's response. HA rejects a
+ * call with `?return_response` on a service that has none ("none"), and
+ * rejects a call WITHOUT it on a service that must return one ("only").
+ */
+export type ServiceResponseSupport = "none" | "optional" | "only";
+
+/** Shape HA returns when a response was requested (`?return_response`). */
+export interface ServiceCallWithResponse {
+  changed_states: EntityState[];
+  service_response: unknown;
+}
+
 export class HomeAssistantClient {
   private baseUrl: string;
   private token: string;
@@ -30,6 +43,11 @@ export class HomeAssistantClient {
   private cacheTTL: number = 10000; // 10 seconds default
   private allStatesCache: CacheEntry<EntityState[]> | null = null;
   private entityCache: Map<string, CacheEntry<EntityState>> = new Map();
+  // The services catalog changes only when integrations load or unload, so it
+  // can live much longer than entity state. It is never invalidated by a
+  // service call. Missing or failed → looked up again next time.
+  private serviceResponseTTL: number = 5 * 60 * 1000;
+  private serviceResponseCache: CacheEntry<Map<string, ServiceResponseSupport>> | null = null;
 
   constructor(config: Config) {
     this.baseUrl = config.haUrl.replace(/\/$/, "");
@@ -196,13 +214,27 @@ export class HomeAssistantClient {
     service: string,
     entityId?: string,
     data?: Record<string, unknown>
-  ): Promise<EntityState[]> {
+  ): Promise<EntityState[] | ServiceCallWithResponse> {
+    // Services that return data (`weather.get_forecasts`, `calendar.get_events`,
+    // `todo.get_items`, ...) must be called with `?return_response`, and services
+    // that don't must NOT be — HA 400s either way round. Which is which is
+    // declared in the services catalog, so the decision is made here from that,
+    // never by the caller. A `return_response` key inside `data` is accepted as
+    // a hint (it is not a service field, so it is stripped from the payload) and
+    // can only ADD the parameter for a service the catalog doesn't know.
     const payload: Record<string, unknown> = { ...data };
+    const hint = payload.return_response === true;
+    delete payload.return_response;
     if (entityId) {
       payload.entity_id = entityId;
     }
 
-    const result = await this.fetch<EntityState[]>(`/api/services/${domain}/${service}`, {
+    const support = await this.getServiceResponseSupport(domain, service);
+    const wantResponse =
+      support === "only" || support === "optional" || (support === undefined && hint);
+
+    const endpoint = `/api/services/${domain}/${service}${wantResponse ? "?return_response" : ""}`;
+    const result = await this.fetch<EntityState[] | ServiceCallWithResponse>(endpoint, {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -211,6 +243,41 @@ export class HomeAssistantClient {
     this.invalidateCache();
 
     return result;
+  }
+
+  /**
+   * Whether `domain.service` supports a response, per HA's services catalog:
+   * `response: null` → "none", `{ optional: true }` → "optional",
+   * `{ optional: false }` → "only". `undefined` when the service is not in the
+   * catalog or the catalog could not be fetched — best-effort, a catalog hiccup
+   * must never stop a light from turning on.
+   */
+  private async getServiceResponseSupport(
+    domain: string,
+    service: string
+  ): Promise<ServiceResponseSupport | undefined> {
+    const cached = this.serviceResponseCache;
+    if (!cached || Date.now() - cached.timestamp >= this.serviceResponseTTL) {
+      try {
+        const raw = await this.fetch<
+          { domain: string; services: Record<string, { response?: { optional?: boolean } | null }> }[]
+        >("/api/services");
+        const map = new Map<string, ServiceResponseSupport>();
+        for (const entry of raw) {
+          for (const [name, desc] of Object.entries(entry.services ?? {})) {
+            const r = desc?.response;
+            map.set(
+              `${entry.domain}.${name}`,
+              r == null ? "none" : r.optional ? "optional" : "only"
+            );
+          }
+        }
+        this.serviceResponseCache = { data: map, timestamp: Date.now() };
+      } catch {
+        return undefined;
+      }
+    }
+    return this.serviceResponseCache!.data.get(`${domain}.${service}`);
   }
 
   /**
