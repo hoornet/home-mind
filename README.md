@@ -6,6 +6,8 @@
 
 AI assistant for Home Assistant with cognitive memory. Adds learning capabilities, persistent memory, and voice control to your smart home.
 
+Home Mind is in early access. It's a convenience assistant for everyday things — asking about your home, and changing it when you ask. Treat it as that rather than as something to depend on.
+
 ## The Problem
 
 Current Home Assistant AI integrations suffer from:
