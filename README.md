@@ -281,8 +281,6 @@ Only specify what needs changing. Unspecified fields use auto-detected values.
 
 Both are AGPL-3.0 with open repos, and both are maintained. Nives's assistant isn't gated either: its BYOK mode is free and does everything the paid path does, and the one Cloud-only extra is optional transcription, since that's billed per use. Pick by temperament: own every moving part here, or have it just work there.
 
-One thing worth knowing if you like this DIY setup but would rather not shop for a model or babysit an API key: a **[Nives Cloud](https://nives.house)** key works with Home Mind too. You keep this stack exactly as it is (your server, your Shodh, your data) and simply point it at a managed key instead of your own, with the model kept current for you. Entirely optional; BYOK stays free and always will.
-
 Both install paths for this repo, the add-on and Docker Compose, are in the [Quick Start](#quick-start) above.
 
 ---
