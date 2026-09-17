@@ -2,6 +2,14 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.18.3] - 2026-09-17
+
+### Security (deps)
+- **proxy-addr goes to 2.0.8, clearing CVE-2026-90711.** The resolver behind Express's `req.ip`/`req.ips` accepted an IPv4-mapped IPv6 trust subnet carrying an IPv4-sized prefix — `::ffff:10.0.0.0/8` where `/104` is meant — and read it as trusting every IPv4 address, which lets any unauthenticated client set `X-Forwarded-For` at will and defeats anything built on the client IP. Home Mind never calls `app.set("trust proxy", ...)`, so the vulnerable path was unreachable here regardless of version. 2.0.8 rejects the undersized prefix outright, which is the part worth having: it closes the hole for whoever adds a `trust proxy` line later, where 2.0.7 would have accepted the wrong notation silently.
+
+### Changed (docs)
+- The README states that Home Mind is in early access.
+
 ## [0.18.2] - 2026-09-11
 
 ### Security (api/routes.ts, deps)
