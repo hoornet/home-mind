@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.18.3
+
+- **Security housekeeping.** A library behind the add-on's web server had a critical advisory raised against it and is now updated. The add-on was not exposed to it — the flaw only appears with a proxy-trust setting the add-on does not use — and the new version refuses that setting outright, so it stays closed if it is ever added. Server 0.18.3.
+
 ## 0.18.2
 
 - **Security fix.** A crafted request could tie the add-on's server up completely and stop it answering anything, using nothing but a malformed upload field name. The upload endpoint now rejects those, and the underlying library is updated. Worth updating if your Home Assistant is reachable from outside your network. Server 0.18.2.
