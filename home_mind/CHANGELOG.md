@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.19.0
+
+- **The assistant now reaches only what you exposed to Assist**, the way Home Assistant's own assistant does. Until now the home layout followed your exposure list but the assistant could still read and control any entity in the house. If you relied on that, turn off the new **Tools limited to exposed entities** option. Two things to know: a group you exposed still acts on all its members, and an entity you expose while the add-on is running is picked up within 30 minutes or on restart.
+- **Google Gemini works through its OpenAI-compatible endpoint.** Choose the `openai` provider, set the base URL to `https://generativelanguage.googleapis.com/v1beta/openai/` and a model such as `gemini-3.5-flash-lite`. The reasoning-effort and "Done." reply settings arrive as add-on options in a later version.
+- **Entities are found across accents, and the home layout shows each entity's name next to its id**, which makes a non-English home much easier for the assistant to work with.
+- Security housekeeping in two libraries; the add-on was not affected by either. All three features contributed by @PeterLinuxOSS. Server 0.19.0.
+
 ## 0.18.3
 
 - **Security housekeeping.** A library behind the add-on's web server had a critical advisory raised against it and is now updated. The add-on was not exposed to it — the flaw only appears with a proxy-trust setting the add-on does not use — and the new version refuses that setting outright, so it stays closed if it is ever added. Server 0.18.3.
