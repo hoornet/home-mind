@@ -36,7 +36,11 @@ const LAYOUT = {
  * imitates Home Assistant's 262 144-character limit by refusing any render whose
  * result would be larger, which is the failure in home-mind#34.
  */
-function makeHa(layout: any = LAYOUT, cap = Infinity): HomeAssistantClient {
+function makeHa(
+  layout: any = LAYOUT,
+  cap = Infinity,
+  names: Record<string, string> = {}
+): HomeAssistantClient {
   const areas: { id: string; name: string; entities: string[] }[] = [
     ...layout.floors.flatMap((f: any) => f.areas),
     ...layout.unassigned,
@@ -63,7 +67,11 @@ function makeHa(layout: any = LAYOUT, cap = Infinity): HomeAssistantClient {
       const entities = doms
         ? area.entities.filter((e) => doms.includes(e.slice(0, e.indexOf("."))))
         : area.entities;
-      return { id, entities };
+      const withNames = template.includes('state_attr(e, "friendly_name")');
+      return {
+        id,
+        entities: withNames ? entities.map((e) => ({ id: e, name: names[e] ?? null })) : entities,
+      };
     });
     const body = JSON.stringify(rows);
     if (body.length > cap) throw new Error(`HA API error 400: Error rendering template: Template output exceeded maximum size of ${cap} characters`);
@@ -264,6 +272,21 @@ describe("TopologyScanner on a large home (home-mind#34)", () => {
     expect(scanner.formatSection()).toContain("light.a7_e0");
   });
 
+  it("reads an area without names when only its bare ids fit", async () => {
+    // 134 lights render in ~3 kB as ids and ~5 kB with the name field.
+    const house = bigHouse(1, 400);
+    const names = Object.fromEntries(
+      house.floors[0].areas[0].entities.map((e: string) => [e, "Some light"])
+    );
+    const ha = makeHa(house, 4000, names);
+    const scanner = new TopologyScanner(ha);
+    await scanner.scan();
+
+    const section = scanner.formatSection();
+    expect(section).toContain("light.a0_e0");
+    expect(section).not.toContain("(Some light)");
+  });
+
   it("keeps the rest of the house when a single area cannot be read", async () => {
     // One area so large it cannot render alone. Losing it must not lose the home.
     const house = bigHouse(3, 10);
@@ -316,5 +339,40 @@ describe("TopologyScanner scan log", () => {
     log.mockRestore();
     expect(line).toContain("dropped");
     expect(line).toMatch(/\d+ entities/);
+  });
+});
+
+describe("TopologyScanner entity names", () => {
+  it("shows each entity's friendly name next to its id", async () => {
+    const ha = makeHa(LAYOUT, Infinity, {
+      "light.kitchen": "Kitchen ceiling",
+      "cover.garage_door": "Garage Door",
+    });
+    const scanner = new TopologyScanner(ha);
+    await scanner.scan();
+    const text = scanner.formatSection();
+    expect(text).toContain("light.kitchen (Kitchen ceiling)");
+    expect(text).toContain("cover.garage_door (Garage Door)");
+  });
+
+  it("keeps a name with a line break or comma on one unambiguous entry", async () => {
+    const ha = makeHa(LAYOUT, Infinity, { "light.kitchen": "Kitchen,\nmain" });
+    const scanner = new TopologyScanner(ha);
+    await scanner.scan();
+    expect(scanner.formatSection()).toContain("light.kitchen (Kitchen main)");
+  });
+
+  it("falls back to the bare id when an entity has no name", async () => {
+    const scanner = new TopologyScanner(makeHa());
+    await scanner.scan();
+    expect(scanner.formatSection()).toMatch(/light\.kitchen(,|$)/m);
+    expect(scanner.formatSection()).not.toContain("(null)");
+  });
+
+  it("asks the template for the friendly names", async () => {
+    const ha = makeHa();
+    await new TopologyScanner(ha).scan();
+    const templates = (ha.renderTemplate as any).mock.calls.map((c: any[]) => c[0] as string);
+    expect(templates.some((t: string) => t.includes('state_attr(e, "friendly_name")'))).toBe(true);
   });
 });

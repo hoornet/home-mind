@@ -56,6 +56,19 @@ const INDIRECT_TARGETS = ["area_id", "device_id", "floor_id", "label_id"] as con
 /** Lifecycle services of the script domain; any other `script.X` runs script X. */
 const SCRIPT_LIFECYCLE = new Set(["turn_on", "turn_off", "toggle", "reload"]);
 
+/**
+ * Lower-case and strip combining diacritics, so "Spálňa" and "spalna" compare
+ * equal. Letters that do not decompose (ł, ø, ß) are left as they are.
+ * NFD splits an accented letter into base + combining mark; the range
+ * U+0300–U+036F is exactly those marks.
+ */
+export function foldAccents(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 export class HomeAssistantClient {
   private baseUrl: string;
   private token: string;
@@ -282,16 +295,22 @@ export class HomeAssistantClient {
 
   /**
    * Search entities by name or ID substring (cached)
+   *
+   * Both sides are accent-folded before comparing. An `entity_id` is ASCII by
+   * construction, so a query in the user's own language ("garáž") could never
+   * match the entity slugged from it ("garaz_dvere"), and a friendly name is
+   * whatever the installer typed — sometimes accented, sometimes not, for the
+   * same device. Folding makes the two spellings one.
    */
   async searchEntities(query: string): Promise<EntityState[]> {
-    const states = await this.visibleStates();
-    const lowerQuery = query.toLowerCase();
+    const needle = foldAccents(query);
 
+    const states = await this.visibleStates();
     return states.filter((s) => {
       const name = (s.attributes.friendly_name as string) || "";
       return (
-        s.entity_id.toLowerCase().includes(lowerQuery) ||
-        name.toLowerCase().includes(lowerQuery)
+        foldAccents(s.entity_id).includes(needle) ||
+        foldAccents(name).includes(needle)
       );
     });
   }

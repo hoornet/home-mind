@@ -314,3 +314,42 @@ describe("HomeAssistantClient and the Assist exposure list", () => {
     expect((await client.getState("sensor.kitchen_presence")).state).toBe("on");
   });
 });
+
+describe("HomeAssistantClient.searchEntities accent folding", () => {
+  const states = [
+    { entity_id: "switch.flush_1d_relay", state: "off", attributes: { friendly_name: "Garaz Dvere" } },
+    { entity_id: "light.spalna_svetlo", state: "on", attributes: { friendly_name: "Spálňa svetlo" } },
+    { entity_id: "light.kuchyna_svetlo", state: "on", attributes: { friendly_name: "Kuchyňa svetlo" } },
+  ];
+
+  beforeEach(() => {
+    global.fetch = vi.fn(
+      async () =>
+        new Response(JSON.stringify(states), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+    ) as unknown as typeof fetch;
+  });
+
+  const ids = async (query: string) =>
+    (await new HomeAssistantClient(baseConfig).searchEntities(query)).map((s) => s.entity_id);
+
+  it("finds an unaccented name from an accented query", async () => {
+    // The model asks in Slovak; the installer typed the name without accents.
+    expect(await ids("garáž")).toEqual(["switch.flush_1d_relay"]);
+  });
+
+  it("finds an accented name from an unaccented query", async () => {
+    // The other direction: speech-to-text drops the accents.
+    expect(await ids("spalna")).toEqual(["light.spalna_svetlo"]);
+  });
+
+  it("still matches when both sides carry the same accents", async () => {
+    expect(await ids("Kuchyňa")).toEqual(["light.kuchyna_svetlo"]);
+  });
+
+  it("does not turn folding into a match-everything", async () => {
+    expect(await ids("terasa")).toEqual([]);
+  });
+});

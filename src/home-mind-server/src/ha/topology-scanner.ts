@@ -44,8 +44,14 @@ const STRUCTURE_TEMPLATE = `
  * Passing null prefilters nothing, which is right when the caller keeps every
  * domain, and batching alone keeps that safe.
  */
-function entitiesTemplate(areaIds: readonly string[], domains: readonly string[] | null): string {
+function entitiesTemplate(
+  areaIds: readonly string[],
+  domains: readonly string[] | null,
+  withNames = true
+): string {
   const ids = JSON.stringify(areaIds);
+  // Bare ids are the fallback for an area too big to render with its names.
+  const item = withNames ? `{"id": e, "name": state_attr(e, "friendly_name")}` : "e";
   const test = domains
     ? `e.split('.')[0] in ${JSON.stringify([...domains])}`
     : "true";
@@ -54,7 +60,7 @@ function entitiesTemplate(areaIds: readonly string[], domains: readonly string[]
 {%- for aid in ${ids} -%}
   {%- set ents = namespace(list=[]) -%}
   {%- for e in area_entities(aid) -%}
-    {%- if ${test} -%}{%- set ents.list = ents.list + [e] -%}{%- endif -%}
+    {%- if ${test} -%}{%- set ents.list = ents.list + [${item}] -%}{%- endif -%}
   {%- endfor -%}
   {%- set ns.rows = ns.rows + [{"id": aid, "entities": ents.list}] -%}
 {%- endfor -%}
@@ -106,10 +112,28 @@ export const DEFAULT_LAYOUT_DOMAINS = [
   "binary_sensor", "camera", "device_tracker", "person", "sensor", "timer", "weather",
 ] as const;
 
+/** One entity in a room. `name` is null when Home Assistant has none. */
+interface EntityRef {
+  id: string;
+  name: string | null;
+}
+
+/**
+ * How an entity appears in the layout. The id is what a tool call needs; the
+ * name is the only thing tying it to the words a user actually says —
+ * `switch.flush_1d_relay` is a garage door in exactly one house, and nothing
+ * in the id says so.
+ */
+function entityLabel(entity: EntityRef): string {
+  // A line break or comma in a name would blur where one entity ends.
+  const name = entity.name?.replace(/[\r\n,]+/g, " ").replace(/\s+/g, " ").trim();
+  return name ? `${entity.id} (${name})` : entity.id;
+}
+
 interface AreaData {
   id: string;
   name: string;
-  entities: string[];
+  entities: EntityRef[];
 }
 
 interface FloorData {
@@ -209,19 +233,30 @@ export class TopologyScanner {
   private async fetchEntities(
     areaIds: string[],
     domains: readonly string[] | null
-  ): Promise<Map<string, string[]>> {
-    const out = new Map<string, string[]>();
-    const queue: string[][] = areaIds.length > 0 ? [areaIds] : [];
+  ): Promise<Map<string, EntityRef[]>> {
+    const out = new Map<string, EntityRef[]>();
+    const queue: { ids: string[]; withNames: boolean }[] =
+      areaIds.length > 0 ? [{ ids: areaIds, withNames: true }] : [];
 
     while (queue.length > 0) {
-      const batch = queue.shift() as string[];
+      const { ids: batch, withNames } = queue.shift()!;
       try {
-        const raw = await this.ha.renderTemplate(entitiesTemplate(batch, domains));
-        const rows = JSON.parse(raw.trim()) as { id: string; entities: string[] }[];
-        for (const row of rows) out.set(row.id, row.entities);
+        const raw = await this.ha.renderTemplate(entitiesTemplate(batch, domains, withNames));
+        const rows = JSON.parse(raw.trim()) as { id: string; entities: (EntityRef | string)[] }[];
+        for (const row of rows) {
+          out.set(
+            row.id,
+            row.entities.map((e) => (typeof e === "string" ? { id: e, name: null } : e))
+          );
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         if (!TOO_BIG.test(msg)) throw err;
+        if (batch.length === 1 && withNames) {
+          // Names make each entry several times longer; ids alone may still fit.
+          queue.unshift({ ids: batch, withNames: false });
+          continue;
+        }
         if (batch.length === 1) {
           console.warn(
             `[topology] Area ${batch[0]} has too many entities to read in one call; ` +
@@ -231,7 +266,10 @@ export class TopologyScanner {
           continue;
         }
         const half = Math.ceil(batch.length / 2);
-        queue.unshift(batch.slice(0, half), batch.slice(half));
+        queue.unshift(
+          { ids: batch.slice(0, half), withNames },
+          { ids: batch.slice(half), withNames }
+        );
       }
     }
     return out;
@@ -288,7 +326,7 @@ export class TopologyScanner {
       const areas = [...data.floors.flatMap((f) => f.areas), ...data.unassigned];
       // Counted in the structure call: what the house holds before prefiltering.
       const total = this.totalEntities;
-      const kept = areas.reduce((n, a) => n + a.entities.filter((e) => this.keep(e)).length, 0);
+      const kept = areas.reduce((n, a) => n + a.entities.filter((e) => this.keep(e.id)).length, 0);
       // The layout ships in every system prompt, so its size is a running cost.
       const dropped = kept === total ? "" : ` (${total - kept} dropped, ${this.filterName()})`;
       console.log(
@@ -320,9 +358,15 @@ export class TopologyScanner {
   private roomLines(areas: AreaData[]): string[] {
     return areas
       .sort((a, b) => a.name.localeCompare(b.name))
-      .map((area) => ({ name: area.name, entities: area.entities.filter((e) => this.keep(e)) }))
+      .map((area) => ({ name: area.name, entities: area.entities.filter((e) => this.keep(e.id)) }))
       .filter((area) => area.entities.length > 0)
-      .map((area) => `- ${area.name}: ${area.entities.sort().join(", ")}`);
+      .map((area) => {
+        const list = area.entities
+          .sort((x, y) => x.id.localeCompare(y.id, "en"))
+          .map(entityLabel)
+          .join(", ");
+        return `- ${area.name}: ${list}`;
+      });
   }
 
   private buildLayout(data: LayoutData): string {
