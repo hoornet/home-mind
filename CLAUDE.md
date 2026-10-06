@@ -206,7 +206,7 @@ HA custom component installed via HACS from `https://github.com/hoornet/home-min
 
 ## Releasing — do not let `main` drift ahead of the latest release
 
-This project has no CI and no published artifact: **the git tag and the GitHub release are the only way a user learns a version exists.** There is nothing else to notice. That makes the tag load-bearing here in a way it isn't for the Nives add-on, where HA updates from `config.yaml` regardless.
+This project publishes no artifact for the server (CI runs the tests since 2026-09-01, but builds nothing): **the git tag and the GitHub release are the only way a user learns a version exists.** There is nothing else to notice. That makes the tag load-bearing here in a way it isn't for the Nives add-on, where HA updates from `config.yaml` regardless.
 
 **Since the add-on landed (2026-09-01, #29) the tag is load-bearing twice over.** `home_mind/Dockerfile` builds the server by fetching `https://codeload.github.com/hoornet/home-mind/tar.gz/refs/tags/${HOME_MIND_REF}`, defaulting to `v<version>`. An untagged version therefore **cannot be built at all** — the add-on install fails outright rather than quietly shipping stale code, which is the better failure, but it means ordering now matters:
 
@@ -221,7 +221,7 @@ It has already gone wrong. On 2026-08-09 `main` was on 0.16.1 while GitHub's *La
 Every version bump, same commit or immediately after:
 
 1. Bump `src/home-mind-server/package.json` (and `package-lock.json`) and add the `CHANGELOG.md` entry. The README needs no edit: its version badge reads `package.json` over raw.githubusercontent, and Project Status points at the badge — both derive from the source, so neither can drift. (They used to be hardcoded, and did drift; don't reintroduce a literal.)
-2. `npm test` — this is the only gate; there is no CI to catch a mistake.
+2. `npm test` locally — CI runs the same suite on push, but the tag is cut from a commit, so run it before tagging rather than after.
 3. `git tag -a v<version> -m "…"` on the commit that *is* that version, not on whatever `main` happens to be later. If several versions were pushed untagged, tag each on its own commit — `git log --oneline` and match the CHANGELOG.
 4. `git push origin v<version>` then `gh release create v<version> --title "v<version> — <what changed, in plain words>" --notes-file …`.
 

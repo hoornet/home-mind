@@ -237,7 +237,7 @@ This gives the AI spatial awareness without tool calls. It will never assume a d
 
 ## Device Capability Index
 
-On startup, Home Mind scans all `light.*` entities in Home Assistant, reads their `supported_color_modes` attributes, and builds a per-entity cheat sheet that is injected into every system prompt. This means the AI always knows the correct way to control each light without needing to call `search_entities` or `get_entities` on every request.
+On startup, Home Mind scans the `light.*` entities exposed to Assist (every light when `TOOLS_FROM_EXPOSED=false`), reads their `supported_color_modes` attributes, and builds a per-entity cheat sheet that is injected into every system prompt. This means the AI always knows the correct way to control each light without needing to call `search_entities` or `get_entities` on every request.
 
 The cheat sheet tells the AI exactly what to use per device:
 - `rgbw_color: [0,0,0,255]` for RGBW strips (WLED, etc.), which uses the dedicated white LED channel
