@@ -272,6 +272,38 @@ describe("HomeAssistantClient and the Assist exposure list", () => {
     expect(calls.some((u) => u.includes("/api/services/light/turn_off"))).toBe(false);
   });
 
+  it("call_service checks the entity maps and lists that scenes and groups take", async () => {
+    const client = new HomeAssistantClient(baseConfig, exposing("light.kitchen_table"));
+    await expect(
+      client.callService("scene", "apply", undefined, {
+        entities: { "light.kitchen_table": "on", "light.kitchen_table_1": "on" },
+      })
+    ).rejects.toThrow(/light\.kitchen_table_1 is not available/);
+    await expect(
+      client.callService("scene", "create", undefined, {
+        scene_id: "before",
+        snapshot_entities: ["sensor.kitchen_presence"],
+      })
+    ).rejects.toThrow(/sensor\.kitchen_presence is not available/);
+    await expect(
+      client.callService("group", "set", undefined, {
+        object_id: "evening",
+        add_entities: ["light.kitchen_table", "light.kitchen_table_2"],
+      })
+    ).rejects.toThrow(/kitchen_table_2 is not available/);
+    // Home Assistant lower-cases entity ids, so a capitalised one must not slip past.
+    await expect(
+      client.callService("scene", "apply", undefined, { entities: { "Light.Kitchen_Table_2": "on" } })
+    ).rejects.toThrow(/light\.kitchen_table_2 is not available/);
+    expect(calls.some((u) => u.includes("/api/services/scene/"))).toBe(false);
+    expect(calls.some((u) => u.includes("/api/services/group/set"))).toBe(false);
+
+    await client.callService("scene", "apply", undefined, {
+      entities: { "light.kitchen_table": { state: "on", brightness: 120 } },
+    });
+    expect(calls.some((u) => u.includes("/api/services/scene/apply"))).toBe(true);
+  });
+
   it("call_service refuses entity_id all", async () => {
     const client = new HomeAssistantClient(baseConfig, exposing("light.kitchen_table"));
     await expect(client.callService("light", "turn_off", "all")).rejects.toThrow(/entity_id "all"/);
