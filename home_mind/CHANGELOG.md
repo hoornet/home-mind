@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19.1
+
+- **Scenes and groups stay within what you exposed to Assist.** Since 0.19.0 the assistant reads and controls only the entities you have exposed. Scenes and groups it sets up now follow the same rule, so it cannot reach an entity you have not exposed by putting it in a scene or a group. No settings to change; turning off **Tools limited to exposed entities** still lifts the limit. Server 0.19.1.
+
 ## 0.19.0
 
 - **The assistant now reaches only what you exposed to Assist**, the way Home Assistant's own assistant does. Until now the home layout followed your exposure list but the assistant could still read and control any entity in the house. If you relied on that, turn off the new **Tools limited to exposed entities** option. Two things to know: a group you exposed still acts on all its members, and an entity you expose while the add-on is running is picked up within 30 minutes or on restart.
