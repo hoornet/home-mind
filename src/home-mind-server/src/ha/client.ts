@@ -62,13 +62,17 @@ const ENTITY_LIST_KEYS = ["entities", "snapshot_entities", "add_entities", "remo
  * The entity ids in one of `ENTITY_LIST_KEYS`: the keys of a scene's entity map,
  * or a list. Only strings shaped like an entity id count, because other
  * integrations use the same key names for things that are not entities.
+ * Lower-cased first, as Home Assistant's `cv.entity_id` does: `Light.Hall`
+ * fails the shape test as written but reaches `light.hall` all the same.
  */
 function listedEntities(value: unknown): string[] {
   const ids =
     value && typeof value === "object" && !Array.isArray(value)
       ? Object.keys(value)
       : targetedEntities(value);
-  return ids.filter((id) => /^[a-z0-9_]+\.[a-z0-9_]+$/.test(id));
+  return ids
+    .map((id) => id.trim().toLowerCase())
+    .filter((id) => /^[a-z0-9_]+\.[a-z0-9_]+$/.test(id));
 }
 
 /** Targets that select entities indirectly, which the exposure list cannot vet. */

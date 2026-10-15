@@ -291,6 +291,10 @@ describe("HomeAssistantClient and the Assist exposure list", () => {
         add_entities: ["light.kitchen_table", "light.kitchen_table_2"],
       })
     ).rejects.toThrow(/kitchen_table_2 is not available/);
+    // Home Assistant lower-cases entity ids, so a capitalised one must not slip past.
+    await expect(
+      client.callService("scene", "apply", undefined, { entities: { "Light.Kitchen_Table_2": "on" } })
+    ).rejects.toThrow(/light\.kitchen_table_2 is not available/);
     expect(calls.some((u) => u.includes("/api/services/scene/"))).toBe(false);
     expect(calls.some((u) => u.includes("/api/services/group/set"))).toBe(false);
 
