@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.19.1] - 2026-10-15
+
+### Fixed (ha/client.ts)
+- **Scenes and groups set up through `call_service` now stay within what you exposed to Assist.** 0.19.0 bounds `call_service` by the exposure list for every entity named in `entity_id`, `data.entity_id` or a nested `target`, but three services take entity ids under other keys: `scene.apply` and `scene.create` take `entities` as a map keyed by entity id, `scene.create` takes `snapshot_entities`, and `group.set` takes `entities`, `add_entities` and `remove_entities`. Those ids are now checked too, so the model cannot reach an unexposed entity by putting it in a scene or a group. Only values shaped like an entity id count, since other integrations use the same key names for other things. No configuration change; `TOOLS_FROM_EXPOSED=false` still lifts the limit.
+
 ## [0.19.0] - 2026-10-06
 
 ### Changed (ha/exposure.ts, ha/client.ts)

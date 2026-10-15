@@ -50,6 +50,27 @@ function targetedEntities(target: unknown): string[] {
     .filter((t) => t !== "");
 }
 
+/**
+ * Data keys that carry entity ids besides `entity_id`: `scene.apply` and
+ * `scene.create` take `entities` as a map keyed by entity id, `scene.create`
+ * takes `snapshot_entities`, and `group.set` takes `entities`, `add_entities`
+ * and `remove_entities` as lists.
+ */
+const ENTITY_LIST_KEYS = ["entities", "snapshot_entities", "add_entities", "remove_entities"] as const;
+
+/**
+ * The entity ids in one of `ENTITY_LIST_KEYS`: the keys of a scene's entity map,
+ * or a list. Only strings shaped like an entity id count, because other
+ * integrations use the same key names for things that are not entities.
+ */
+function listedEntities(value: unknown): string[] {
+  const ids =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? Object.keys(value)
+      : targetedEntities(value);
+  return ids.filter((id) => /^[a-z0-9_]+\.[a-z0-9_]+$/.test(id));
+}
+
 /** Targets that select entities indirectly, which the exposure list cannot vet. */
 const INDIRECT_TARGETS = ["area_id", "device_id", "floor_id", "label_id"] as const;
 
@@ -116,10 +137,11 @@ export class HomeAssistantClient {
   /**
    * Refuses a service call that would reach past the exposure list.
    *
-   * Named entities are checked one by one, including a nested `target`. Area,
-   * device, floor and label targets would need resolving to know what they
-   * hit, so with an opinionated list they are refused and the model is told
-   * to name entities. A call with no target at all touches no entity in
+   * Named entities are checked one by one, including a nested `target` and the
+   * entity maps and lists that scenes and groups take (`ENTITY_LIST_KEYS`).
+   * Area, device, floor and label targets would need resolving to know what
+   * they hit, so with an opinionated list they are refused and the model is
+   * told to name entities. A call with no target at all touches no entity in
    * current Home Assistant, except `script.<name>`, which runs that script.
    */
   private async requireExposedTargets(
@@ -139,7 +161,11 @@ export class HomeAssistantClient {
           `assistant may be controlled. Call the service with the exposed entity_ids instead.`
       );
     }
-    const ids = [...targetedEntities(payload.entity_id), ...targetedEntities(nested.entity_id)];
+    const ids = [
+      ...targetedEntities(payload.entity_id),
+      ...targetedEntities(nested.entity_id),
+      ...ENTITY_LIST_KEYS.flatMap((k) => listedEntities(payload[k])),
+    ];
     if (ids.includes("all")) {
       throw new Error(
         `entity_id "all" is not available to you: it reaches entities the user has not exposed. ` +
