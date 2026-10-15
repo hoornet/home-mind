@@ -124,10 +124,11 @@ export function createRouter(
     try {
       const parsed = ChatRequestSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({
+        res.status(400).json({
           error: "Invalid request",
           details: parsed.error.errors,
         });
+        return;
       }
 
       // Use streaming internally (no callback = just faster processing)
@@ -141,7 +142,8 @@ export function createRouter(
     } catch (error) {
       console.error("Chat error:", error);
       if ((error as any)?.status === 402) {
-        return res.status(402).json({ error: "usage_limit_reached" });
+        res.status(402).json({ error: "usage_limit_reached" });
+        return;
       }
       const message = error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({ error: message });
@@ -157,10 +159,11 @@ export function createRouter(
     try {
       const parsed = ChatRequestSchema.safeParse(req.body);
       if (!parsed.success) {
-        return res.status(400).json({
+        res.status(400).json({
           error: "Invalid request",
           details: parsed.error.errors,
         });
+        return;
       }
 
       // Set up SSE headers
@@ -225,10 +228,11 @@ export function createRouter(
       const parsed = AddFactSchema.safeParse(req.body);
 
       if (!parsed.success) {
-        return res.status(400).json({
+        res.status(400).json({
           error: "Invalid request",
           details: parsed.error.errors,
         });
+        return;
       }
 
       const { content, category } = parsed.data;
@@ -296,7 +300,8 @@ export function createRouter(
    */
   router.get("/admin/conversations", async (_req: Request, res: Response) => {
     if (!conversations) {
-      return res.status(501).json({ error: "Conversation store not available" });
+      res.status(501).json({ error: "Conversation store not available" });
+      return;
     }
 
     try {
@@ -321,7 +326,8 @@ export function createRouter(
    */
   router.get("/conversations/:userId", async (req: Request, res: Response) => {
     if (!conversations) {
-      return res.status(501).json({ error: "Conversation store not available" });
+      res.status(501).json({ error: "Conversation store not available" });
+      return;
     }
 
     try {
@@ -341,7 +347,8 @@ export function createRouter(
    */
   router.get("/conversations/:userId/:conversationId", async (req: Request, res: Response) => {
     if (!conversations) {
-      return res.status(501).json({ error: "Conversation store not available" });
+      res.status(501).json({ error: "Conversation store not available" });
+      return;
     }
 
     try {
@@ -361,7 +368,8 @@ export function createRouter(
    */
   router.delete("/conversations/:userId/:conversationId", async (req: Request, res: Response) => {
     if (!conversations) {
-      return res.status(501).json({ error: "Conversation store not available" });
+      res.status(501).json({ error: "Conversation store not available" });
+      return;
     }
 
     try {
@@ -388,11 +396,13 @@ export function createRouter(
    */
   router.post("/stt", upload.single("audio"), async (req: Request, res: Response) => {
     if (!stt) {
-      return res.status(501).json({ error: "STT is not enabled on this server" });
+      res.status(501).json({ error: "STT is not enabled on this server" });
+      return;
     }
 
     if (!req.file) {
-      return res.status(400).json({ error: "No audio file provided (field name: audio)" });
+      res.status(400).json({ error: "No audio file provided (field name: audio)" });
+      return;
     }
 
     try {
@@ -415,12 +425,14 @@ export function createRouter(
    */
   router.post("/tts", async (req: Request, res: Response) => {
     if (!tts) {
-      return res.status(501).json({ error: "TTS is not enabled on this server" });
+      res.status(501).json({ error: "TTS is not enabled on this server" });
+      return;
     }
 
     const { text, language } = req.body;
     if (typeof text !== "string" || !text.trim()) {
-      return res.status(400).json({ error: "text is required" });
+      res.status(400).json({ error: "text is required" });
+      return;
     }
 
     try {

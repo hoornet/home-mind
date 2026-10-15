@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { DeviceScanner } from "./device-scanner.js";
 import type { HomeAssistantClient, EntityState } from "./client.js";
 
@@ -35,12 +35,6 @@ const BRIGHTNESS_ONLY = makeEntity(
   "light.led_strip_kuhinja_main",
   "Kitchen Volume Strip",
   ["brightness"]
-);
-
-const ONOFF_LED = makeEntity(
-  "light.status_led",
-  "Status LED",
-  ["onoff"]
 );
 
 const RGB_ONLY = makeEntity(

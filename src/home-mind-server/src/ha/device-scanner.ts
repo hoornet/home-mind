@@ -189,7 +189,7 @@ export class DeviceScanner {
     const hasBrightness =
       modes.some((m) => ["brightness", "color_temp", "rgb", "rgbw", "rgbww", "xy", "hs", "white"].includes(m));
 
-    let whiteMethod = this.computeWhiteMethod(entity.entity_id, modes, attrs);
+    let whiteMethod = this.computeWhiteMethod(modes, attrs);
     let colorMethod = this.computeColorMethod(modes);
 
     const override = this.overrides[entity.entity_id];
@@ -223,7 +223,6 @@ export class DeviceScanner {
    * 4. brightness/onoff only → no white setting needed, just brightness or on/off
    */
   private computeWhiteMethod(
-    entityId: string,
     modes: string[],
     attrs: Record<string, unknown>
   ): WhiteMethod {
