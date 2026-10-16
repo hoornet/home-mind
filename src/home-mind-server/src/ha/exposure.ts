@@ -24,6 +24,19 @@ import type { EntityState } from "./client.js";
  * alternative — a failed websocket call leaving the assistant unable to see a
  * single device in the house — is far worse than the leak it would close.
  */
+/**
+ * Domains the assistant may use whether or not they are exposed. A voice
+ * engine (`tts.*`) is not a device in the house: it can only be heard through
+ * a speaker, and the speaker is checked (`media_player_entity_id`). Home
+ * Assistant exposes no engine by default, so requiring one exposed would block
+ * every announcement while protecting nothing.
+ */
+const ALWAYS_ALLOWED_DOMAINS = ["tts"];
+
+function alwaysAllowed(entityId: string): boolean {
+  return ALWAYS_ALLOWED_DOMAINS.some((d) => entityId.startsWith(`${d}.`));
+}
+
 export class AssistExposure {
   private entities: Set<string> | null = null;
   /** When the cached answer (a list or "no opinion") stops being good. */
@@ -87,15 +100,19 @@ export class AssistExposure {
 
   /** Whether the assistant may see and act on this entity. */
   async allows(entityId: string): Promise<boolean> {
+    if (alwaysAllowed(entityId)) return true;
     const exposed = await this.list();
     return exposed === null || exposed.has(entityId);
   }
 
-  /** The subset of `states` the assistant may see, in the order given. */
+  /**
+   * The subset of `states` the assistant may see, in the order given. Voice
+   * engines stay in, so the assistant can find the one to announce with.
+   */
   async filter(states: EntityState[]): Promise<EntityState[]> {
     const exposed = await this.list();
     if (exposed === null) return states;
-    return states.filter((s) => exposed.has(s.entity_id));
+    return states.filter((s) => exposed.has(s.entity_id) || alwaysAllowed(s.entity_id));
   }
 }
 

@@ -53,10 +53,19 @@ function targetedEntities(target: unknown): string[] {
 /**
  * Data keys that carry entity ids besides `entity_id`: `scene.apply` and
  * `scene.create` take `entities` as a map keyed by entity id, `scene.create`
- * takes `snapshot_entities`, and `group.set` takes `entities`, `add_entities`
- * and `remove_entities` as lists.
+ * takes `snapshot_entities`, `group.set` takes `entities`, `add_entities` and
+ * `remove_entities` as lists, `tts.speak` names its speaker in
+ * `media_player_entity_id` (its `entity_id` is the voice engine), and
+ * `media_player.join` takes the speakers to group in `group_members`.
  */
-const ENTITY_LIST_KEYS = ["entities", "snapshot_entities", "add_entities", "remove_entities"] as const;
+const ENTITY_LIST_KEYS = [
+  "entities",
+  "snapshot_entities",
+  "add_entities",
+  "remove_entities",
+  "media_player_entity_id",
+  "group_members",
+] as const;
 
 /**
  * The entity ids in one of `ENTITY_LIST_KEYS`: the keys of a scene's entity map,

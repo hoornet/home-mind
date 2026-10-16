@@ -166,6 +166,9 @@ describe("HomeAssistantClient and the Assist exposure list", () => {
     { entity_id: "light.kitchen_table_1", state: "off", attributes: { friendly_name: "Kitchen table 1" } },
     { entity_id: "light.kitchen_table_2", state: "off", attributes: { friendly_name: "Kitchen table 2" } },
     { entity_id: "sensor.kitchen_presence", state: "on", attributes: { friendly_name: "Kitchen presence" } },
+    { entity_id: "tts.piper", state: "unknown", attributes: { friendly_name: "Piper" } },
+    { entity_id: "media_player.living_room_speaker", state: "idle", attributes: { friendly_name: "Living room speaker" } },
+    { entity_id: "media_player.bedroom_speaker", state: "idle", attributes: { friendly_name: "Bedroom speaker" } },
   ];
 
   let calls: string[];
@@ -210,9 +213,9 @@ describe("HomeAssistantClient and the Assist exposure list", () => {
     expect(found.map((s) => s.entity_id)).toEqual(["light.kitchen_table"]);
   });
 
-  it("get_entities returns only what the user exposed", async () => {
+  it("get_entities returns only what the user exposed, plus the voice engines", async () => {
     const client = new HomeAssistantClient(baseConfig, exposing("light.kitchen_table"));
-    expect((await client.getEntities()).map((s) => s.entity_id)).toEqual(["light.kitchen_table"]);
+    expect((await client.getEntities()).map((s) => s.entity_id)).toEqual(["light.kitchen_table", "tts.piper"]);
     expect((await client.getEntities("sensor")).map((s) => s.entity_id)).toEqual([]);
   });
 
@@ -309,6 +312,34 @@ describe("HomeAssistantClient and the Assist exposure list", () => {
     await expect(client.callService("light", "turn_off", "all")).rejects.toThrow(/entity_id "all"/);
   });
 
+  it("call_service announces with any voice engine, but only on an exposed speaker", async () => {
+    const client = new HomeAssistantClient(
+      baseConfig,
+      exposing("light.kitchen_table", "media_player.living_room_speaker")
+    );
+    await client.callService("tts", "speak", undefined, {
+      entity_id: "tts.piper",
+      media_player_entity_id: "media_player.living_room_speaker",
+      message: "Good morning",
+    });
+    expect(calls.some((u) => u.includes("/api/services/tts/speak"))).toBe(true);
+    calls = [];
+    await expect(
+      client.callService("tts", "speak", undefined, {
+        entity_id: "tts.piper",
+        media_player_entity_id: "media_player.bedroom_speaker",
+        message: "Good morning",
+      })
+    ).rejects.toThrow(/media_player\.bedroom_speaker is not available/);
+    await expect(
+      client.callService("media_player", "join", "media_player.living_room_speaker", {
+        group_members: ["media_player.bedroom_speaker"],
+      })
+    ).rejects.toThrow(/media_player\.bedroom_speaker is not available/);
+    expect(calls.some((u) => u.includes("/api/services/tts/speak"))).toBe(false);
+    expect(calls.some((u) => u.includes("/api/services/media_player/join"))).toBe(false);
+  });
+
   it("script.<name> needs that script exposed; a call without a target passes", async () => {
     const client = new HomeAssistantClient(baseConfig, exposing("light.kitchen_table", "script.good_night"));
     await expect(client.callService("script", "garage_door")).rejects.toThrow(/script\.garage_door/);
@@ -334,15 +365,19 @@ describe("HomeAssistantClient and the Assist exposure list", () => {
   it("without an exposure list the client behaves exactly as before", async () => {
     const client = new HomeAssistantClient(baseConfig);
     expect((await client.searchEntities("kitchen")).map((s) => s.entity_id)).toEqual(
-      house.map((s) => s.entity_id)
+      house.filter((s) => s.entity_id.includes("kitchen")).map((s) => s.entity_id)
     );
+    expect(await client.getEntities()).toHaveLength(house.length);
     await client.callService("light", "turn_on", "light.kitchen_table_1");
     expect(calls.some((u) => u.includes("/api/services/light/turn_on"))).toBe(true);
   });
 
   it("a list that cannot be read means no opinion, not a house with no devices", async () => {
     const client = new HomeAssistantClient(baseConfig, new AssistExposure(async () => null));
-    expect((await client.searchEntities("kitchen"))).toHaveLength(house.length);
+    expect(await client.getEntities()).toHaveLength(house.length);
+    expect(await client.searchEntities("kitchen")).toHaveLength(
+      house.filter((s) => s.entity_id.includes("kitchen")).length
+    );
     expect((await client.getState("sensor.kitchen_presence")).state).toBe("on");
   });
 });
