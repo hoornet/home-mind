@@ -136,4 +136,18 @@ describe("AssistExposure", () => {
       "light.c",
     ]);
   });
+
+  it("always allows a voice engine, and keeps it when filtering", async () => {
+    const exposure = new AssistExposure(async () => set("light.a"));
+    expect(await exposure.allows("tts.piper")).toBe(true);
+    expect(await exposure.allows("media_player.bedroom")).toBe(false);
+    const states = ["tts.piper", "media_player.bedroom", "light.a"].map((entity_id) => ({
+      entity_id,
+      state: "on",
+      attributes: {},
+      last_changed: "",
+      last_updated: "",
+    }));
+    expect((await exposure.filter(states)).map((s) => s.entity_id)).toEqual(["tts.piper", "light.a"]);
+  });
 });

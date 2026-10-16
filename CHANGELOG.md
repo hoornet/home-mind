@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.19.2] - 2026-10-16
+
+### Fixed (ha/exposure.ts, ha/client.ts)
+- **Announcements check the speaker, not the voice engine.** `tts.speak` names the voice engine in `entity_id` and the speaker in `media_player_entity_id`. Since 0.19.0 `call_service` checked the engine and never looked at the speaker. Home Assistant exposes no `tts` entity by default, so every announcement was refused, while the device that actually plays went unchecked. Voice engines are now always allowed (and `search_entities` finds them), and the speaker must be exposed; so must every speaker passed to `media_player.join` in `group_members`. The home layout is unchanged. No configuration change.
+
 ## [0.19.1] - 2026-10-15
 
 ### Fixed (ha/client.ts)
