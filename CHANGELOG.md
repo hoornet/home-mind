@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.19.3] - 2026-10-16
+
+### Fixed (ha/exposure.ts)
+- **Exposing an entity and asking again works straight away.** The exposure list was cached for the 30-minute topology scan interval, so after the assistant said an entity is not exposed, exposing it and asking again could be refused for up to half an hour. `allows` now re-reads the list before refusing (at most once every 10 seconds, so several refusals in one turn read it once), and the cache lasts one minute, so `search_entities` in a new conversation sees the change too. A read is one small websocket request, made only while the assistant is in use. The refusal now tells the model to say that asking again will work once the entity is exposed. The home layout keeps its 30-minute scan. No configuration change.
+
 ## [0.19.2] - 2026-10-16
 
 ### Fixed (ha/exposure.ts, ha/client.ts)
