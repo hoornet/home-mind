@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19.2
+
+- **Announcements need the speaker exposed, not the voice.** Home Assistant does not expose voice engines to Assist by default, so announcements used to be refused. Now any voice can be used, and the speaker it plays on has to be exposed, as does every speaker you ask the assistant to group together. No settings to change. Server 0.19.2.
+
 ## 0.19.1
 
 - **Scenes and groups stay within what you exposed to Assist.** Since 0.19.0 the assistant reads and controls only the entities you have exposed. Scenes and groups it sets up now follow the same rule, so it cannot reach an entity you have not exposed by putting it in a scene or a group. No settings to change; turning off **Tools limited to exposed entities** still lifts the limit. Server 0.19.1.
