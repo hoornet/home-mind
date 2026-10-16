@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19.3
+
+- **Expose something and ask again, and it works straight away.** When the assistant says it cannot use something you have not exposed to Assist, you can now expose it and ask again right away; the assistant checks the list again before saying no, instead of waiting up to 30 minutes. No settings to change. Server 0.19.3.
+
 ## 0.19.2
 
 - **Announcements need the speaker exposed, not the voice.** Home Assistant does not expose voice engines to Assist by default, so announcements used to be refused. Now any voice can be used, and the speaker it plays on has to be exposed, as does every speaker you ask the assistant to group together. No settings to change. Server 0.19.2.
