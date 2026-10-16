@@ -44,6 +44,52 @@ describe("AssistExposure", () => {
     vi.useRealTimers();
   });
 
+  it("defaults the TTL to one minute", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetcher = vi.fn(async () => set("light.a"));
+    const exposure = new AssistExposure(fetcher);
+    await exposure.list();
+    vi.setSystemTime(Date.now() + 50 * 1000);
+    await exposure.list();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    vi.setSystemTime(Date.now() + 20 * 1000);
+    await exposure.list();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
+  it("re-reads the set before refusing, so exposing and asking again works at once", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    let exposed = set("light.a");
+    const fetcher = vi.fn(async () => exposed);
+    const exposure = new AssistExposure(fetcher, 60 * 60 * 1000);
+
+    expect(await exposure.allows("lock.front_door")).toBe(false);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    exposed = set("light.a", "lock.front_door");
+    vi.setSystemTime(Date.now() + 15 * 1000);
+    expect(await exposure.allows("lock.front_door")).toBe(true);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
+  it("re-reads before refusing at most once per pacing window, never for an exposed entity", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetcher = vi.fn(async () => set("light.a"));
+    const exposure = new AssistExposure(fetcher, 60 * 60 * 1000);
+
+    await exposure.list();
+    vi.setSystemTime(Date.now() + 15 * 1000);
+    expect(await exposure.allows("lock.front_door")).toBe(false);
+    expect(await exposure.allows("switch.garage")).toBe(false);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    vi.setSystemTime(Date.now() + 15 * 1000);
+    expect(await exposure.allows("light.a")).toBe(true);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
   it("collapses concurrent reads into one fetch", async () => {
     const fetcher = vi.fn(async () => {
       await new Promise((r) => setTimeout(r, 5));
