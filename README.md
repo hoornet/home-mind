@@ -3,6 +3,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhoornet%2Fhome-mind%2Fmain%2Fsrc%2Fhome-mind-server%2Fpackage.json&query=%24.version&label=Version&color=brightgreen)](https://github.com/hoornet/home-mind/releases)
 [![Status](https://img.shields.io/badge/Status-Voice%20Working-success.svg)]()
+[![Greptile: The War on Bugs](https://www.greptile.com/badge.svg)](https://www.greptile.com/?utm_source=oss_badge&utm_medium=readme&utm_campaign=greptile_for_open_source)
 
 AI assistant for Home Assistant with cognitive memory. Adds learning capabilities, persistent memory, and voice control to your smart home.
 
