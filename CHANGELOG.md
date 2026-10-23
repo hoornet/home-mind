@@ -2,6 +2,14 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.19.5] - 2026-10-23
+
+### Security (api/json-body.ts)
+- **Compressed request bodies are refused with 415.** The JSON parser runs before the API token check, and it decompressed gzip, deflate and Brotli bodies, so anyone who could reach the port could hand Node's decoders a body without a token. That is the path CVE-2026-111497 had, the Brotli flaw 0.19.4 fixed by moving to Node.js 22.23.4. The parser now refuses compressed bodies before any decoder runs, so a future flaw of that kind is not reachable that way. The Home Assistant integration sends plain JSON and is unaffected; a client of your own needs to send uncompressed JSON. No configuration change.
+
+### Changed (Dockerfile, home_mind/Dockerfile, CI)
+- **The server now runs on Node.js 24.** Node.js 22 gets security fixes until April 2027 and Node.js 24 until April 2028. The add-on builds on Node.js 24.22.1. The Docker Compose image uses `node:24-slim`; rebuild it with `docker compose build --pull`. CI now tests on Node.js 24, and `@types/node` follows. No configuration change.
+
 ## [0.19.4] - 2026-10-23
 
 ### Security (Dockerfile, home_mind/Dockerfile, CI)
