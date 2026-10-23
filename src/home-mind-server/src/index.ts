@@ -4,6 +4,7 @@ import cors from "cors";
 import { createRequire } from "module";
 import { loadConfig } from "./config.js";
 import { createAuthMiddleware } from "./api/auth.js";
+import { JSON_BODY_OPTIONS } from "./api/json-body.js";
 
 // Read version from package.json
 const require = createRequire(import.meta.url);
@@ -118,7 +119,8 @@ if (config.corsOrigins) {
   console.log(`  CORS: ${origins.join(", ")}`);
 }
 
-app.use(express.json());
+// Refuses compressed bodies before the token check: see api/json-body.ts.
+app.use(express.json(JSON_BODY_OPTIONS));
 
 // API token auth (only when API_TOKEN is configured)
 const authMiddleware = createAuthMiddleware(config.apiToken);
