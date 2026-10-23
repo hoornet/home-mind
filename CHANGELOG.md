@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.19.4] - 2026-10-23
+
+### Security (Dockerfile, home_mind/Dockerfile, CI)
+- **The server now runs on Node.js 22 instead of Node.js 20.** Node.js 20 reached end of life in April 2026 and gets no more security fixes, including the October 21 security release. The most serious fix in that release is in how Node.js unpacks Brotli-compressed data, which a crafted request to the server could have used to run code. The release also updates the certificates Node.js trusts, following the eMudhra certificate authority compromise. The add-on builds on Node.js 22.23.4, the patched release. The Docker Compose image uses `node:22-slim`; rebuild it with `docker compose build --pull` so Docker fetches the current image instead of reusing an older one. If you run the server without Docker, update Node.js to 22.23.4, 24.22.1 or 26.12.1. CI now tests on Node.js 22. No configuration change.
+
 ## [0.19.3] - 2026-10-16
 
 ### Fixed (ha/exposure.ts)

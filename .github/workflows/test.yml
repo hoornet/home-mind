@@ -24,11 +24,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Node 20 on purpose: it is what home_mind/Dockerfile builds with, so CI
+      # Node 22 on purpose: it is what home_mind/Dockerfile builds with, so CI
       # tests the runtime that actually ships rather than whatever is newest.
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: src/home-mind-server/package-lock.json
 
