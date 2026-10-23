@@ -9,11 +9,11 @@ FROM ${SHODH_IMAGE} AS shodh
 # Build the Home Mind server from a pinned upstream tag. The add-on build
 # context is the add-on folder, so the source is fetched rather than copied.
 # The node binary built here is the one the add-on runs, so the tag names an
-# exact patched release rather than node:22, which a build could resolve to
-# an older 22.x it already has. Raise it with each Node security release.
-FROM node:22.23.4-bookworm-slim AS builder
+# exact patched release rather than node:24, which a build could resolve to
+# an older 24.x it already has. Raise it with each Node security release.
+FROM node:24.22.1-bookworm-slim AS builder
 # Upstream tag the server is built from. Bump with `version` in config.yaml.
-ARG HOME_MIND_REF=v0.19.4
+ARG HOME_MIND_REF=v0.19.5
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
