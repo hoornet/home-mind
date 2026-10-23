@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19.4
+
+- **Security update: Node.js 22.23.4.** The add-on used to run on Node.js 20, which no longer gets security fixes. It now runs on the October 21 Node.js 22 security release. The most serious fix is in how Node.js unpacks Brotli-compressed data, which a crafted request to the add-on could have used to run code inside it. The release also updates the certificates Node.js trusts, following the eMudhra certificate authority compromise. Please update; there are no settings to change. Server 0.19.4.
+
 ## 0.19.3
 
 - **Expose something and ask again, and it works straight away.** When the assistant says it cannot use something you have not exposed to Assist, you can now expose it and ask again right away; the assistant checks the list again before saying no, instead of waiting up to 30 minutes. No settings to change. Server 0.19.3.
