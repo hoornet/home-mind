@@ -277,4 +277,39 @@ describe("loadConfig", () => {
 
     expect(config.reasoningEffort).toBe("low");
   });
+
+  // zod 4 returns a .default() value without running the transform, so a
+  // string default like "false" would come out truthy. These settings use
+  // .prefault() instead; both the defaults and explicit values must arrive
+  // as real booleans.
+  describe("boolean settings", () => {
+    beforeEach(() => {
+      delete process.env.LAYOUT_FROM_EXPOSED;
+      delete process.env.TOOLS_FROM_EXPOSED;
+    });
+
+    it("default to TLS checks on and the exposure list respected", async () => {
+      Object.assign(process.env, BASE_ENV);
+
+      const config = await loadConfigFresh();
+
+      expect(config.haSkipTlsVerify).toBe(false);
+      expect(config.layoutFromExposed).toBe(true);
+      expect(config.toolsFromExposed).toBe(true);
+    });
+
+    it("read explicit values", async () => {
+      Object.assign(process.env, BASE_ENV, {
+        HA_SKIP_TLS_VERIFY: "true",
+        LAYOUT_FROM_EXPOSED: "false",
+        TOOLS_FROM_EXPOSED: "false",
+      });
+
+      const config = await loadConfigFresh();
+
+      expect(config.haSkipTlsVerify).toBe(true);
+      expect(config.layoutFromExposed).toBe(false);
+      expect(config.toolsFromExposed).toBe(false);
+    });
+  });
 });
