@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # Workflow actions are pinned to commit SHAs, with the version as a trailing
+  # comment, because a tag can be moved to different code. Dependabot updates the
+  # SHA and the comment together, so the pins keep moving instead of freezing.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci(deps)"
