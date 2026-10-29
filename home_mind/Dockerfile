@@ -13,7 +13,7 @@ FROM ${SHODH_IMAGE} AS shodh
 # an older 24.x it already has. Raise it with each Node security release.
 FROM node:24.22.1-bookworm-slim AS builder
 # Upstream tag the server is built from. Bump with `version` in config.yaml.
-ARG HOME_MIND_REF=v0.19.5
+ARG HOME_MIND_REF=v0.19.6
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl python3 make g++ \
     && rm -rf /var/lib/apt/lists/*

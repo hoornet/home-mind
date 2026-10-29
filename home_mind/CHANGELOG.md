@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19.6
+
+- **Security housekeeping.** The libraries the add-on uses to read requests and to talk to Home Assistant are updated to their newest fixed releases. Most of the issues fixed in them do not affect how the add-on uses these libraries, so on 0.19.5 this keeps it current. If you are still on 0.19.4 or older, it also closes a way for a crafted request to stop the add-on. No settings to change. Server 0.19.6.
+
 ## 0.19.5
 
 - **Runs on Node.js 24**, which gets security fixes until April 2028.
