@@ -2,6 +2,14 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.19.6] - 2026-10-29
+
+### Security (dependencies)
+- **The libraries that read requests and talk to Home Assistant are updated to their newest fixed releases:** multer 2.5.0, body-parser 2.4.0, undici 7.30.1, qs 6.17.1 and openai 6.49.0. The way Home Mind uses multer, body-parser and qs, their published issues do not apply: no upload filter is set, compressed request bodies are refused since 0.19.5, and `qs.stringify` is never called. undici 7.30.1 fixes eight issues in the client the server uses to reach Home Assistant. If you still run 0.19.4 or older, this update also closes a way for a crafted request to stop the server. Checked with real requests against a Home Assistant install (states over HTTP, the exposure list over the websocket) and a streamed reply through the OpenAI SDK, not only with the tests. No configuration change.
+
+### Changed (api/routes.ts, config.ts)
+- **Request and configuration validation moved to zod 4.** zod 3 has no release with the fix for CVE-2023-54404 (memory exhaustion while validating oversized size-limited collections). No Home Mind schema uses one, so this is housekeeping too. A 400 reply still lists the problems under `details`, but zod 4 words some messages differently. Boolean settings (`HA_SKIP_TLS_VERIFY`, `LAYOUT_FROM_EXPOSED`, `TOOLS_FROM_EXPOSED`) keep their defaults. No configuration change.
+
 ## [0.19.5] - 2026-10-23
 
 ### Security (api/json-body.ts)
