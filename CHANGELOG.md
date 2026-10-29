@@ -2,6 +2,14 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.20.0] - 2026-10-29
+
+### Security (dependencies)
+- **The OpenAI SDK moves from 6.49.0 to 7.45.1.** Aikido reports three issues in the 6.x line, fixed in 7.5.0 and 7.6.0; the worst is rated as possible access to user accounts. There is no public advisory with details yet, so updating is the way to be sure. The SDK's only breaking change in 7.0 is the Node.js requirement below; no Home Mind code had to change. Checked with real requests through an OpenAI-compatible endpoint, not only with the tests: a streamed reply that looked devices up in a live Home Assistant, fact extraction, speech-to-text on a Slovene recording, and text-to-speech.
+
+### Changed (package.json)
+- **Running the server without Docker now needs Node.js 22 or newer**, because the SDK does. `engines` says so. The add-on and Docker Compose already run Node.js 24, so nothing changes there. No configuration change.
+
 ## [0.19.6] - 2026-10-29
 
 ### Security (dependencies)
