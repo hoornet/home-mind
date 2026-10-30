@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.20.1
+
+- **Memory now works on the newest Claude models.** If you use your own Anthropic key with a model that thinks before it answers, such as Claude Haiku 5.5 or Opus 5.5, the add-on now picks up the facts you tell it and remembers them. Other models and providers work as before. No settings to change. Server 0.20.1.
+
 ## 0.20.0
 
 - **Security update.** The library the add-on uses to talk to OpenAI-compatible services moves to its newest major version, which fixes three issues reported against the old one. Checked with real requests before release: a reply that looked devices up in Home Assistant, memory, speech-to-text and text-to-speech. No settings to change. Server 0.20.0.
