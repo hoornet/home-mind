@@ -138,3 +138,11 @@ describe("cache-friendly ordering", () => {
     expect(text.indexOf("fact1")).toBeGreaterThan(text.indexOf("Device Capabilities"));
   });
 });
+
+describe("follow-up rule", () => {
+  // History keeps reply text only, so without this the model reads its own
+  // answer as unchecked and takes it back.
+  it.each([false, true])("says earlier tool calls are not shown (voice: %s)", (isVoice) => {
+    expect(buildSystemPromptText([], isVoice)).toContain("not the tool calls behind them");
+  });
+});

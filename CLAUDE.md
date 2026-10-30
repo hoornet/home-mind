@@ -57,7 +57,7 @@ Provider is selected at startup by `llm/factory.ts` based on `LLM_PROVIDER` conf
 ### Memory Architecture
 
 - **Long-term facts**: Shodh Memory (external service, semantic search, Hebbian learning, natural decay)
-- **Conversation history**: `IConversationStore` with two backends: `InMemoryConversationStore` (default, lost on restart) and `SqliteConversationStore` (persistent via `better-sqlite3`). Controlled by `CONVERSATION_STORAGE` env var (`memory` | `sqlite`). Max 20 messages/conversation.
+- **Conversation history**: `IConversationStore` with two backends: `InMemoryConversationStore` (default, lost on restart) and `SqliteConversationStore` (persistent via `better-sqlite3`). Controlled by `CONVERSATION_STORAGE` env var (`memory` | `sqlite`). Max 20 messages/conversation. History is reply text only, with no tool calls, so the follow-up rule in `llm/prompts.ts` tells the model that; without it Haiku 5.5 reads its own correct answers as unchecked and takes them back.
 - **Known users** live in their own `users` table (sqlite) / `knownUsers` set (memory) — deliberately *not* derived from conversation rows, which `cleanupOldConversations()` prunes after 24h. Deriving them from messages is what silently disabled `MemoryCleanupJob` before 0.15.7.
 - **Entity cache**: 10-second TTL in HomeAssistantClient (invalidated after service calls)
 - **Fact categories**: baseline, preference, identity, device, pattern, correction
