@@ -60,7 +60,7 @@ jobs:
 
       # Build only, never push. Users build this add-on on their own machine,
       # so there is no registry to publish to and nothing to sign.
-      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: home_mind
           push: false
