@@ -2,6 +2,14 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.20.1] - 2026-10-30
+
+### Fixed (memory/extractor.ts)
+- **Home Mind now learns facts on Claude models that think before they answer.** Models such as Claude Haiku 5.5 and Opus 5.5 send a thinking block ahead of their reply, so extraction now reads every text block rather than the first block only. Without this these models stored no new facts, and the one sign was a `Fact extraction failed` line in the log. The default model, Claude Haiku 4.5, and the OpenAI-compatible providers work as before. Checked with real requests on Haiku 4.5, Haiku 5.5, Sonnet 5.5 and Opus 5.5, not only with the tests. No configuration change.
+
+### Security (dependencies)
+- **vitest moves to 4.1.12**, which fixes two issues in its test-time mocking. It is a development tool and never part of what the server runs, so this changes nothing for a running install.
+
 ## [0.20.0] - 2026-10-29
 
 ### Security (dependencies)

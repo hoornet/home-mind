@@ -45,8 +45,12 @@ ${JSON.stringify(factsJson, null, 2)}`;
         messages: [{ role: "user", content: prompt }],
       });
 
-      const text =
-        response.content[0].type === "text" ? response.content[0].text : "";
+      // Read every text block, not content[0]: models that think by default
+      // (Haiku 5.5, Opus 5.5) put a thinking block first.
+      const text = response.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("");
 
       // Strip markdown code fences if present (LLMs sometimes wrap JSON in ```json ... ```)
       const cleaned = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();

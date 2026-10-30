@@ -1,6 +1,6 @@
 {
   "name": "@home-mind/server",
-  "version": "0.20.0",
+  "version": "0.20.1",
   "description": "Home Mind API server - AI assistant with cognitive memory for Home Assistant",
   "type": "module",
   "main": "dist/index.js",
@@ -32,10 +32,10 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^24.19.2",
     "@types/uuid": "^10.0.0",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.12",
     "tsx": "^4.22.4",
     "typescript": "^5.6.0",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.12"
   },
   "engines": {
     "node": ">=22.0.0"
