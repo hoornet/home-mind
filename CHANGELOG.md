@@ -2,6 +2,11 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.20.2] - 2026-10-31
+
+### Fixed (llm/prompts.ts)
+- **Follow-up answers hold on newer models.** Saved history keeps reply text only, so a model such as Claude Haiku 5.5 could read its own correct answer as unchecked and take it back, or look everything up again after a plain thanks. The prompt now says earlier answers were checked. On real conversations, false retractions went from 19 of 48 to 1 of 48 with an own Anthropic key and from 8 of 48 to 1 of 48 through an OpenAI-compatible service, and needless re-checks from 30 of 64 to none. It still checks again when asked. No configuration change.
+
 ## [0.20.1] - 2026-10-30
 
 ### Fixed (memory/extractor.ts)

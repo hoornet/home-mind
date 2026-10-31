@@ -138,3 +138,15 @@ describe("cache-friendly ordering", () => {
     expect(text.indexOf("fact1")).toBeGreaterThan(text.indexOf("Device Capabilities"));
   });
 });
+
+describe("follow-up rule", () => {
+  // History keeps reply text only, so without this the model reads its own
+  // answer as unchecked and takes it back.
+  it.each([false, true])("stands by earlier answers (voice: %s)", (isVoice) => {
+    const text = buildSystemPromptText([], isVoice);
+    expect(text).toContain("not the tool calls behind them");
+    expect(text).toContain("so stand by them");
+    expect(text).toContain("don't re-check anything on a plain thanks");
+    expect(text).toContain("Re-check only when the user asks or the state may have changed");
+  });
+});

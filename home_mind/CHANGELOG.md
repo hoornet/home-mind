@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.20.2
+
+- **Steadier answers on follow-ups.** On newer models such as Claude Haiku 5.5, a follow-up or a simple thanks could make the assistant take back a correct answer or look everything up again. It now stands by what it checked, and looks again when you ask it to or when something may have changed. No settings to change.
+
 ## 0.20.1
 
 - **Memory now works on the newest Claude models.** If you use your own Anthropic key with a model that thinks before it answers, such as Claude Haiku 5.5 or Opus 5.5, the add-on now picks up the facts you tell it and remembers them. Other models and providers work as before. No settings to change. Server 0.20.1.
