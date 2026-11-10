@@ -23,6 +23,10 @@ jobs:
         working-directory: src/home-mind-server
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No step after checkout runs git, so the job token has no reason
+          # to stay in .git/config where every later step can read it.
+          persist-credentials: false
 
       # Node 24 on purpose: it is what home_mind/Dockerfile builds with, so CI
       # tests the runtime that actually ships rather than whatever is newest.
