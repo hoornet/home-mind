@@ -164,7 +164,7 @@ The server works against any OpenAI-compatible endpoint: set `LLM_PROVIDER=opena
 
 Google Gemini is one such endpoint: `LLM_PROVIDER=openai`, `OPENAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/`, `OPENAI_API_KEY=<AI Studio key>`, `LLM_MODEL=gemini-3.5-flash-lite`, `OPENAI_RESPONSE_FORMAT=json_object`, `REASONING_EFFORT=low`. The engine copes with the ways its stream departs from OpenAI's, none of which raise an error on their own: a tool-calling turn that ends with `finish_reason: "stop"` (the loop runs whatever tool calls arrived), parallel calls that each come whole with their own `id` and no `index` (a new id opens a new call), the `extra_content` thought signature Gemini 3 requires back on the next turn (passed through untouched), and a turn that ends in silence after a successful tool call (`ACTION_DONE_REPLY`).
 
-Nothing here should grow provider-, tier-, or preset-specific logic — this repo is model-agnostic by design, and how the paid product is powered is deliberately not its concern. See `PRODUCT_SEPARATION.md` in the project hub for the specifics.
+Nothing here should grow provider-, tier-, or preset-specific logic — this repo is model-agnostic by design, and how Nives is powered is deliberately not its concern. See `PRODUCT_SEPARATION.md` in the project hub for the specifics.
 
 STT (optional): `STT_PROVIDER` (`openai` | `none`, default `none`), `STT_API_KEY` (overrides `OPENAI_API_KEY`), `STT_BASE_URL` (custom Whisper-compatible endpoint), `STT_MODEL` (default `whisper-1`)
 

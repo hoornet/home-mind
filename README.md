@@ -281,9 +281,9 @@ Only specify what needs changing. Unspecified fields use auto-detected values.
 **[Nives](https://github.com/hoornet/nives)** (formerly HomeMind PRO) is this project's sister: it began as a fork of this server, so the core (conversation engine and memory layer) is shared heritage. They're now maintained as two independent products for two kinds of people:
 
 - **Home Mind (this repo)** is the DIY path: you pick every model, you can run it anywhere (Docker Compose on Proxmox, a NAS, bare Docker), and there is an add-on for Home Assistant OS if you'd rather not manage a Docker host. You still install the integration and wire it up yourself. Full control by design.
-- **Nives** is the batteries-included one: a self-installing companion integration, no terminal at any point, and features this repo deliberately doesn't have: automation create/edit/delete by voice (behind a confirmation gate), an AI Task provider with camera-snapshot vision, Voice PE mic reopening, arm64 for Raspberry Pi, and an optional managed-key Cloud (pay-as-you-go tickets, no subscription).
+- **Nives** is the batteries-included one: a self-installing companion integration, no terminal at any point, and features this repo deliberately doesn't have: automation create/edit/delete by voice (behind a confirmation gate), an AI Task provider with camera-snapshot vision, Voice PE mic reopening, and arm64 for Raspberry Pi.
 
-Both are AGPL-3.0 with open repos, and both are maintained. Nives's assistant isn't gated either: its BYOK mode is free and does everything the paid path does, and the one Cloud-only extra is optional transcription, since that's billed per use. Pick by temperament: own every moving part here, or have it just work there.
+Both are AGPL-3.0 with open repos, both are maintained, and both run on your own key. Pick by temperament: own every moving part here, or have it just work there.
 
 Both install paths for this repo, the add-on and Docker Compose, are in the [Quick Start](#quick-start) above.
 
