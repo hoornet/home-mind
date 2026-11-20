@@ -16,6 +16,7 @@ describe("handleToolCall", () => {
       getEntities: vi.fn().mockResolvedValue([{ entity_id: "light.kitchen" }]),
       searchEntities: vi.fn().mockResolvedValue([{ entity_id: "light.bed" }]),
       callService: vi.fn().mockResolvedValue({ success: true }),
+      callServiceAsAssistant: vi.fn().mockResolvedValue({ success: true }),
       getHistory: vi.fn().mockResolvedValue([{ state: "22" }]),
     } as unknown as HomeAssistantClient;
   });
@@ -57,7 +58,7 @@ describe("handleToolCall", () => {
     expect(result).toEqual([{ entity_id: "light.bed" }]);
   });
 
-  it("dispatches call_service to ha.callService", async () => {
+  it("dispatches call_service to ha.callServiceAsAssistant", async () => {
     const result = await handleToolCall(ha, "call_service", {
       domain: "light",
       service: "turn_on",
@@ -65,9 +66,10 @@ describe("handleToolCall", () => {
       data: { brightness: 255 },
     });
 
-    expect(ha.callService).toHaveBeenCalledWith("light", "turn_on", "light.kitchen", {
+    expect(ha.callServiceAsAssistant).toHaveBeenCalledWith("light", "turn_on", "light.kitchen", {
       brightness: 255,
     });
+    expect(ha.callService).not.toHaveBeenCalled();
     expect(result).toEqual({ success: true });
   });
 
@@ -409,6 +411,7 @@ describe("handleToolCall get_history normalization", () => {
       getEntities: vi.fn().mockResolvedValue([]),
       searchEntities: vi.fn().mockResolvedValue([]),
       callService: vi.fn().mockResolvedValue({ success: true }),
+      callServiceAsAssistant: vi.fn().mockResolvedValue({ success: true }),
       getHistory: vi.fn().mockResolvedValue([{ state: "22" }]),
     } as unknown as HomeAssistantClient;
   });

@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
-import { TopologyScanner, DEFAULT_LAYOUT_DOMAINS } from "./topology-scanner.js";
+import {
+  TopologyScanner,
+  DEFAULT_LAYOUT_DOMAINS,
+  NOTHING_EXPOSED_LAYOUT,
+} from "./topology-scanner.js";
 import type { HomeAssistantClient } from "./client.js";
 
 // One kitchen holding a light, a sensor, and the config/diagnostic entities an
@@ -185,32 +189,63 @@ describe("TopologyScanner layout filtering", () => {
     expect(section).not.toContain("sensor.kitchen_temperature");
   });
 
-  it("falls back to domains when nothing is exposed", async () => {
-    // Exposing nothing must not empty the layout — that would leave the model
-    // believing the house has no devices.
+  it("looks again within minutes once nothing is exposed, so newly exposed devices show up", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      let exposed = new Set<string>();
+      const scanner = new TopologyScanner(makeHa(), 30 * 60 * 1000, DEFAULT_LAYOUT_DOMAINS, async () => exposed);
+      await scanner.scan();
+      expect(scanner.formatSection()).toBe(NOTHING_EXPOSED_LAYOUT);
+
+      exposed = new Set(["light.kitchen"]);
+      vi.setSystemTime(Date.now() + 61 * 1000);
+      await scanner.refreshIfStale();
+      expect(scanner.formatSection()).toContain("light.kitchen");
+    } finally {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("says nothing is exposed when nothing is, and names no device", async () => {
+    // Listing the house by domain instead would name devices the user kept
+    // from the assistant; the model is told why it sees none instead.
+    const ha = makeHa();
     const scanner = new TopologyScanner(
-      makeHa(),
+      ha,
       30 * 60 * 1000,
       DEFAULT_LAYOUT_DOMAINS,
       async () => new Set<string>()
     );
     await scanner.scan();
 
-    expect(scanner.formatSection()).toContain("light.kitchen");
-    expect(scanner.formatSection()).not.toContain("button.kitchen_identify");
+    expect(scanner.formatSection()).toBe(NOTHING_EXPOSED_LAYOUT);
+    expect(scanner.formatSection()).not.toContain("light.kitchen");
   });
 
-  it("falls back to domains when the exposure list cannot be read", async () => {
-    const scanner = new TopologyScanner(
-      makeHa(),
-      30 * 60 * 1000,
-      DEFAULT_LAYOUT_DOMAINS,
-      async () => null
-    );
-    await scanner.scan();
+  it("has no layout while the exposure list cannot be read, and retries within minutes", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      let exposed: Set<string> | null = null;
+      const scanner = new TopologyScanner(
+        makeHa(),
+        30 * 60 * 1000,
+        DEFAULT_LAYOUT_DOMAINS,
+        async () => exposed
+      );
+      await scanner.scan();
+      expect(scanner.hasLayout()).toBe(false);
 
-    expect(scanner.formatSection()).toContain("light.kitchen");
-    expect(scanner.formatSection()).not.toContain("button.kitchen_identify");
+      exposed = new Set(["light.kitchen"]);
+      vi.setSystemTime(Date.now() + 61 * 1000);
+      await scanner.refreshIfStale();
+      expect(scanner.formatSection()).toContain("light.kitchen");
+    } finally {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    }
   });
 
   it("picks up an entity exposed after the first scan", async () => {

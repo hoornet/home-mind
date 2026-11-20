@@ -72,7 +72,7 @@ HA_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 **Optional settings** (defaults are fine for most users):
 ```bash
 PORT=3100                    # API port (default: 3100)
-HA_SKIP_TLS_VERIFY=true      # Set to true if HA uses HTTPS (required for self-signed certs)
+HA_SKIP_TLS_VERIFY=false     # Only for a self-signed certificate on a network you trust: true turns off certificate checks for every request, token included
 MEMORY_TOKEN_LIMIT=3000      # Max memory context tokens (default: 3000)
 
 # Per-entity device capability overrides (JSON)

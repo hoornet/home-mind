@@ -161,6 +161,21 @@ interface LayoutData {
 /** Reads the entities exposed to Assist; `null` when the list is unavailable. */
 export type ExposureProvider = () => Promise<Set<string> | null>;
 
+/**
+ * The layout when the user has exposed nothing. Saying so beats an empty
+ * prompt: the model can tell the user why it sees no devices and how to fix it.
+ */
+export const NOTHING_EXPOSED_LAYOUT = [
+  "## Home Layout",
+  "",
+  "The user has not exposed any devices to the assistant (in Home Assistant: Settings → " +
+    "Voice assistants → Expose), so you cannot see or control any. When they ask about a " +
+    "device, tell them to expose it there first; it works as soon as they do.",
+].join("\n");
+
+/** How soon to try again when the exposure list could not be read at all. */
+const EXPOSURE_RETRY_MS = 60 * 1000;
+
 export class TopologyScanner {
   private ha: HomeAssistantClient;
   private lastScanTime: number = 0;
@@ -176,10 +191,11 @@ export class TopologyScanner {
    *   wants. On a large install `area_entities()` returns everything, so the
    *   default filter drops the config and diagnostic domains nobody asks a
    *   voice assistant about (`button`, `update`, `number`, `select`, `event`).
-   * @param exposure Optional reader for the Assist exposure list. When it
-   *   returns entities they win over `domains`, because the user picking them
-   *   by hand beats any heuristic. Falls back to `domains` when it yields
-   *   nothing, so a home that exposes nothing still gets a layout.
+   * @param exposure Optional reader for the Assist exposure list. When given,
+   *   the list wins over `domains`, because the user picking entities by hand
+   *   beats any heuristic. An empty list gives `NOTHING_EXPOSED_LAYOUT`, and a
+   *   list that cannot be read gives no layout until it can: listing the house
+   *   by domain instead would name devices the user kept from the assistant.
    */
   constructor(
     ha: HomeAssistantClient,
@@ -313,9 +329,25 @@ export class TopologyScanner {
       // stale set would silently hide a device they just added.
       if (this.exposure) {
         const exposed = await this.exposure();
-        // An empty set means "exposed nothing", which must not empty the whole
-        // layout — fall back to the domain filter in that case.
-        this.exposed = exposed && exposed.size > 0 ? exposed : null;
+        if (exposed) {
+          this.exposed = exposed;
+        } else if (!this.exposed) {
+          // Never read yet (Home Assistant still starting, or no websocket):
+          // no layout rather than one built from entities nobody exposed, and
+          // another try in a minute instead of half an hour.
+          this.layoutText = "";
+          this.lastScanTime = Date.now() - this.scanIntervalMs + EXPOSURE_RETRY_MS;
+          console.warn("[topology] Exposure list unavailable — home layout skipped, retrying in 1 min");
+          return;
+        }
+        if (this.exposed.size === 0) {
+          this.layoutText = NOTHING_EXPOSED_LAYOUT;
+          // Checked again in a minute, not half an hour: the user is likely
+          // exposing devices right now, prompted by the notification.
+          this.lastScanTime = Date.now() - this.scanIntervalMs + EXPOSURE_RETRY_MS;
+          console.log("[topology] Nothing is exposed to Assist — home layout says so");
+          return;
+        }
       }
 
       const data = await this.fetchLayout();
