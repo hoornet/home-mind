@@ -3,7 +3,11 @@ import express from "express";
 import { createRequire } from "module";
 import { loadConfig } from "./config.js";
 import { createAuthMiddleware, type AutomaticToken } from "./api/auth.js";
-import { UNPROTECTED_API_NOTIFICATION_ID, scheduleApiTokenNotice } from "./jobs/api-token-notice.js";
+import {
+  NO_API_TOKEN_NOTICE,
+  UNPROTECTED_API_NOTIFICATION_ID,
+  scheduleApiTokenNotice,
+} from "./jobs/api-token-notice.js";
 import { JSON_BODY_OPTIONS } from "./api/json-body.js";
 
 // Read version from package.json
@@ -184,11 +188,10 @@ cleanupJob.start();
 // nothing to reach; tell the user why rather than leave Home Mind looking broken.
 // A generated token protects nothing until the integration uses it: say so.
 // With a token of the user's own it is enforced from the start, and the check
-// clears a notice left from before it was set.
-const cancelApiTokenNotice =
-  config.apiToken || automaticToken
-    ? scheduleApiTokenNotice(ha, () => authMiddleware.enforced())
-    : () => {};
+// clears a notice left from before it was set. With no token at all, say that.
+const cancelApiTokenNotice = scheduleApiTokenNotice(ha, () => authMiddleware.enforced(), {
+  notice: config.apiToken || automaticToken ? undefined : NO_API_TOKEN_NOTICE,
+});
 
 const cancelExposureNotice = config.toolsFromExposed
   ? scheduleNothingExposedNotice(ha, exposure)
