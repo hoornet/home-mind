@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.21.0
+
+- **The add-on now protects its API with a token by itself.** If you haven't set `api_token`, the add-on creates one and hands it to the Home Mind integration. Update the integration in HACS to 0.11.0 and restart Home Assistant: it picks the token up and starts using it, and from then on the API refuses requests without it. Until then a notification says the API is not protected yet, and everything works as before.
+- **Do your own scripts or tools call the add-on's API directly?** They need the token too once the integration uses it, and you can't see the generated one. Set your own `api_token` in the add-on's options and use it there; the add-on hands it to the integration by itself.
+- If you added the integration by hand rather than from the discovered add-on, remove it and accept the discovered add-on instead. A token you set yourself is required from the start, as before. Server 0.21.0.
+
 ## 0.20.3
 
 - **A security update; we recommend installing it.** The assistant now sticks to everyday device control, whoever asks: it switches and dims, works locks, covers, climate, media players and vacuums, runs your exposed scripts and scenes, sets helpers and timers, and uses your to-do lists, calendars, weather, announcements and notifications. Restarting Home Assistant, the host, add-ons and backups, shell and REST commands, MQTT and other integrations' own services are off-limits. To let it run something more, put it in a script and expose the script to Assist.
