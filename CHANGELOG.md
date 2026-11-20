@@ -13,6 +13,8 @@ A security update; we recommend installing it.
 - **A self-signed certificate works for the exposure list too.** With `HA_SKIP_TLS_VERIFY=true`, the list of exposed devices is now read with the same setting as every other request; before, it could not be read on such a setup.
 - **The example configuration no longer turns off certificate checks.** `.env.example` set `HA_SKIP_TLS_VERIFY=true`; it is now a commented opt-in for a self-signed certificate on a network you trust. If you copied the old example and reach Home Assistant over `https://` with a real certificate, set it to `false` or remove it.
 
+**Recommended: protect the API with a token.** Home Mind's API on port 3100 accepts requests without a token unless you set one. Choose a long random token, set it as `api_token` in the add-on's options (or `API_TOKEN` in `.env` for Docker Compose) and restart; then remove the Home Mind integration in Home Assistant and add it again, entering the same token. Your memories stay on the server. A later version will set this up for you.
+
 No other configuration changes. The Home Mind add-on picks this up in its next version.
 
 ## [0.20.2] - 2026-10-31

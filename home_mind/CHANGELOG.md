@@ -5,6 +5,7 @@
 - **A security update; we recommend installing it.** The assistant now sticks to everyday device control, whoever asks: it switches and dims, works locks, covers, climate, media players and vacuums, runs your exposed scripts and scenes, sets helpers and timers, and uses your to-do lists, calendars, weather, announcements and notifications. Restarting Home Assistant, the host, add-ons and backups, shell and REST commands, MQTT and other integrations' own services are off-limits. To let it run something more, put it in a script and expose the script to Assist.
 - **If nothing is exposed to Assist, the assistant reaches nothing.** Until now, exposing nothing meant there was no limit at all. A notification explains how to expose devices (Settings → Voice assistants → Expose); most homes already expose lights and switches by default and notice no change.
 - Every request has to name the device it acts on, media plays from your libraries, radio stations, local audio and streaming services, and an alarm or lock code is sent only a few times in ten minutes. Server 0.20.3; no settings to change.
+- **Recommended: protect the API with a token.** Home Mind's API on port 3100 accepts requests without a token unless you set one. Choose a long random token, set it as `api_token` in the add-on's options (or `API_TOKEN` in `.env` for Docker Compose) and restart; then remove the Home Mind integration in Home Assistant and add it again, entering the same token. Your memories stay on the server. A later version will set this up for you.
 
 ## 0.20.2
 
