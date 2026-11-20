@@ -189,6 +189,25 @@ describe("TopologyScanner layout filtering", () => {
     expect(section).not.toContain("sensor.kitchen_temperature");
   });
 
+  it("looks again within minutes once nothing is exposed, so newly exposed devices show up", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      let exposed = new Set<string>();
+      const scanner = new TopologyScanner(makeHa(), 30 * 60 * 1000, DEFAULT_LAYOUT_DOMAINS, async () => exposed);
+      await scanner.scan();
+      expect(scanner.formatSection()).toBe(NOTHING_EXPOSED_LAYOUT);
+
+      exposed = new Set(["light.kitchen"]);
+      vi.setSystemTime(Date.now() + 61 * 1000);
+      await scanner.refreshIfStale();
+      expect(scanner.formatSection()).toContain("light.kitchen");
+    } finally {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    }
+  });
+
   it("says nothing is exposed when nothing is, and names no device", async () => {
     // Listing the house by domain instead would name devices the user kept
     // from the assistant; the model is told why it sees none instead.

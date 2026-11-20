@@ -269,6 +269,9 @@ export function notifyRefusal(
   }
   const message = payload.message;
   if (typeof message === "string") {
+    if (/\{%/.test(message)) {
+      return `A notification's message may not contain {% %} statements; use plain text and {{ }} values.`;
+    }
     const templated = literalText(message) !== message;
     // The message as rendered, with the whitespace that `-` markers strip
     // already gone. A phone command is one word, so a template that touches

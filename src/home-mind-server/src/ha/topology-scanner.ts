@@ -342,7 +342,9 @@ export class TopologyScanner {
         }
         if (this.exposed.size === 0) {
           this.layoutText = NOTHING_EXPOSED_LAYOUT;
-          this.lastScanTime = Date.now();
+          // Checked again in a minute, not half an hour: the user is likely
+          // exposing devices right now, prompted by the notification.
+          this.lastScanTime = Date.now() - this.scanIntervalMs + EXPOSURE_RETRY_MS;
           console.log("[topology] Nothing is exposed to Assist — home layout says so");
           return;
         }

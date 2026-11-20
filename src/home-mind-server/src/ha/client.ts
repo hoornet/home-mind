@@ -107,14 +107,19 @@ function listedEntities(value: unknown): string[] {
 const INDIRECT_TARGETS = ["area_id", "device_id", "floor_id", "label_id"] as const;
 
 /**
- * Entity-shaped words in a call's other fields (a script's field, an id inside
- * a url or a message), lower-cased. Only the
- * ones that exist are held to the exposure list.
+ * Entity-shaped words anywhere in a call's fields (a script's variables, an id
+ * inside a url or a message), lower-cased, and the first area, device, floor
+ * or label named at any depth. Only the ids that exist are held to the
+ * exposure list.
  */
-function mentionedEntities(payload: Record<string, unknown>): Set<string> {
+function fieldReach(payload: Record<string, unknown>): { mentioned: Set<string>; indirect?: string } {
   const found = new Set<string>();
+  let indirect: string | undefined;
   const walk = (value: unknown, key?: string): void => {
-    if (key === "entity_id" || (ENTITY_LIST_KEYS as readonly string[]).includes(key ?? "")) return;
+    if (key && (INDIRECT_TARGETS as readonly string[]).includes(key) && value !== undefined) {
+      indirect ??= key;
+      return;
+    }
     if (typeof value === "string") {
       // An id in a url may be percent-encoded, and Home Assistant decodes it.
       let decoded = value;
@@ -138,7 +143,7 @@ function mentionedEntities(payload: Record<string, unknown>): Set<string> {
     }
   };
   walk(payload);
-  return found;
+  return { mentioned: found, indirect };
 }
 
 /**
@@ -461,7 +466,14 @@ export class HomeAssistantClient {
         if (exposed === null) throw new Error(exposureUnavailableMessage());
         if (exposed.size === 0) throw new Error(nothingExposedMessage());
       }
-      const mentioned = mentionedEntities(payload);
+      // Entities and areas can also be named deeper in the fields: checked too.
+      const { mentioned, indirect: nested } = fieldReach(payload);
+      if (nested) {
+        throw new Error(
+          `Targeting by ${nested} is not available to you: only entities the user exposed to the ` +
+            `assistant may be controlled. Call the service with the exposed entity_ids instead.`
+        );
+      }
       if (mentioned.size > 0) {
         const existing = new Set((await this.getAllStatesCached()).map((s) => s.entity_id));
         await this.requireExposed(...[...mentioned].filter((id) => existing.has(id)));

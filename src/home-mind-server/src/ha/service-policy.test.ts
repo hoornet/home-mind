@@ -150,6 +150,9 @@ describe("notifyRefusal", () => {
       expect(notifyRefusal("mobile_app_phone", { message })).toMatch(/command to the phone/);
     }
     expect(notifyRefusal("mobile_app_phone", { message: "{{ 'x' }}" })).toMatch(/plain text/);
+    expect(
+      notifyRefusal("mobile_app_phone", { message: "{% if false %} hello {% else %}{{ 'x' }}{% endif %}" })
+    ).toMatch(/statements/);
   });
 
   it("lets an ordinary message through, templated or not", () => {

@@ -539,6 +539,16 @@ describe("HomeAssistantClient and the Assist exposure list", () => {
       await expect(
         client.callServiceAsAssistant("script", "good_night", undefined, { light: "light.kitchen_table_1" })
       ).rejects.toThrow(/light\.kitchen_table_1 is not available to you/);
+      await expect(
+        client.callServiceAsAssistant("script", "turn_on", "script.good_night", {
+          variables: { entity_id: "light.kitchen_table_1" },
+        })
+      ).rejects.toThrow(/light\.kitchen_table_1 is not available to you/);
+      await expect(
+        client.callServiceAsAssistant("script", "turn_on", "script.good_night", {
+          variables: { area_id: "kitchen" },
+        })
+      ).rejects.toThrow(/Targeting by area_id is not available/);
       expect(posted("script/")).toBe(false);
     });
 
