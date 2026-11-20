@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { scryptSync, timingSafeEqual } from "node:crypto";
 import { accessSync, constants, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
@@ -9,7 +9,7 @@ import { dirname } from "node:path";
  * Enforcing it from the first start would lock out every integration set up
  * before it existed, so it is enforced from the first request that carries
  * it: that proves the integration has it. A fingerprint of the token is
- * written to `confirmedPath`, so enforcement survives restarts, and a new
+ * written to `confirmedPath` (scrypt, in case the token is one a person chose), so enforcement survives restarts, and a new
  * token starts out unconfirmed again. Until then the API behaves as it always
  * has.
  */
@@ -31,8 +31,9 @@ function matches(provided: string, token: string): boolean {
   return providedBuf.length === tokenBuf.length && timingSafeEqual(providedBuf, tokenBuf);
 }
 
+/** What is stored to say which token is in use; the token itself never is. */
 function fingerprint(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
+  return scryptSync(token, "home-mind-api-token", 32).toString("hex");
 }
 
 /** Whether this automatic token was confirmed on an earlier run. */

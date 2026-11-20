@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { API_TOKEN_NOTIFICATION_ID, postApiTokenNotice } from "./api-token-notice.js";
+import { UNPROTECTED_API_NOTIFICATION_ID, postApiTokenNotice } from "./api-token-notice.js";
 
 describe("postApiTokenNotice", () => {
   it("tells the user while the integration does not use the token", async () => {
@@ -10,7 +10,7 @@ describe("postApiTokenNotice", () => {
       "persistent_notification",
       "create",
       undefined,
-      expect.objectContaining({ notification_id: API_TOKEN_NOTIFICATION_ID })
+      expect.objectContaining({ notification_id: UNPROTECTED_API_NOTIFICATION_ID })
     );
     vi.restoreAllMocks();
   });
@@ -19,7 +19,7 @@ describe("postApiTokenNotice", () => {
     const ha = { callService: vi.fn().mockResolvedValue(undefined) };
     await postApiTokenNotice(ha, () => true);
     expect(ha.callService).toHaveBeenCalledWith("persistent_notification", "dismiss", undefined, {
-      notification_id: API_TOKEN_NOTIFICATION_ID,
+      notification_id: UNPROTECTED_API_NOTIFICATION_ID,
     });
   });
 });

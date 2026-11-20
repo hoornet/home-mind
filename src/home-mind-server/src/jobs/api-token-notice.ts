@@ -6,9 +6,9 @@ import type { HomeAssistantClient } from "../ha/client.js";
  * API is open as before, so the user is told, and told what to do.
  */
 
-export const API_TOKEN_NOTIFICATION_ID = "home_mind_api_unprotected";
+export const UNPROTECTED_API_NOTIFICATION_ID = "home_mind_api_unprotected";
 
-export const API_TOKEN_MESSAGE = {
+export const UNPROTECTED_API_NOTICE = {
   title: "Home Mind's API is not protected yet",
   message:
     "Home Mind has an API token, but the Home Mind integration in Home Assistant is not using " +
@@ -26,13 +26,13 @@ type Notifier = Pick<HomeAssistantClient, "callService">;
 export async function postApiTokenNotice(ha: Notifier, confirmed: () => boolean): Promise<void> {
   if (confirmed()) {
     await ha.callService("persistent_notification", "dismiss", undefined, {
-      notification_id: API_TOKEN_NOTIFICATION_ID,
+      notification_id: UNPROTECTED_API_NOTIFICATION_ID,
     });
     return;
   }
   await ha.callService("persistent_notification", "create", undefined, {
-    notification_id: API_TOKEN_NOTIFICATION_ID,
-    ...API_TOKEN_MESSAGE,
+    notification_id: UNPROTECTED_API_NOTIFICATION_ID,
+    ...UNPROTECTED_API_NOTICE,
   });
   console.log("[auth] The integration does not use the API token yet: posted a notification");
 }

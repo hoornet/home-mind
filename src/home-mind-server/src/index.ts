@@ -4,7 +4,7 @@ import cors from "cors";
 import { createRequire } from "module";
 import { loadConfig } from "./config.js";
 import { createAuthMiddleware, type AutomaticToken } from "./api/auth.js";
-import { API_TOKEN_NOTIFICATION_ID, scheduleApiTokenNotice } from "./jobs/api-token-notice.js";
+import { UNPROTECTED_API_NOTIFICATION_ID, scheduleApiTokenNotice } from "./jobs/api-token-notice.js";
 import { JSON_BODY_OPTIONS } from "./api/json-body.js";
 
 // Read version from package.json
@@ -135,7 +135,7 @@ const automaticToken: AutomaticToken | undefined =
         confirmedPath: config.apiTokenStatePath,
         onConfirmed: () => {
           ha.callService("persistent_notification", "dismiss", undefined, {
-            notification_id: API_TOKEN_NOTIFICATION_ID,
+            notification_id: UNPROTECTED_API_NOTIFICATION_ID,
           }).catch(() => {});
         },
       }
