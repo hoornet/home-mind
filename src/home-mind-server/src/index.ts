@@ -3,7 +3,8 @@ import express from "express";
 import cors from "cors";
 import { createRequire } from "module";
 import { loadConfig } from "./config.js";
-import { createAuthMiddleware } from "./api/auth.js";
+import { automaticTokenConfirmed, createAuthMiddleware, type AutomaticToken } from "./api/auth.js";
+import { API_TOKEN_NOTIFICATION_ID, scheduleApiTokenNotice } from "./jobs/api-token-notice.js";
 import { JSON_BODY_OPTIONS } from "./api/json-body.js";
 
 // Read version from package.json
@@ -125,9 +126,33 @@ if (config.corsOrigins) {
 // Refuses compressed bodies before the token check: see api/json-body.ts.
 app.use(express.json(JSON_BODY_OPTIONS));
 
-// API token auth (only when API_TOKEN is configured)
-const authMiddleware = createAuthMiddleware(config.apiToken);
+// API token auth: API_TOKEN is enforced from the start, a generated
+// API_TOKEN_AUTO from the first request that carries it (see api/auth.ts).
+const automaticToken: AutomaticToken | undefined =
+  !config.apiToken && config.apiTokenAuto
+    ? {
+        token: config.apiTokenAuto,
+        confirmedPath: config.apiTokenStatePath,
+        onConfirmed: () => {
+          ha.callService("persistent_notification", "dismiss", undefined, {
+            notification_id: API_TOKEN_NOTIFICATION_ID,
+          }).catch(() => {});
+        },
+      }
+    : undefined;
+const authMiddleware = createAuthMiddleware(config.apiToken, automaticToken);
 app.use("/api", authMiddleware);
+console.log(
+  `  API token: ${
+    config.apiToken
+      ? "required"
+      : automaticToken
+        ? automaticTokenConfirmed(automaticToken)
+          ? "required (generated, in use by the integration)"
+          : "generated, not yet used by the integration: the API stays open until it is"
+        : "none: anything that can reach the port can use the API"
+  }`
+);
 
 // Add request logging
 app.use((req, res, next) => {
@@ -183,6 +208,12 @@ cleanupJob.start();
 
 // With the tools bounded, a home that exposes nothing gives the assistant
 // nothing to reach; tell the user why rather than leave Home Mind looking broken.
+// A generated token protects nothing until the integration uses it: say so.
+const auto = automaticToken;
+const cancelApiTokenNotice = auto
+  ? scheduleApiTokenNotice(ha, () => automaticTokenConfirmed(auto))
+  : () => {};
+
 const cancelExposureNotice = config.toolsFromExposed
   ? scheduleNothingExposedNotice(ha, exposure)
   : () => {};
@@ -192,6 +223,7 @@ process.on("SIGTERM", () => {
   console.log("Shutting down...");
   cleanupJob.stop();
   cancelExposureNotice();
+  cancelApiTokenNotice();
   conversations.close();
   memory.close();
   process.exit(0);
@@ -201,6 +233,7 @@ process.on("SIGINT", () => {
   console.log("Shutting down...");
   cleanupJob.stop();
   cancelExposureNotice();
+  cancelApiTokenNotice();
   conversations.close();
   memory.close();
   process.exit(0);

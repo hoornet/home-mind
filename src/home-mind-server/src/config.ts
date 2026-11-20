@@ -81,7 +81,10 @@ const ConfigSchema = z
 
     // App / API access
     corsOrigins: z.string().optional(), // Comma-separated origins, e.g. "http://localhost:5173,https://app.example.com"
-    apiToken: z.string().optional(), // Bearer token for API auth (when unset, no auth enforced)
+    apiToken: z.string().optional(), // Bearer token for API auth, set by the user: enforced from the start
+    // Generated token (add-on, deploy.sh): enforced from the first request that carries it
+    apiTokenAuto: z.string().optional(),
+    apiTokenStatePath: z.string().default("/data/.api_token_confirmed"),
 
     // Speech-to-text (for HomeMind App)
     sttProvider: z.enum(["openai", "none"]).default("none"),
@@ -150,6 +153,8 @@ export function loadConfig(): Config {
     toolsFromExposed: emptyToUndefined(process.env.TOOLS_FROM_EXPOSED),
     corsOrigins: emptyToUndefined(process.env.CORS_ORIGINS),
     apiToken: emptyToUndefined(process.env.API_TOKEN),
+    apiTokenAuto: emptyToUndefined(process.env.API_TOKEN_AUTO),
+    apiTokenStatePath: emptyToUndefined(process.env.API_TOKEN_STATE_PATH),
     sttProvider: emptyToUndefined(process.env.STT_PROVIDER),
     sttApiKey: emptyToUndefined(process.env.STT_API_KEY),
     sttBaseUrl: emptyToUndefined(process.env.STT_BASE_URL),

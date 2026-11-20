@@ -91,6 +91,19 @@ export_option 'device_overrides' 'DEVICE_OVERRIDES'
 export_bool 'layout_from_exposed' 'LAYOUT_FROM_EXPOSED'
 export_bool 'tools_from_exposed' 'TOOLS_FROM_EXPOSED'
 export_option 'api_token' 'API_TOKEN'
+
+# A token set in the options is required from the start. Without one, the
+# add-on generates a token once and keeps it in /data; the server requires it
+# from the first request that carries it, so an integration set up before the
+# token existed keeps working until it picks the token up through discovery.
+if ! bashio::config.has_value 'api_token'; then
+    if [ ! -s /data/.api_token ]; then
+        head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n' > /data/.api_token
+        chmod 600 /data/.api_token
+    fi
+    export API_TOKEN_AUTO="$(cat /data/.api_token)"
+    export API_TOKEN_STATE_PATH="/data/.api_token_confirmed"
+fi
 export_option 'cors_origins' 'CORS_ORIGINS'
 export_option 'stt_api_key' 'STT_API_KEY'
 export_option 'stt_base_url' 'STT_BASE_URL'
@@ -122,8 +135,12 @@ fi
 (
     for _ in $(seq 1 60); do
         if curl -fsS "http://127.0.0.1:${PORT}/api/health" > /dev/null 2>&1; then
-            if bashio::discovery "home_mind" \
-                "{\"host\": \"$(hostname)\", \"port\": ${PORT}}" > /dev/null; then
+            # The token in effect goes with the announcement, so the
+            # integration can send it without the user typing it in.
+            payload=$(jq -nc --arg host "$(hostname)" --argjson port "${PORT}" \
+                --arg token "${API_TOKEN:-${API_TOKEN_AUTO:-}}" \
+                '{host: $host, port: $port} + (if $token == "" then {} else {api_token: $token} end)')
+            if bashio::discovery "home_mind" "${payload}" > /dev/null; then
                 bashio::log.info "Announced to Home Assistant for discovery"
             else
                 bashio::log.warning \

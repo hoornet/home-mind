@@ -72,6 +72,8 @@ services:
       - DEVICE_OVERRIDES=${DEVICE_OVERRIDES:-}
       - CORS_ORIGINS=${CORS_ORIGINS:-}
       - API_TOKEN=${API_TOKEN:-}
+      - API_TOKEN_AUTO=${API_TOKEN_AUTO:-}
+      - API_TOKEN_STATE_PATH=/data/.api_token_confirmed
       - STT_PROVIDER=${STT_PROVIDER:-none}
       - STT_API_KEY=${STT_API_KEY:-}
       - STT_BASE_URL=${STT_BASE_URL:-}

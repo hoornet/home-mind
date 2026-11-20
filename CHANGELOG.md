@@ -2,6 +2,13 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.21.0] - 2026-11-20
+
+### Security (api/auth.ts, add-on, scripts/deploy.sh)
+- **The API gets a token by default.** If you haven't set `API_TOKEN` (`api_token` in the add-on), the add-on, or `scripts/deploy.sh` for Docker, now creates one. The server requires it from the first request that carries it, so nothing stops working on the day you update: the Home Mind integration 0.11.0 or later picks the token up from the add-on by itself and starts using it, and from then on requests without it are refused. Until that happens, Home Assistant shows a notification saying the API is not protected yet.
+- If you added the integration by hand (Docker, or the add-on without discovery), enter the token there: for Docker it is `API_TOKEN_AUTO` in your `.env`; for the add-on, set your own `api_token` and use the same one in the integration. A token you set yourself is required from the start, as before.
+- If you use the HomeMind app, give it the same token.
+
 ## [0.20.3] - 2026-11-20
 
 A security update; we recommend installing it.
