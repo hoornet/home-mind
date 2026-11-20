@@ -35,45 +35,68 @@ type Notice = { title: string; message: string };
 
 type Notifier = Pick<HomeAssistantClient, "callService">;
 
-/** Post the notice while the token is unconfirmed (or absent), clear it once it is in use. */
+/**
+ * Post the notice while the token is unconfirmed (or absent), clear it once
+ * it is in use. Returns whether the notice was posted.
+ */
 export async function postApiTokenNotice(
   ha: Notifier,
   confirmed: () => boolean,
   notice: Notice = UNPROTECTED_API_NOTICE
-): Promise<void> {
+): Promise<boolean> {
   if (confirmed()) {
     await ha.callService("persistent_notification", "dismiss", undefined, {
       notification_id: UNPROTECTED_API_NOTIFICATION_ID,
     });
-    return;
+    return false;
   }
   await ha.callService("persistent_notification", "create", undefined, {
     notification_id: UNPROTECTED_API_NOTIFICATION_ID,
     ...notice,
   });
   console.log("[auth] The API is not protected yet: posted a notification in Home Assistant");
+  return true;
 }
 
 /**
  * Check a few minutes after startup, once Home Assistant and the integration
- * have had time to connect. Returns a function that cancels it.
+ * have had time to connect, and again every `repeatMs` while the API is not
+ * protected: Home Assistant forgets notifications when it restarts, and the
+ * notice is the only reminder. Stops once the token is in use. Returns a
+ * function that cancels it.
  */
 export function scheduleApiTokenNotice(
   ha: Notifier,
   confirmed: () => boolean,
-  { delayMs = 5 * 60_000, retryMs = 5 * 60_000, attempts = 6, notice = UNPROTECTED_API_NOTICE } = {}
+  {
+    delayMs = 5 * 60_000,
+    retryMs = 5 * 60_000,
+    attempts = 6,
+    repeatMs = 6 * 60 * 60_000,
+    notice = UNPROTECTED_API_NOTICE,
+  } = {}
 ): () => void {
   let timer: NodeJS.Timeout | null = null;
+  let cancelled = false;
   let left = attempts;
-  const run = () => {
-    left--;
-    postApiTokenNotice(ha, confirmed, notice).catch((err) => {
-      console.warn(`[auth] Could not post the API token notice: ${String(err)}`);
-      if (left > 0) timer = setTimeout(run, retryMs);
-    });
+  const later = (ms: number) => {
+    if (!cancelled) timer = setTimeout(run, ms);
   };
-  timer = setTimeout(run, delayMs);
+  const run = () => {
+    postApiTokenNotice(ha, confirmed, notice)
+      .then((posted) => {
+        left = attempts;
+        if (posted) later(repeatMs);
+      })
+      .catch((err) => {
+        console.warn(`[auth] Could not post the API token notice: ${String(err)}`);
+        left--;
+        later(left > 0 ? retryMs : repeatMs);
+      });
+  };
+  later(delayMs);
   return () => {
+    cancelled = true;
     if (timer) clearTimeout(timer);
     timer = null;
   };
