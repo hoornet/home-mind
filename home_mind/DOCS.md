@@ -85,7 +85,7 @@ existing Assist pipeline and needs none of this.
 
 | Option | Description |
 |---|---|
-| `api_token` | Bearer token required on `/api` requests from the start. Leave it empty and the add-on creates a token itself and hands it to the Home Mind integration (0.11.0 or later) through discovery; the API requires that token from the first request that uses it, and until then Home Assistant shows a notification. If you added the integration by hand, set your own token here and enter it there. |
+| `api_token` | Bearer token required on `/api` requests from the start. Leave it empty and the add-on creates a token itself and hands it to the Home Mind integration (0.11.0 or later) through discovery; the API requires that token from the first request that uses it, and until then Home Assistant shows a notification. If you added the integration by hand, set your own token here and enter it there. Set your own token too if anything else talks to the add-on directly, such as the HomeMind app: you can't see the generated one, and the add-on hands yours to the integration by itself. |
 | `cors_origins` | Comma-separated origins, needed when a browser client calling the API is served from another origin. |
 
 ### Advanced: a different Home Assistant

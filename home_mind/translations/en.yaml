@@ -107,7 +107,8 @@ configuration:
       Bearer token required on API requests from the start. Leave empty and
       the add-on creates a token itself and hands it to the Home Mind
       integration (0.11.0 or later); the API requires it once the
-      integration has used it.
+      integration has used it. Set your own if anything else, such as the
+      HomeMind app, talks to the add-on directly.
   cors_origins:
     name: CORS origins
     description: >-

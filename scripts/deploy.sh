@@ -34,6 +34,17 @@ env_value() {
         | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
 
+# 32 random bytes as hex; stops the deploy rather than save an empty secret.
+generate_secret() {
+    local secret
+    secret=$(openssl rand -hex 32) || true
+    if [ ${#secret} -ne 64 ]; then
+        echo "ERROR: could not generate a random key. Is openssl installed?" >&2
+        exit 1
+    fi
+    echo "$secret"
+}
+
 # Set a variable in .env, replacing any line that already sets it.
 set_env_value() {
     if grep -q "^$1=" "$PROJECT_DIR/.env"; then
@@ -46,7 +57,8 @@ set_env_value() {
 # Auto-generate SHODH_API_KEY if not set
 SHODH_API_KEY=$(env_value SHODH_API_KEY)
 if [ -z "$SHODH_API_KEY" ] || [ "$SHODH_API_KEY" = "your-shodh-api-key" ]; then
-    set_env_value SHODH_API_KEY "$(openssl rand -hex 32)"
+    SECRET=$(generate_secret)
+    set_env_value SHODH_API_KEY "$SECRET"
     echo "Generated SHODH_API_KEY automatically"
 fi
 
@@ -54,7 +66,8 @@ fi
 # it from the first request that carries it, so an integration set up without
 # a token keeps working until it is given this one.
 if [ -z "$(env_value API_TOKEN)" ] && [ -z "$(env_value API_TOKEN_AUTO)" ]; then
-    set_env_value API_TOKEN_AUTO "$(openssl rand -hex 32)"
+    SECRET=$(generate_secret)
+    set_env_value API_TOKEN_AUTO "$SECRET"
     echo "Generated an API token (API_TOKEN_AUTO in .env). The API requires it from the first"
     echo "request that uses it. A Home Mind integration added without it keeps working until then;"
     echo "to protect the API, remove the integration in Home Assistant and add it again with this token."
