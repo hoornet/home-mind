@@ -22,7 +22,7 @@ export const UNPROTECTED_API_NOTICE = {
     "Docker, use `API_TOKEN_AUTO` from your `.env` file.",
 };
 
-export const NO_API_TOKEN_NOTICE = {
+export const OPEN_API_NOTICE = {
   title: "Home Mind's API has no token",
   message:
     "Home Mind runs without an API token, so anything on your network can talk to it.\n\n" +
@@ -51,7 +51,7 @@ export async function postApiTokenNotice(
     notification_id: UNPROTECTED_API_NOTIFICATION_ID,
     ...notice,
   });
-  console.log(`[auth] ${notice.title}: posted a notification`);
+  console.log("[auth] The API is not protected yet: posted a notification in Home Assistant");
 }
 
 /**

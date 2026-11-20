@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import {
-  NO_API_TOKEN_NOTICE,
+  OPEN_API_NOTICE,
   UNPROTECTED_API_NOTIFICATION_ID,
   postApiTokenNotice,
 } from "./api-token-notice.js";
@@ -22,12 +22,12 @@ describe("postApiTokenNotice", () => {
   it("tells the user when the server has no token at all", async () => {
     vi.spyOn(console, "log").mockImplementation(() => {});
     const ha = { callService: vi.fn().mockResolvedValue(undefined) };
-    await postApiTokenNotice(ha, () => false, NO_API_TOKEN_NOTICE);
+    await postApiTokenNotice(ha, () => false, OPEN_API_NOTICE);
     expect(ha.callService).toHaveBeenCalledWith("persistent_notification", "create", undefined, {
       notification_id: UNPROTECTED_API_NOTIFICATION_ID,
-      ...NO_API_TOKEN_NOTICE,
+      ...OPEN_API_NOTICE,
     });
-    expect(NO_API_TOKEN_NOTICE.message).toContain("scripts/deploy.sh");
+    expect(OPEN_API_NOTICE.message).toContain("scripts/deploy.sh");
     vi.restoreAllMocks();
   });
 

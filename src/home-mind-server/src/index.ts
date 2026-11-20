@@ -4,7 +4,7 @@ import { createRequire } from "module";
 import { loadConfig } from "./config.js";
 import { createAuthMiddleware, type AutomaticToken } from "./api/auth.js";
 import {
-  NO_API_TOKEN_NOTICE,
+  OPEN_API_NOTICE,
   UNPROTECTED_API_NOTIFICATION_ID,
   scheduleApiTokenNotice,
 } from "./jobs/api-token-notice.js";
@@ -190,7 +190,7 @@ cleanupJob.start();
 // With a token of the user's own it is enforced from the start, and the check
 // clears a notice left from before it was set. With no token at all, say that.
 const cancelApiTokenNotice = scheduleApiTokenNotice(ha, () => authMiddleware.enforced(), {
-  notice: config.apiToken || automaticToken ? undefined : NO_API_TOKEN_NOTICE,
+  notice: config.apiToken || automaticToken ? undefined : OPEN_API_NOTICE,
 });
 
 const cancelExposureNotice = config.toolsFromExposed
