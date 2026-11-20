@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.0
+
+- **The "not protected yet" reminder comes back every 6 hours while it applies.** Home Assistant forgets notifications when it restarts; the reminder now returns until the Home Mind integration uses the API token, and stops then.
+- **The speech-to-text, text-to-speech and CORS options are removed.** They served a companion app that was never released; voice through Assist is unaffected and works as before. If you had set any of them, the Supervisor log mentions that each one no longer exists, which is harmless. Server 0.22.0; no settings to change.
+
 ## 0.21.0
 
 - **The add-on now protects its API with a token by itself.** If you haven't set `api_token`, the add-on creates one and hands it to the Home Mind integration. Update the integration in HACS to 0.11.0 and restart Home Assistant: it picks the token up and starts using it, and from then on the API refuses requests without it. Until then a notification says the API is not protected yet, and everything works as before.
