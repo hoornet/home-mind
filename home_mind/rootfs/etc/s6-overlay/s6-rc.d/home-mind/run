@@ -98,8 +98,7 @@ export_option 'api_token' 'API_TOKEN'
 # token existed keeps working until it picks the token up through discovery.
 if ! bashio::config.has_value 'api_token'; then
     if [ ! -s /data/.api_token ]; then
-        head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n' > /data/.api_token
-        chmod 600 /data/.api_token
+        (umask 077 && head -c 32 /dev/urandom | od -An -v -tx1 | tr -d ' \n' > /data/.api_token)
     fi
     export API_TOKEN_AUTO="$(cat /data/.api_token)"
     export API_TOKEN_STATE_PATH="/data/.api_token_confirmed"

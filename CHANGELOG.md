@@ -5,9 +5,11 @@ All notable changes to Home Mind are documented here.
 ## [0.21.0] - 2026-11-20
 
 ### Security (api/auth.ts, add-on, scripts/deploy.sh)
-- **The API gets a token by default.** If you haven't set `API_TOKEN` (`api_token` in the add-on), the add-on, or `scripts/deploy.sh` for Docker, now creates one. The server requires it from the first request that carries it, so nothing stops working on the day you update: the Home Mind integration 0.11.0 or later picks the token up from the add-on by itself and starts using it, and from then on requests without it are refused. Until that happens, Home Assistant shows a notification saying the API is not protected yet.
-- If you added the integration by hand (Docker, or the add-on without discovery), enter the token there: for Docker it is `API_TOKEN_AUTO` in your `.env`; for the add-on, set your own `api_token` and use the same one in the integration. A token you set yourself is required from the start, as before.
-- If you use the HomeMind app, give it the same token.
+- **The API gets a token by default.** If you haven't set `API_TOKEN` (`api_token` in the add-on), the add-on, or `scripts/deploy.sh` for Docker, now creates one. The server requires it from the first request that carries it, so nothing stops working on the day you update: the Home Mind integration 0.11.0 or later picks the token up from the add-on by itself and uses it as soon as Home Assistant has restarted, and from then on requests without it are refused. Until that happens, Home Assistant shows a notification saying the API is not protected yet, and a client that still sends a token from an earlier setup keeps working too.
+- If you added the integration by hand (Docker, or the add-on without discovery), remove it and add it again with the token: for Docker it is `API_TOKEN_AUTO` in your `.env`; for the add-on, accept the discovered add-on, or set your own `api_token` and use the same one in the integration. A token you set yourself is required from the start, as before.
+- **Docker Compose:** the server records that the token is in use in a new `server_state` volume, so `docker-compose.yml` changed; `scripts/deploy.sh` (or `docker compose up -d`) creates the volume. `deploy.sh` also makes `.env` readable by its owner only, since it holds your Home Assistant token.
+- If you use the HomeMind app, enter the same token in its settings. Don't put it in `VITE_DEFAULT_API_TOKEN`: that is built into the app's JavaScript, which anyone who can open the app can read.
+- Refused requests (401 and 403) now show up in the request log, and `API_TOKEN` is read without surrounding spaces.
 
 ## [0.20.3] - 2026-11-20
 

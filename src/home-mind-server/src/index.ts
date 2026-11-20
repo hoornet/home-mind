@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import { createRequire } from "module";
 import { loadConfig } from "./config.js";
-import { automaticTokenConfirmed, createAuthMiddleware, type AutomaticToken } from "./api/auth.js";
+import { createAuthMiddleware, type AutomaticToken } from "./api/auth.js";
 import { API_TOKEN_NOTIFICATION_ID, scheduleApiTokenNotice } from "./jobs/api-token-notice.js";
 import { JSON_BODY_OPTIONS } from "./api/json-body.js";
 
@@ -140,21 +140,7 @@ const automaticToken: AutomaticToken | undefined =
         },
       }
     : undefined;
-const authMiddleware = createAuthMiddleware(config.apiToken, automaticToken);
-app.use("/api", authMiddleware);
-console.log(
-  `  API token: ${
-    config.apiToken
-      ? "required"
-      : automaticToken
-        ? automaticTokenConfirmed(automaticToken)
-          ? "required (generated, in use by the integration)"
-          : "generated, not yet used by the integration: the API stays open until it is"
-        : "none: anything that can reach the port can use the API"
-  }`
-);
-
-// Add request logging
+// Log every request, refused ones included
 app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
@@ -163,6 +149,20 @@ app.use((req, res, next) => {
   });
   next();
 });
+
+const authMiddleware = createAuthMiddleware(config.apiToken, automaticToken);
+app.use("/api", authMiddleware);
+console.log(
+  `  API token: ${
+    config.apiToken
+      ? "required"
+      : automaticToken
+        ? authMiddleware.enforced()
+          ? "required (generated, in use by the integration)"
+          : "generated, not yet used by the integration: the API stays open until it is"
+        : "none: anything that can reach the port can use the API"
+  }`
+);
 
 // Mount API routes
 app.use("/api", createRouter(llm, memory, "shodh", version, config.customPrompt, conversations, stt ?? undefined, tts ?? undefined));
@@ -209,9 +209,8 @@ cleanupJob.start();
 // With the tools bounded, a home that exposes nothing gives the assistant
 // nothing to reach; tell the user why rather than leave Home Mind looking broken.
 // A generated token protects nothing until the integration uses it: say so.
-const auto = automaticToken;
-const cancelApiTokenNotice = auto
-  ? scheduleApiTokenNotice(ha, () => automaticTokenConfirmed(auto))
+const cancelApiTokenNotice = automaticToken
+  ? scheduleApiTokenNotice(ha, () => authMiddleware.enforced())
   : () => {};
 
 const cancelExposureNotice = config.toolsFromExposed

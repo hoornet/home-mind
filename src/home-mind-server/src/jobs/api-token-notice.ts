@@ -13,10 +13,11 @@ export const API_TOKEN_MESSAGE = {
   message:
     "Home Mind has an API token, but the Home Mind integration in Home Assistant is not using " +
     "it yet, so anything on your network can still talk to Home Mind.\n\n" +
-    "Update the Home Mind integration in HACS to 0.11.0 or later and restart Home Assistant; " +
-    "it picks the token up by itself. If you added the integration by hand, remove it and add " +
-    "it again with a token: for the add-on, set your own `api_token` in its options and restart " +
-    "it; for Docker, use `API_TOKEN_AUTO` from your `.env` file.",
+    "With the add-on, update the Home Mind integration in HACS to 0.11.0 or later and restart " +
+    "Home Assistant: it picks the token up by itself and this notice goes away. If you added " +
+    "the integration by hand, remove it and add it again with a token: for the add-on, accept " +
+    "the discovered add-on, or set your own `api_token` in its options and enter that; for " +
+    "Docker, use `API_TOKEN_AUTO` from your `.env` file.",
 };
 
 type Notifier = Pick<HomeAssistantClient, "callService">;
