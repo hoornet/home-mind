@@ -3,6 +3,7 @@ import express from "express";
 import { createRequire } from "module";
 import { loadConfig } from "./config.js";
 import { createAuthMiddleware, type AutomaticToken } from "./api/auth.js";
+import { listenOrExit } from "./api/listen.js";
 import {
   OPEN_API_NOTICE,
   UNPROTECTED_API_NOTIFICATION_ID,
@@ -163,7 +164,7 @@ app.get("/", (_req, res) => {
 });
 
 // Start server
-app.listen(config.port, () => {
+listenOrExit(app, config.port, () => {
   console.log(`
 ┌─────────────────────────────────────────┐
 │      Home Mind Server Started           │
