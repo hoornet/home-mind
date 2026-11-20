@@ -58,6 +58,15 @@ function stateDirectoryWritable(auto: AutomaticToken): boolean {
 const BEARER = /^Bearer\s+(\S+)$/i;
 
 /**
+ * Set to `invalid` on a request that passed with a token that is not the API
+ * token, which happens only while the generated token is not in use yet. A
+ * client being set up can tell the user about a typo from it; a client that
+ * still holds an older token keeps working. It reveals nothing a request
+ * could not get anyway while the API is open.
+ */
+export const TOKEN_STATUS_HEADER = "X-Home-Mind-Token";
+
+/**
  * Creates a bearer token auth middleware.
  *
  * - `token` (API_TOKEN, set by the user): every request except the health
@@ -67,7 +76,7 @@ const BEARER = /^Bearer\s+(\S+)$/i;
  *   A request with some other token passes too while unconfirmed: a client may
  *   still hold a token from an earlier setup, and refusing it would stop it
  *   on the day of the update without protecting anything, since leaving the
- *   header out gets in.
+ *   header out gets in. Such a response carries `TOKEN_STATUS_HEADER`.
  * - Neither: every request passes.
  */
 export function createAuthMiddleware(token: string | undefined, auto?: AutomaticToken): AuthMiddleware {
@@ -97,6 +106,7 @@ export function createAuthMiddleware(token: string | undefined, auto?: Automatic
 
     if (!matches(provided, expected)) {
       if (!enforced) {
+        res.setHeader(TOKEN_STATUS_HEADER, "invalid");
         if (!warnedOtherToken) {
           warnedOtherToken = true;
           console.warn(

@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, mkdirSync, rmSync, existsSync, writeFileSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createAuthMiddleware, type AutomaticToken } from "./auth.js";
+import { createAuthMiddleware, TOKEN_STATUS_HEADER, type AutomaticToken } from "./auth.js";
+
+let lastHeaders: Record<string, string> = {};
 
 function call(
   middleware: ReturnType<typeof createAuthMiddleware>,
@@ -10,7 +12,11 @@ function call(
   authorization?: string
 ): number {
   let status = 200;
+  lastHeaders = {};
   const res = {
+    setHeader(name: string, value: string) {
+      lastHeaders[name] = value;
+    },
     status(code: number) {
       status = code;
       return { json: () => undefined };
@@ -56,10 +62,14 @@ describe("createAuthMiddleware", () => {
 
     expect(call(mw, "/memory/u")).toBe(200); // not yet in use: open, as before
     expect(call(mw, "/memory/u", "Bearer leftover")).toBe(200); // an old client's token still gets in
+    expect(lastHeaders[TOKEN_STATUS_HEADER]).toBe("invalid"); // flagged, so a setup can report a typo
+    expect(call(mw, "/memory/u")).toBe(200);
+    expect(lastHeaders[TOKEN_STATUS_HEADER]).toBeUndefined();
     expect(existsSync(auto.confirmedPath)).toBe(false); // but confirms nothing
     expect(mw.enforced()).toBe(false);
 
     expect(call(mw, "/memory/u", "Bearer generated")).toBe(200);
+    expect(lastHeaders[TOKEN_STATUS_HEADER]).toBeUndefined();
     expect(existsSync(auto.confirmedPath)).toBe(true);
     expect(onConfirmed).toHaveBeenCalledTimes(1);
     expect(call(mw, "/memory/u")).toBe(401); // and from now on it is required
