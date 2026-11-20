@@ -5,7 +5,7 @@ All notable changes to Home Mind are documented here.
 ## [0.22.0] - 2026-11-20
 
 ### Security (jobs/api-token-notice.ts)
-- **A server with no API token at all now says so in Home Assistant.** Since 0.21.0, `scripts/deploy.sh` creates a token for Docker, but a server started another way, such as `docker compose up -d` without running `deploy.sh` once, still has none, and nothing told you. Now a notification explains how to add one: run `scripts/deploy.sh` once, or set your own `API_TOKEN`, then add the Home Mind integration again with that token. It clears itself once the token is in use.
+- **A server with no API token at all now says so in Home Assistant.** Since 0.21.0, `scripts/deploy.sh` creates a token for Docker; a server started another way, such as `docker compose up -d` without running `deploy.sh` once, runs without one. Home Assistant now shows a notification when that is the case, explaining how to add one: run `scripts/deploy.sh` once, or set your own `API_TOKEN`, then add the Home Mind integration again with that token. It clears itself once the token is in use.
 
 ### Removed (api/routes.ts, config.ts, docker-compose.yml, scripts/deploy.sh)
 - **The speech-to-text and text-to-speech endpoints (`/api/stt`, `/api/tts`), the CORS setting and the optional app container are gone.** They served a companion app that was never released, so nothing that ships with Home Mind used them. Voice through Home Assistant Assist is unaffected: it runs on your Assist pipeline's own speech engines, as before.
