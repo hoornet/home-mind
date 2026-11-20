@@ -180,7 +180,7 @@ That repository is the current, maintained integration: v0.10.1+, with a field f
 cp -r src/ha-integration/custom_components/home_mind /config/custom_components/
 ```
 
-> The copy vendored here is an older snapshot (v0.9.3) kept for offline installs. It predates API token support, so if you've set `API_TOKEN` on the server every request from it returns 401. Use HACS in that case.
+> The copy vendored here is an older snapshot (v0.9.3) kept for offline installs. It predates API token support, so once the server requires a token (`API_TOKEN`, or since 0.21.0 the generated `API_TOKEN_AUTO` after its first use) every request from it returns 401. Use HACS instead.
 
 ### 4. Configure in Home Assistant
 

@@ -30,6 +30,10 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3100/api/health || exit 1
 
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 --ingroup nodejs nodeuser
+# Where the server records that the generated API token is in use. A volume
+# mounted here takes this ownership, so the server can write it (an existing
+# /data volume is root's).
+RUN mkdir -p /state && chown nodeuser:nodejs /state
 USER nodeuser
 
 # Start server

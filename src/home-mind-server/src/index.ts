@@ -3,7 +3,8 @@ import express from "express";
 import cors from "cors";
 import { createRequire } from "module";
 import { loadConfig } from "./config.js";
-import { createAuthMiddleware } from "./api/auth.js";
+import { createAuthMiddleware, type AutomaticToken } from "./api/auth.js";
+import { UNPROTECTED_API_NOTIFICATION_ID, scheduleApiTokenNotice } from "./jobs/api-token-notice.js";
 import { JSON_BODY_OPTIONS } from "./api/json-body.js";
 
 // Read version from package.json
@@ -125,11 +126,21 @@ if (config.corsOrigins) {
 // Refuses compressed bodies before the token check: see api/json-body.ts.
 app.use(express.json(JSON_BODY_OPTIONS));
 
-// API token auth (only when API_TOKEN is configured)
-const authMiddleware = createAuthMiddleware(config.apiToken);
-app.use("/api", authMiddleware);
-
-// Add request logging
+// API token auth: API_TOKEN is enforced from the start, a generated
+// API_TOKEN_AUTO from the first request that carries it (see api/auth.ts).
+const automaticToken: AutomaticToken | undefined =
+  !config.apiToken && config.apiTokenAuto
+    ? {
+        token: config.apiTokenAuto,
+        confirmedPath: config.apiTokenStatePath,
+        onConfirmed: () => {
+          ha.callService("persistent_notification", "dismiss", undefined, {
+            notification_id: UNPROTECTED_API_NOTIFICATION_ID,
+          }).catch(() => {});
+        },
+      }
+    : undefined;
+// Log every request, refused ones included
 app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
@@ -138,6 +149,20 @@ app.use((req, res, next) => {
   });
   next();
 });
+
+const authMiddleware = createAuthMiddleware(config.apiToken, automaticToken);
+app.use("/api", authMiddleware);
+console.log(
+  `  API token: ${
+    config.apiToken
+      ? "required"
+      : automaticToken
+        ? authMiddleware.enforced()
+          ? "required (generated, in use by the integration)"
+          : "generated, not yet used by the integration: the API stays open until it is"
+        : "none: anything that can reach the port can use the API"
+  }`
+);
 
 // Mount API routes
 app.use("/api", createRouter(llm, memory, "shodh", version, config.customPrompt, conversations, stt ?? undefined, tts ?? undefined));
@@ -183,6 +208,14 @@ cleanupJob.start();
 
 // With the tools bounded, a home that exposes nothing gives the assistant
 // nothing to reach; tell the user why rather than leave Home Mind looking broken.
+// A generated token protects nothing until the integration uses it: say so.
+// With a token of the user's own it is enforced from the start, and the check
+// clears a notice left from before it was set.
+const cancelApiTokenNotice =
+  config.apiToken || automaticToken
+    ? scheduleApiTokenNotice(ha, () => authMiddleware.enforced())
+    : () => {};
+
 const cancelExposureNotice = config.toolsFromExposed
   ? scheduleNothingExposedNotice(ha, exposure)
   : () => {};
@@ -192,6 +225,7 @@ process.on("SIGTERM", () => {
   console.log("Shutting down...");
   cleanupJob.stop();
   cancelExposureNotice();
+  cancelApiTokenNotice();
   conversations.close();
   memory.close();
   process.exit(0);
@@ -201,6 +235,7 @@ process.on("SIGINT", () => {
   console.log("Shutting down...");
   cleanupJob.stop();
   cancelExposureNotice();
+  cancelApiTokenNotice();
   conversations.close();
   memory.close();
   process.exit(0);
