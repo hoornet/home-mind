@@ -1,5 +1,24 @@
 import type { Config } from "../config.js";
-import { AssistExposure, notExposedMessage } from "./exposure.js";
+import {
+  AssistExposure,
+  exposureUnavailableMessage,
+  notExposedMessage,
+  nothingExposedMessage,
+} from "./exposure.js";
+import {
+  CODE_DOMAINS,
+  SCRIPT_LIFECYCLE,
+  assertServiceName,
+  isVoiceEngine,
+  mediaRefusal,
+  normalizeEntityId,
+  notifyRefusal,
+  serviceRefusal,
+} from "./service-policy.js";
+
+/** Calls with a security code allowed per entity within `CODE_WINDOW_MS`. */
+const CODE_ATTEMPTS = 3;
+const CODE_WINDOW_MS = 10 * 60 * 1000;
 
 export interface EntityState {
   entity_id: string;
@@ -87,8 +106,40 @@ function listedEntities(value: unknown): string[] {
 /** Targets that select entities indirectly, which the exposure list cannot vet. */
 const INDIRECT_TARGETS = ["area_id", "device_id", "floor_id", "label_id"] as const;
 
-/** Lifecycle services of the script domain; any other `script.X` runs script X. */
-const SCRIPT_LIFECYCLE = new Set(["turn_on", "turn_off", "toggle", "reload"]);
+/**
+ * Entity-shaped words in a call's other fields (a script's field, an id inside
+ * a url or a message), lower-cased. Only the
+ * ones that exist are held to the exposure list.
+ */
+function mentionedEntities(payload: Record<string, unknown>): Set<string> {
+  const found = new Set<string>();
+  const walk = (value: unknown, key?: string): void => {
+    if (key === "entity_id" || (ENTITY_LIST_KEYS as readonly string[]).includes(key ?? "")) return;
+    if (typeof value === "string") {
+      // An id in a url may be percent-encoded, and Home Assistant decodes it.
+      let decoded = value;
+      try {
+        decoded = decodeURIComponent(value);
+      } catch {
+        // Not valid percent-encoding: the text as written is all there is.
+      }
+      for (const text of decoded === value ? [value] : [value, decoded]) {
+        for (const word of text.toLowerCase().match(/[a-z0-9_]+(?:\.[a-z0-9_]+)+/g) ?? []) {
+          const parts = word.split(".");
+          for (let i = 0; i + 1 < parts.length; i++) {
+            if (parts[i] !== "zone" && parts[i] !== "sun") found.add(`${parts[i]}.${parts[i + 1]}`);
+          }
+        }
+      }
+    } else if (Array.isArray(value)) {
+      value.forEach((v) => walk(v));
+    } else if (value && typeof value === "object") {
+      for (const [k, v] of Object.entries(value)) walk(v, k);
+    }
+  };
+  walk(payload);
+  return found;
+}
 
 /**
  * Lower-case and strip combining diacritics, so "Spálňa" and "spalna" compare
@@ -117,12 +168,15 @@ export class HomeAssistantClient {
   // service call. Missing or failed → looked up again next time.
   private serviceResponseTTL: number = 5 * 60 * 1000;
   private serviceResponseCache: CacheEntry<Map<string, ServiceResponseSupport>> | null = null;
+  /** When calls carrying a security code were made, by entity, for `CODE_ATTEMPTS`. */
+  private codeAttempts = new Map<string, number[]>();
 
   /**
    * @param exposure The entities the user exposed to Assist. When given, it
-   *   bounds everything the tools can read and drive — the same bound Home
-   *   Assistant's own agent puts on its tools. Omitted (or reporting "no
-   *   opinion") leaves the client unfiltered.
+   *   bounds everything the tools can read and drive, the same bound Home
+   *   Assistant's own agent puts on its tools; an empty or unread list allows
+   *   nothing. Omitted (`TOOLS_FROM_EXPOSED=false`), the client reaches every
+   *   entity.
    */
   constructor(
     config: Config,
@@ -143,8 +197,34 @@ export class HomeAssistantClient {
   private async requireExposed(...entityIds: string[]): Promise<void> {
     if (!this.exposure) return;
     for (const id of entityIds) {
-      if (!(await this.exposure.allows(id))) throw new Error(notExposedMessage(id));
+      if (await this.exposure.allows(id)) continue;
+      const unread = (await this.exposure.list()) === null;
+      throw new Error(unread ? exposureUnavailableMessage() : notExposedMessage(id));
     }
+  }
+
+  /**
+   * The entities a service call names, from `entity_id`, a nested `target`, the
+   * entity maps and lists of `ENTITY_LIST_KEYS`, and the script that
+   * `script.<name>` runs; plus the first area, device, floor or label target.
+   */
+  private serviceTargets(
+    domain: string,
+    service: string,
+    payload: Record<string, unknown>
+  ): { ids: string[]; indirect?: string } {
+    const nested =
+      payload.target && typeof payload.target === "object"
+        ? (payload.target as Record<string, unknown>)
+        : {};
+    const indirect = INDIRECT_TARGETS.find((k) => payload[k] !== undefined || nested[k] !== undefined);
+    const ids = [
+      ...targetedEntities(payload.entity_id),
+      ...targetedEntities(nested.entity_id),
+      ...ENTITY_LIST_KEYS.flatMap((k) => listedEntities(payload[k])),
+    ];
+    if (domain === "script" && !SCRIPT_LIFECYCLE.has(service)) ids.push(`script.${service}`);
+    return { ids, indirect };
   }
 
   /**
@@ -153,39 +233,31 @@ export class HomeAssistantClient {
    * Named entities are checked one by one, including a nested `target` and the
    * entity maps and lists that scenes and groups take (`ENTITY_LIST_KEYS`).
    * Area, device, floor and label targets would need resolving to know what
-   * they hit, so with an opinionated list they are refused and the model is
-   * told to name entities. A call with no target at all touches no entity in
-   * current Home Assistant, except `script.<name>`, which runs that script.
+   * they hit, so they are refused and the model is told to name entities. A
+   * call with no target at all touches no entity in current Home Assistant,
+   * except `script.<name>`, which runs that script; whether the assistant may
+   * make such a call at all is `serviceRefusal`'s question
+   * (`callServiceAsAssistant`).
    */
   private async requireExposedTargets(
     domain: string,
     service: string,
     payload: Record<string, unknown>
   ): Promise<void> {
-    if (!this.exposure || (await this.exposure.list()) === null) return;
-    const nested =
-      payload.target && typeof payload.target === "object"
-        ? (payload.target as Record<string, unknown>)
-        : {};
-    const indirect = INDIRECT_TARGETS.find((k) => payload[k] !== undefined || nested[k] !== undefined);
+    if (!this.exposure) return;
+    const { ids, indirect } = this.serviceTargets(domain, service, payload);
     if (indirect) {
       throw new Error(
         `Targeting by ${indirect} is not available to you: only entities the user exposed to the ` +
           `assistant may be controlled. Call the service with the exposed entity_ids instead.`
       );
     }
-    const ids = [
-      ...targetedEntities(payload.entity_id),
-      ...targetedEntities(nested.entity_id),
-      ...ENTITY_LIST_KEYS.flatMap((k) => listedEntities(payload[k])),
-    ];
     if (ids.includes("all")) {
       throw new Error(
         `entity_id "all" is not available to you: it reaches entities the user has not exposed. ` +
           `Call the service with the exposed entity_ids instead.`
       );
     }
-    if (domain === "script" && !SCRIPT_LIFECYCLE.has(service)) ids.push(`script.${service}`);
     await this.requireExposed(...ids);
   }
 
@@ -292,7 +364,8 @@ export class HomeAssistantClient {
   /**
    * Get state of a single entity (cached)
    */
-  async getState(entityId: string): Promise<EntityState> {
+  async getState(rawEntityId: string): Promise<EntityState> {
+    const entityId = normalizeEntityId(rawEntityId);
     await this.requireExposed(entityId);
 
     // Check individual cache first
@@ -308,7 +381,7 @@ export class HomeAssistantClient {
     }
 
     // Fetch individual entity
-    const state = await this.fetch<EntityState>(`/api/states/${entityId}`);
+    const state = await this.fetch<EntityState>(`/api/states/${encodeURIComponent(entityId)}`);
     this.entityCache.set(entityId, { data: state, timestamp: Date.now() });
     return state;
   }
@@ -355,6 +428,82 @@ export class HomeAssistantClient {
   }
 
   /**
+   * A service call the assistant asked for. Everything `callService` checks,
+   * plus what the assistant may call at all (`serviceRefusal`): no system
+   * services, and no call that names nothing it acts on, except the few meant
+   * to be called that way. The server's own calls (its notifications) go
+   * through `callService` and are not limited.
+   */
+  async callServiceAsAssistant(
+    domain: string,
+    service: string,
+    entityId?: string,
+    data?: Record<string, unknown>
+  ): Promise<EntityState[] | ServiceCallWithResponse> {
+    assertServiceName(domain, service);
+    const payload: Record<string, unknown> = { ...data };
+    if (entityId) payload.entity_id = entityId;
+    const { ids, indirect } = this.serviceTargets(domain, service, payload);
+    const targeted = ids.some((id) => !isVoiceEngine(id.toLowerCase())) || indirect !== undefined;
+    const refusal =
+      serviceRefusal(domain, service, targeted) ??
+      (domain === "notify" ? notifyRefusal(service, payload) : null) ??
+      mediaRefusal(payload, service === "browse_media" || service === "search_media");
+    if (refusal) throw new Error(refusal);
+    // Before anything is awaited: the model's calls run in parallel, and each
+    // must see the attempts the others have already taken.
+    this.takeCodeAttempt(domain, payload, ids, indirect);
+    if (this.exposure) {
+      // A call that names nothing still acts for the household: with nothing
+      // exposed, or the list unread, the assistant may do nothing at all.
+      if (!targeted) {
+        const exposed = await this.exposure.list();
+        if (exposed === null) throw new Error(exposureUnavailableMessage());
+        if (exposed.size === 0) throw new Error(nothingExposedMessage());
+      }
+      const mentioned = mentionedEntities(payload);
+      if (mentioned.size > 0) {
+        const existing = new Set((await this.getAllStatesCached()).map((s) => s.entity_id));
+        await this.requireExposed(...[...mentioned].filter((id) => existing.has(id)));
+      }
+    }
+    return this.callService(domain, service, entityId, data);
+  }
+
+  /**
+   * A code is often all that guards an alarm or a lock, and many answer a wrong
+   * one without an error, so every call that carries a code counts: a few per
+   * entity within `CODE_WINDOW_MS`, then no more. Throws when none is left.
+   */
+  private takeCodeAttempt(
+    domain: string,
+    payload: Record<string, unknown>,
+    ids: string[],
+    indirect: string | undefined
+  ): void {
+    if (!CODE_DOMAINS.has(domain) || payload.code === undefined) return;
+    const keys = ids.map((id) => id.trim().toLowerCase());
+    if (keys.length === 0 || indirect !== undefined) {
+      throw new Error(
+        `A security code can only be sent to a named alarm or lock, not to an area or device. ` +
+          `Call it again with the entity_id.`
+      );
+    }
+    const now = Date.now();
+    for (const key of keys) {
+      const recent = (this.codeAttempts.get(key) ?? []).filter((t) => now - t < CODE_WINDOW_MS);
+      this.codeAttempts.set(key, recent);
+      if (recent.length >= CODE_ATTEMPTS) {
+        throw new Error(
+          `${key} has been sent a code ${CODE_ATTEMPTS} times in the last few minutes, so you ` +
+            `can't send another now. Tell the user to use Home Assistant or the device itself.`
+        );
+      }
+    }
+    for (const key of keys) this.codeAttempts.get(key)!.push(now);
+  }
+
+  /**
    * Call a Home Assistant service (invalidates cache)
    */
   async callService(
@@ -370,6 +519,7 @@ export class HomeAssistantClient {
     // never by the caller. A `return_response` key inside `data` is accepted as
     // a hint (it is not a service field, so it is stripped from the payload) and
     // can only ADD the parameter for a service the catalog doesn't know.
+    assertServiceName(domain, service);
     const payload: Record<string, unknown> = { ...data };
     const hint = payload.return_response === true;
     delete payload.return_response;
@@ -386,7 +536,9 @@ export class HomeAssistantClient {
     const wantResponse =
       support === "only" || support === "optional" || (support === undefined && hint);
 
-    const endpoint = `/api/services/${domain}/${service}${wantResponse ? "?return_response" : ""}`;
+    const endpoint =
+      `/api/services/${encodeURIComponent(domain)}/${encodeURIComponent(service)}` +
+      (wantResponse ? "?return_response" : "");
     const result = await this.fetch<EntityState[] | ServiceCallWithResponse>(endpoint, {
       method: "POST",
       body: JSON.stringify(payload),
@@ -448,10 +600,12 @@ export class HomeAssistantClient {
    * Get historical states for an entity (not cached - historical data)
    */
   async getHistory(
-    entityId: string,
+    rawEntityId: string,
     startTime?: string,
     endTime?: string
   ): Promise<HistoryEntry[]> {
+    // One entity: `filter_entity_id` also takes a comma-separated list.
+    const entityId = normalizeEntityId(rawEntityId);
     await this.requireExposed(entityId);
 
     const start = startTime || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

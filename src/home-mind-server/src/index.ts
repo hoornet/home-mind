@@ -16,6 +16,7 @@ import { DeviceScanner } from "./ha/device-scanner.js";
 import { DEFAULT_LAYOUT_DOMAINS, TopologyScanner } from "./ha/topology-scanner.js";
 import { fetchExposedEntities } from "./ha/exposed-entities.js";
 import { AssistExposure } from "./ha/exposure.js";
+import { scheduleNothingExposedNotice } from "./jobs/nothing-exposed-notice.js";
 import { createChatEngine, createFactExtractor } from "./llm/factory.js";
 import { createRouter } from "./api/routes.js";
 import { createSttService } from "./stt/stt-service.js";
@@ -55,7 +56,9 @@ console.log(`  Fact extractor: ${config.llmProvider}/${config.llmModel}`);
 // tools — Home Assistant filters both from the same list, and when the two
 // disagreed the layout honoured the user's choices while `search_entities`
 // returned every entity in the house.
-const exposure = new AssistExposure(() => fetchExposedEntities(config.haUrl, config.haToken));
+const exposure = new AssistExposure(() =>
+  fetchExposedEntities(config.haUrl, config.haToken, { skipTlsVerify: config.haSkipTlsVerify })
+);
 
 const ha = new HomeAssistantClient(config, config.toolsFromExposed ? exposure : undefined);
 console.log(`  Home Assistant: ${config.haUrl}`);
@@ -178,10 +181,17 @@ Ready to accept requests at http://localhost:${config.port}
 const cleanupJob = new MemoryCleanupJob(memory, conversations, config.memoryCleanupIntervalHours);
 cleanupJob.start();
 
+// With the tools bounded, a home that exposes nothing gives the assistant
+// nothing to reach; tell the user why rather than leave Home Mind looking broken.
+const cancelExposureNotice = config.toolsFromExposed
+  ? scheduleNothingExposedNotice(ha, exposure)
+  : () => {};
+
 // Graceful shutdown
 process.on("SIGTERM", () => {
   console.log("Shutting down...");
   cleanupJob.stop();
+  cancelExposureNotice();
   conversations.close();
   memory.close();
   process.exit(0);
@@ -190,6 +200,7 @@ process.on("SIGTERM", () => {
 process.on("SIGINT", () => {
   console.log("Shutting down...");
   cleanupJob.stop();
+  cancelExposureNotice();
   conversations.close();
   memory.close();
   process.exit(0);

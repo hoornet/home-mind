@@ -1,4 +1,4 @@
-import { WebSocket } from "undici";
+import { Agent, WebSocket } from "undici";
 
 /**
  * Reads the entities the user has exposed to Assist.
@@ -37,21 +37,34 @@ export function websocketUrl(baseUrl: string): string {
   return /\/core$/.test(base) ? `${ws}/websocket` : `${ws}/api/websocket`;
 }
 
+/** Shared by every read that may skip certificate checks (`HA_SKIP_TLS_VERIFY`). */
+let insecureAgent: Agent | undefined;
+
 /**
+ * @param skipTlsVerify Accept a self-signed certificate, as `HA_SKIP_TLS_VERIFY`
+ *   does for the REST calls. Without it such a Home Assistant answers every
+ *   read with a TLS error, and an unreadable list allows nothing.
  * @returns the entity IDs exposed to the conversation agent, or `null` when the
  *   list could not be read — an old Home Assistant, a token without websocket
- *   access, or a network error. `null` means "no opinion", not "expose nothing".
+ *   access, or a network error. `AssistExposure` treats `null` as "not known yet",
+ *   which allows nothing until a read succeeds.
  */
 export async function fetchExposedEntities(
   baseUrl: string,
-  token: string
+  token: string,
+  { skipTlsVerify = false }: { skipTlsVerify?: boolean } = {}
 ): Promise<Set<string> | null> {
   const url = websocketUrl(baseUrl);
 
   return new Promise((resolve) => {
     let socket: WebSocket;
     try {
-      socket = new WebSocket(url);
+      if (skipTlsVerify && url.startsWith("wss://")) {
+        insecureAgent ??= new Agent({ connect: { rejectUnauthorized: false } });
+        socket = new WebSocket(url, { dispatcher: insecureAgent });
+      } else {
+        socket = new WebSocket(url);
+      }
     } catch (err) {
       console.warn(`[exposure] Could not open ${url}: ${describe(err)}`);
       return resolve(null);
@@ -76,7 +89,15 @@ export async function fetchExposedEntities(
       TIMEOUT_MS
     );
 
-    socket.addEventListener("error", () => finish(null, `Websocket error on ${url}`));
+    socket.addEventListener("error", () =>
+      finish(
+        null,
+        `Websocket error on ${url}` +
+          (url.startsWith("wss://") && !skipTlsVerify
+            ? " (if Home Assistant uses a self-signed certificate, set HA_SKIP_TLS_VERIFY=true)"
+            : "")
+      )
+    );
     socket.addEventListener("close", () => finish(null));
 
     socket.addEventListener("message", (event) => {

@@ -2,6 +2,19 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.20.3] - 2026-11-20
+
+A security update; we recommend installing it.
+
+### Security (ha/service-policy.ts, ha/client.ts, ha/exposure.ts)
+- **The assistant sticks to everyday device control, whoever asks.** It switches and dims, works locks, covers, climate, media players and vacuums, runs your exposed scripts and scenes, sets helpers and timers, and uses your to-do lists, calendars, weather, announcements and notifications. Everything else is off-limits: restarting or stopping Home Assistant, the host, add-ons and backups, shell and REST commands, MQTT, and the services other integrations add for themselves. To let it run something beyond this, put it in a script and expose the script to Assist. This holds with `TOOLS_FROM_EXPOSED=false` too.
+- **Every request has to name what it acts on.** A call that names no device is only carried out for notifications and the shopping list; anything else needs an entity you have exposed. Device and service names are also checked before they reach Home Assistant, devices named inside a call's fields are held to the same list, a notification goes to the recipients you set up, not to one the assistant picks, media plays from your music and video libraries (such as Jellyfin, Plex, DLNA servers or Music Assistant), radio stations, audio from your local media folder and streaming services, but not from camera recordings, photo libraries or web addresses, and the assistant sends an alarm or lock code only a few times in ten minutes.
+- **If nothing is exposed, Home Mind reaches nothing.** Until now, exposing nothing meant there was no limit at all. Now the assistant can't see or control any device until you expose some, and a notification in Home Assistant explains how (Settings → Voice assistants → Expose). Home Assistant exposes common devices such as lights and switches by default, so most homes notice no change. While Home Assistant can't yet say what is exposed, Home Mind waits instead of guessing, tells you in a notification if that lasts, and the home layout follows the same rule.
+- **A self-signed certificate works for the exposure list too.** With `HA_SKIP_TLS_VERIFY=true`, the list of exposed devices is now read with the same setting as every other request; before, it could not be read on such a setup.
+- **The example configuration no longer turns off certificate checks.** `.env.example` set `HA_SKIP_TLS_VERIFY=true`; it is now a commented opt-in for a self-signed certificate on a network you trust. If you copied the old example and reach Home Assistant over `https://` with a real certificate, set it to `false` or remove it.
+
+No other configuration changes. The Home Mind add-on picks this up in its next version.
+
 ## [0.20.2] - 2026-10-31
 
 ### Fixed (llm/prompts.ts)

@@ -2,6 +2,13 @@ import { describe, it, expect, vi } from "vitest";
 import { AssistExposure } from "./exposure.js";
 
 const set = (...ids: string[]) => new Set(ids);
+const state = (entity_id: string) => ({
+  entity_id,
+  state: "on",
+  attributes: {},
+  last_changed: "",
+  last_updated: "",
+});
 
 describe("AssistExposure", () => {
   it("allows an exposed entity and refuses one that is merely present", async () => {
@@ -11,18 +18,30 @@ describe("AssistExposure", () => {
     expect(await exposure.allows("light.kitchen_1")).toBe(false);
   });
 
-  it("has no opinion when the list cannot be read", async () => {
+  it("allows nothing while the list has never been read", async () => {
     const exposure = new AssistExposure(async () => null);
 
-    // A websocket failure must not blind the assistant to the whole house.
-    expect(await exposure.allows("light.anything")).toBe(true);
+    // Fails closed: not knowing what is exposed is no licence to reach it all.
+    expect(await exposure.allows("light.anything")).toBe(false);
     expect(await exposure.list()).toBeNull();
+    expect(await exposure.filter([state("light.anything")])).toEqual([]);
   });
 
-  it("has no opinion when the user exposed nothing", async () => {
+  it("allows nothing when the user exposed nothing", async () => {
     const exposure = new AssistExposure(async () => set());
 
-    expect(await exposure.allows("light.anything")).toBe(true);
+    expect(await exposure.allows("light.anything")).toBe(false);
+    expect(await exposure.list()).toEqual(set());
+    expect(await exposure.filter([state("light.anything")])).toEqual([]);
+  });
+
+  it("allows a voice engine only by a whole, well-formed id", async () => {
+    const exposure = new AssistExposure(async () => set("light.a"));
+
+    expect(await exposure.allows("tts.piper")).toBe(true);
+    for (const id of ["tts.piper.extra", "tts.piper x", "tts.", "tts"]) {
+      expect(await exposure.allows(id)).toBe(false);
+    }
   });
 
   it("caches for the TTL, then refreshes", async () => {
@@ -156,8 +175,8 @@ describe("AssistExposure", () => {
     const fetcher = vi.fn(async () => answer);
     const exposure = new AssistExposure(fetcher, 60_000, 1000);
 
-    expect(await exposure.allows("light.b")).toBe(true);
-    expect(await exposure.allows("light.b")).toBe(true);
+    expect(await exposure.allows("light.b")).toBe(false);
+    expect(await exposure.allows("light.b")).toBe(false);
     expect(fetcher).toHaveBeenCalledTimes(1);
 
     answer = set("light.a");

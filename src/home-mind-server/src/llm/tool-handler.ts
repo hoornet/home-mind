@@ -121,7 +121,7 @@ export async function handleToolCall(
         break;
 
       case "call_service":
-        result = await ha.callService(
+        result = await ha.callServiceAsAssistant(
           input.domain as string,
           input.service as string,
           input.entity_id as string | undefined,
