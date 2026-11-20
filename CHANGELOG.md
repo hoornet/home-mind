@@ -2,10 +2,24 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.22.0] - 2026-11-20
+
+### Security (jobs/api-token-notice.ts)
+- **A server with no API token at all now says so in Home Assistant.** Since 0.21.0, `scripts/deploy.sh` creates a token for Docker; a server started another way, such as `docker compose up -d` without running `deploy.sh` once, runs without one. Home Assistant now shows a notification when that is the case, explaining how to add one: run `scripts/deploy.sh` once, or set your own `API_TOKEN`, then add the Home Mind integration again with that token. It clears itself once the token is in use.
+- **The "not protected yet" notice comes back every 6 hours while it applies.** Home Assistant forgets notifications when it restarts, so a single notice at startup could disappear while the API was still open. It stops once the token is in use.
+
+### Removed (api/routes.ts, config.ts, docker-compose.yml, scripts/deploy.sh)
+- **The speech-to-text and text-to-speech endpoints (`/api/stt`, `/api/tts`), the CORS setting and the optional app container are gone.** They served a companion app that was never released, so nothing that ships with Home Mind used them. Voice through Home Assistant Assist is unaffected: it runs on your Assist pipeline's own speech engines, as before.
+- **The `STT_*`, `TTS_*` and `CORS_ORIGINS` settings are no longer read.** If they are in your `.env` or Docker environment, they are ignored and you can delete them. The add-on's matching options (`stt_*`, `tts_*`, `cors_origins`) are removed in its next version.
+- `scripts/deploy.sh` now deploys Shodh and the server only. The `multer` and `cors` dependencies are removed with the code that used them.
+
+No configuration change is needed. Everything else works as before.
+
 ## [0.21.0] - 2026-11-20
 
 ### Security (api/auth.ts, add-on, scripts/deploy.sh)
 - **The API gets a token by default.** If you haven't set `API_TOKEN` (`api_token` in the add-on), the add-on, or `scripts/deploy.sh` for Docker, now creates one. The server requires it from the first request that carries it, so the Home Mind integration keeps working on the day you update: the integration 0.11.0 or later picks the token up from the add-on by itself and uses it as soon as Home Assistant has restarted, and from then on requests without it are refused. Until that happens, Home Assistant shows a notification saying the API is not protected yet, and a client that still sends a token from an earlier setup keeps working too. The integration's setup still tells you if the token you entered is not the server's.
+- With Docker, run `scripts/deploy.sh` once after updating: it creates the token. `docker compose up -d` on its own doesn't, and the API stays open.
 - If you added the integration by hand (Docker, or the add-on without discovery), remove it and add it again with the token: for Docker it is `API_TOKEN_AUTO` in your `.env`; for the add-on, accept the discovered add-on, or set your own `api_token` and use the same one in the integration. A token you set yourself is required from the start, as before.
 - **Docker Compose:** the server records that the token is in use in a new `server_state` volume, so `docker-compose.yml` changed; `scripts/deploy.sh` (or `docker compose up -d`) creates the volume. `deploy.sh` also makes `.env` readable by its owner only, since it holds your Home Assistant token.
 - **Does anything else talk to Home Mind directly, such as your own scripts or tools?** Once the integration uses the token, they need it too, as `Authorization: Bearer <token>`. With Docker, it is `API_TOKEN_AUTO` in your `.env`. With the add-on you can't see the generated token, so set your own `api_token` in the add-on's options and use it there; the add-on hands it to the integration (0.11.0 or later) by itself.

@@ -307,8 +307,6 @@ Both install paths for this repo, the add-on and Docker Compose, are in the [Qui
 - [x] Per-entity device overrides (`DEVICE_OVERRIDES`) for firmware quirks
 - [x] Home Layout Index (floor/room awareness via HA template API)
 - [x] Conversational forgetting (`forget_memory`, confirmed before deleting)
-- [x] Server-side STT (`POST /api/stt`, OpenAI Whisper)
-- [x] Server-side TTS (`POST /api/tts`, OpenAI TTS API)
 - [x] Home Assistant add-on (amd64; no long-lived access token, via the Supervisor proxy)
 - [x] Nives HA Add-on (one-click install, cloud + BYOK; formerly HomeMind PRO)
 - [ ] Multi-user support (OIDC)

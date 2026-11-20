@@ -1,10 +1,13 @@
 import "dotenv/config";
 import express from "express";
-import cors from "cors";
 import { createRequire } from "module";
 import { loadConfig } from "./config.js";
 import { createAuthMiddleware, type AutomaticToken } from "./api/auth.js";
-import { UNPROTECTED_API_NOTIFICATION_ID, scheduleApiTokenNotice } from "./jobs/api-token-notice.js";
+import {
+  OPEN_API_NOTICE,
+  UNPROTECTED_API_NOTIFICATION_ID,
+  scheduleApiTokenNotice,
+} from "./jobs/api-token-notice.js";
 import { JSON_BODY_OPTIONS } from "./api/json-body.js";
 
 // Read version from package.json
@@ -20,8 +23,6 @@ import { AssistExposure } from "./ha/exposure.js";
 import { scheduleNothingExposedNotice } from "./jobs/nothing-exposed-notice.js";
 import { createChatEngine, createFactExtractor } from "./llm/factory.js";
 import { createRouter } from "./api/routes.js";
-import { createSttService } from "./stt/stt-service.js";
-import { createTtsService } from "./tts/tts-service.js";
 import { MemoryCleanupJob } from "./jobs/memory-cleanup.js";
 
 // Load configuration
@@ -97,31 +98,8 @@ console.log(`  ✓ Topology scanner: home layout ${topology.hasLayout() ? "loade
 const llm = createChatEngine(config, memory, conversations, extractor, ha, scanner, topology);
 console.log(`  LLM client: ${config.llmProvider}/${config.llmModel}`);
 
-// Initialize STT (optional — only when STT_PROVIDER is set)
-const stt = createSttService(config);
-if (stt) {
-  console.log(`  STT: ${config.sttProvider} / ${config.sttModel}`);
-} else {
-  console.log("  STT: disabled");
-}
-
-// Initialize TTS (optional — only when TTS_PROVIDER is set)
-const tts = createTtsService(config);
-if (tts) {
-  console.log(`  TTS: ${config.ttsProvider} / ${config.ttsModel} (voice: ${config.ttsVoice})`);
-} else {
-  console.log("  TTS: disabled");
-}
-
 // Create Express app
 const app = express();
-
-// CORS middleware (only when CORS_ORIGINS is configured)
-if (config.corsOrigins) {
-  const origins = config.corsOrigins.split(",").map((o) => o.trim());
-  app.use(cors({ origin: origins, credentials: true }));
-  console.log(`  CORS: ${origins.join(", ")}`);
-}
 
 // Refuses compressed bodies before the token check: see api/json-body.ts.
 app.use(express.json(JSON_BODY_OPTIONS));
@@ -165,7 +143,7 @@ console.log(
 );
 
 // Mount API routes
-app.use("/api", createRouter(llm, memory, "shodh", version, config.customPrompt, conversations, stt ?? undefined, tts ?? undefined));
+app.use("/api", createRouter(llm, memory, "shodh", version, config.customPrompt, conversations));
 
 // Root endpoint
 app.get("/", (_req, res) => {
@@ -210,11 +188,10 @@ cleanupJob.start();
 // nothing to reach; tell the user why rather than leave Home Mind looking broken.
 // A generated token protects nothing until the integration uses it: say so.
 // With a token of the user's own it is enforced from the start, and the check
-// clears a notice left from before it was set.
-const cancelApiTokenNotice =
-  config.apiToken || automaticToken
-    ? scheduleApiTokenNotice(ha, () => authMiddleware.enforced())
-    : () => {};
+// clears a notice left from before it was set. With no token at all, say that.
+const cancelApiTokenNotice = scheduleApiTokenNotice(ha, () => authMiddleware.enforced(), {
+  notice: config.apiToken || automaticToken ? undefined : OPEN_API_NOTICE,
+});
 
 const cancelExposureNotice = config.toolsFromExposed
   ? scheduleNothingExposedNotice(ha, exposure)

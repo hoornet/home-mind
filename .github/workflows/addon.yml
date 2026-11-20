@@ -32,6 +32,8 @@ jobs:
           persist-credentials: false
 
       - name: HOME_MIND_REF matches package.json and the tag exists
+        env:
+          EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
           server=$(node -p "require('./src/home-mind-server/package.json').version")
@@ -39,7 +41,18 @@ jobs:
           echo "server package.json : $server"
           echo "HOME_MIND_REF       : $ref"
 
+          tag_exists() { git ls-remote --exit-code --tags origin "refs/tags/$1" >/dev/null 2>&1; }
+
           if [ "$ref" != "v$server" ]; then
+            # A pull request that bumps the server cannot bump the add-on in
+            # the same change: the tag it would point at is cut after the
+            # merge. That is the expected state, so say so and pass, as long
+            # as the add-on still points at a released server. On main the
+            # mismatch stays an error until the add-on bump lands.
+            if [ "$EVENT" = "pull_request" ] && ! tag_exists "v$server" && tag_exists "$ref"; then
+              echo "::notice file=home_mind/Dockerfile::Release pending: after merging, tag v$server, then bump HOME_MIND_REF and the add-on version. Until then the add-on builds $ref."
+              exit 0
+            fi
             echo "::error file=home_mind/Dockerfile::HOME_MIND_REF is $ref but the server is $server. The add-on would build an old server. Bump HOME_MIND_REF to v$server."
             exit 1
           fi
@@ -47,7 +60,7 @@ jobs:
           # The tag has to exist before the add-on can reference it, so a bump
           # that runs ahead of the release is caught here rather than on a
           # user's machine. Order: tag first, then point the add-on at it.
-          if ! git ls-remote --exit-code --tags origin "refs/tags/$ref" >/dev/null 2>&1; then
+          if ! tag_exists "$ref"; then
             echo "::error file=home_mind/Dockerfile::Tag $ref does not exist on origin, so this add-on cannot be built. Tag and push $ref first, then bump the add-on."
             exit 1
           fi
