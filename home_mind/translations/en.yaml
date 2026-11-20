@@ -39,8 +39,10 @@ configuration:
     name: Tools limited to exposed entities
     description: >-
       The assistant can read and control only the entities exposed to Assist,
-      like Home Assistant's own agent. Off lets it reach the whole house.
-      Default on.
+      like Home Assistant's own agent; if nothing is exposed, it reaches
+      nothing. Off lets it reach the whole house. Either way it sticks to
+      everyday device control and never restarts Home Assistant, the host or
+      add-ons, or runs commands. Default on.
   max_output_tokens:
     name: Maximum answer length
     description: >-
