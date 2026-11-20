@@ -142,7 +142,17 @@ function fieldReach(payload: Record<string, unknown>): { mentioned: Set<string>;
       for (const [k, v] of Object.entries(value)) walk(v, k);
     }
   };
-  walk(payload);
+  // The top-level targets are checked already (`serviceTargets`); scanning
+  // them again would read the whole house for every ordinary command.
+  const checked = new Set<string>(["entity_id", ...ENTITY_LIST_KEYS]);
+  for (const [key, value] of Object.entries(payload)) {
+    if (checked.has(key)) continue;
+    if (key === "target" && value && typeof value === "object" && !Array.isArray(value)) {
+      for (const [inner, v] of Object.entries(value)) if (inner !== "entity_id") walk(v, inner);
+      continue;
+    }
+    walk(value, key);
+  }
   return { mentioned: found, indirect };
 }
 

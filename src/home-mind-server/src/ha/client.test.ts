@@ -608,6 +608,16 @@ describe("HomeAssistantClient and the Assist exposure list", () => {
       expect(calls.filter((u) => u.includes("/api/services/lock/unlock"))).toHaveLength(3);
     });
 
+    it("does not read the whole house for an ordinary command", async () => {
+      const client = new HomeAssistantClient(baseConfig, exposing("light.kitchen_table"));
+      await client.callServiceAsAssistant("light", "turn_on", "light.kitchen_table", { brightness: 100 });
+      await client.callServiceAsAssistant("light", "turn_off", undefined, {
+        target: { entity_id: "light.kitchen_table" },
+      });
+      expect(calls.some((u) => u.endsWith("/api/states"))).toBe(false);
+      expect(posted("light/turn_on")).toBe(true);
+    });
+
     it("leaves the server's own calls alone", async () => {
       const client = new HomeAssistantClient(baseConfig, exposing("light.kitchen_table"));
       await client.callService("persistent_notification", "create", undefined, { message: "x" });
