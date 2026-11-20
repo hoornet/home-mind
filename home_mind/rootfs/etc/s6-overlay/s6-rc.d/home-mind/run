@@ -76,8 +76,6 @@ export LLM_PROVIDER="$(bashio::config 'llm_provider')"
 export CONVERSATION_STORAGE="$(bashio::config 'conversation_storage')"
 export MEMORY_TOKEN_LIMIT="$(bashio::config 'memory_token_limit')"
 export MEMORY_CLEANUP_INTERVAL_HOURS="$(bashio::config 'memory_cleanup_interval_hours')"
-export STT_PROVIDER="$(bashio::config 'stt_provider')"
-export TTS_PROVIDER="$(bashio::config 'tts_provider')"
 
 export_option 'llm_model' 'LLM_MODEL'
 export_option 'anthropic_api_key' 'ANTHROPIC_API_KEY'
@@ -103,14 +101,6 @@ if ! bashio::config.has_value 'api_token'; then
     export API_TOKEN_AUTO="$(cat /data/.api_token)"
     export API_TOKEN_STATE_PATH="/data/.api_token_confirmed"
 fi
-export_option 'cors_origins' 'CORS_ORIGINS'
-export_option 'stt_api_key' 'STT_API_KEY'
-export_option 'stt_base_url' 'STT_BASE_URL'
-export_option 'stt_model' 'STT_MODEL'
-export_option 'tts_api_key' 'TTS_API_KEY'
-export_option 'tts_base_url' 'TTS_BASE_URL'
-export_option 'tts_model' 'TTS_MODEL'
-export_option 'tts_voice' 'TTS_VOICE'
 
 # Without ha_url the add-on reaches Home Assistant through the Supervisor
 # proxy, which authenticates with the add-on's own token — no long-lived

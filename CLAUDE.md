@@ -170,10 +170,6 @@ Google Gemini is one such endpoint: `LLM_PROVIDER=openai`, `OPENAI_BASE_URL=http
 
 Nothing here should grow provider-, tier-, or preset-specific logic — this repo is model-agnostic by design, and how Nives is powered is deliberately not its concern. See `PRODUCT_SEPARATION.md` in the project hub for the specifics.
 
-STT (optional): `STT_PROVIDER` (`openai` | `none`, default `none`), `STT_API_KEY` (overrides `OPENAI_API_KEY`), `STT_BASE_URL` (custom Whisper-compatible endpoint), `STT_MODEL` (default `whisper-1`)
-
-TTS (optional): `TTS_PROVIDER` (`openai` | `none`, default `none`), `TTS_API_KEY` (overrides `OPENAI_API_KEY`), `TTS_BASE_URL` (custom OpenAI-compatible endpoint), `TTS_MODEL` (default `tts-1`), `TTS_VOICE` (default `alloy`)
-
 Integration tests: `SHODH_TEST_URL`, `SHODH_TEST_API_KEY`
 
 ## Authentication
@@ -189,8 +185,6 @@ Bearer token auth (`api/auth.ts`), in two kinds. `API_TOKEN`, set by the user, i
 
 - `POST /api/chat` — Full response (uses streaming internally). Body: `{ message, userId?, conversationId?, isVoice?, customPrompt? }`
 - `POST /api/chat/stream` — SSE streaming (`event: chunk` then `event: done`). Same body as `/api/chat`
-- `POST /api/stt` — Transcribe audio. Multipart `audio` field. Returns `{ text }`. 501 if `STT_PROVIDER=none`.
-- `POST /api/tts` — Synthesize speech. Body `{ text, language? }`. Returns `audio/mpeg`. 501 if `TTS_PROVIDER=none`.
 - `GET /api/health` — Health check (always public, bypasses auth)
 - `GET /api/memory/:userId` — List user's facts
 - `POST /api/memory/:userId/facts` — Add fact manually

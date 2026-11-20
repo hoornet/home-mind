@@ -2,6 +2,15 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.22.0] - 2026-11-20
+
+### Removed (api/routes.ts, config.ts, docker-compose.yml, scripts/deploy.sh)
+- **The speech-to-text and text-to-speech endpoints (`/api/stt`, `/api/tts`), the CORS setting and the optional app container are gone.** They served a companion app that was never released, so nothing that ships with Home Mind used them. Voice through Home Assistant Assist is unaffected: it runs on your Assist pipeline's own speech engines, as before.
+- **The `STT_*`, `TTS_*` and `CORS_ORIGINS` settings are no longer read.** If they are in your `.env` or Docker environment, they are ignored and you can delete them. The add-on's matching options (`stt_*`, `tts_*`, `cors_origins`) are removed in its next version.
+- `scripts/deploy.sh` now deploys Shodh and the server only. The `multer` and `cors` dependencies are removed with the code that used them.
+
+No configuration change is needed. Everything else works as before.
+
 ## [0.21.0] - 2026-11-20
 
 ### Security (api/auth.ts, add-on, scripts/deploy.sh)

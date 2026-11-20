@@ -124,7 +124,7 @@
   <!-- ============================================================ -->
 
   <g filter="url(#shadow)">
-    <rect x="520" y="260" width="380" height="270" rx="18" fill="white" stroke="#8b5cf6" stroke-width="2"/>
+    <rect x="520" y="260" width="380" height="222" rx="18" fill="white" stroke="#8b5cf6" stroke-width="2"/>
     <rect x="520" y="260" width="380" height="7" rx="4" fill="url(#hmGrad)"/>
     <!-- HM icon circle -->
     <circle cx="710" cy="297" r="18" fill="url(#hmGrad)"/>
@@ -149,17 +149,9 @@
     <text x="797" y="431" text-anchor="middle" font-size="11" font-weight="500" fill="#6d28d9">Topology Scanner</text>
     <text x="797" y="444" text-anchor="middle" font-size="9" fill="#7c3aed">Floor/room layout</text>
 
-    <rect x="540" y="461" width="165" height="36" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1"/>
-    <text x="622" y="479" text-anchor="middle" font-size="11" font-weight="500" fill="#6d28d9">STT (Whisper)</text>
-    <text x="622" y="492" text-anchor="middle" font-size="9" fill="#7c3aed">Voice transcription</text>
-
-    <rect x="715" y="461" width="165" height="36" rx="8" fill="#ede9fe" stroke="#c4b5fd" stroke-width="1"/>
-    <text x="797" y="479" text-anchor="middle" font-size="11" font-weight="500" fill="#6d28d9">TTS (OpenAI)</text>
-    <text x="797" y="492" text-anchor="middle" font-size="9" fill="#7c3aed">Speech synthesis</text>
-
     <!-- Tools badge -->
-    <rect x="540" y="505" width="340" height="16" rx="4" fill="#f5f3ff"/>
-    <text x="710" y="517" text-anchor="middle" font-size="10" fill="#7c3aed">Tools: get_state | get_entities | search_entities | call_service | get_history</text>
+    <rect x="540" y="457" width="340" height="16" rx="4" fill="#f5f3ff"/>
+    <text x="710" y="469" text-anchor="middle" font-size="10" fill="#7c3aed">Tools: get_state | get_entities | search_entities | call_service | get_history</text>
   </g>
 
   <!-- ============================================================ -->
@@ -293,7 +285,7 @@
   <text x="383" y="504" text-anchor="middle" font-size="9" fill="#64748b">WiFi</text>
 
   <!-- HM Server → host (dashed, "runs on") -->
-  <line x1="710" y1="530" x2="750" y2="600" stroke="#c4b5fd" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <line x1="710" y1="482" x2="750" y2="600" stroke="#c4b5fd" stroke-width="1.2" stroke-dasharray="4,3"/>
   <text x="742" y="572" font-size="9" fill="#a78bfa">runs on</text>
 
   <!-- ============================================================ -->

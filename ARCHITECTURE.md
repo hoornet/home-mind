@@ -2,7 +2,7 @@
 
 **Version:** 0.13.0
 **Last Updated:** March 8, 2026
-**Status:** Voice + Text + Memory + Multi-LLM Provider Support + Device Capability Index + Home Layout Index + TTS
+**Status:** Voice + Text + Memory + Multi-LLM Provider Support + Device Capability Index + Home Layout Index
 
 ---
 
@@ -64,10 +64,6 @@ src/home-mind-server/
 │   │   ├── extractor.ts      # Anthropic fact extractor
 │   │   ├── openai-extractor.ts # OpenAI fact extractor
 │   │   └── types.ts          # Memory types
-│   ├── stt/
-│   │   └── stt-service.ts    # Whisper transcription (optional)
-│   ├── tts/
-│   │   └── tts-service.ts    # OpenAI TTS synthesis (optional)
 │   └── ha/
 │       ├── client.ts         # HA REST API client
 │       ├── device-scanner.ts # Device capability index (light color modes)
@@ -78,8 +74,6 @@ src/home-mind-server/
 **Endpoints:**
 - `POST /api/chat` - Send message, get response
 - `POST /api/chat/stream` - SSE streaming response
-- `POST /api/stt` - Transcribe audio (multipart, requires `STT_PROVIDER`)
-- `POST /api/tts` - Synthesize speech (JSON `{text}`, requires `TTS_PROVIDER`)
 - `GET /api/health` - Health check
 
 ### 2. Shodh Memory

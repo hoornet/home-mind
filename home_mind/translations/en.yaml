@@ -70,37 +70,6 @@ configuration:
   log_level:
     name: Log level
     description: Also controls how much Shodh Memory logs.
-  stt_provider:
-    name: Speech-to-text provider
-    description: >-
-      Only used by the HomeMind app. Voice through Home Assistant Assist does
-      not need this.
-  stt_api_key:
-    name: Speech-to-text API key
-    description: Falls back to the OpenAI API key when empty.
-  stt_base_url:
-    name: Speech-to-text base URL
-    description: For OpenAI-compatible transcription endpoints.
-  stt_model:
-    name: Speech-to-text model
-    description: Transcription model name.
-  tts_provider:
-    name: Text-to-speech provider
-    description: >-
-      Only used by the HomeMind app. Voice through Home Assistant Assist does
-      not need this.
-  tts_api_key:
-    name: Text-to-speech API key
-    description: Falls back to the OpenAI API key when empty.
-  tts_base_url:
-    name: Text-to-speech base URL
-    description: For OpenAI-compatible speech endpoints.
-  tts_model:
-    name: Text-to-speech model
-    description: Speech synthesis model name.
-  tts_voice:
-    name: Voice
-    description: Voice used for synthesised speech.
   api_token:
     name: API token
     description: >-
@@ -109,11 +78,6 @@ configuration:
       integration (0.11.0 or later); the API requires it once the
       integration has used it. Set your own if anything else, such as your
       own scripts, talks to the add-on directly.
-  cors_origins:
-    name: CORS origins
-    description: >-
-      Comma-separated origins allowed to call the API from a browser. Needed
-      when the HomeMind app is served from another origin.
   ha_url:
     name: Home Assistant URL
     description: >-
@@ -130,5 +94,4 @@ configuration:
       Advanced. Accept self-signed certificates on the remote Home Assistant.
 network:
   3100/tcp: >-
-    Home Mind API. Required by the Home Mind integration and the optional
-    HomeMind app.
+    Home Mind API. Required by the Home Mind integration.

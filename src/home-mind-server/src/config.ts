@@ -79,25 +79,11 @@ const ConfigSchema = z
       .transform((v) => v !== "false")
       .prefault("true"),
 
-    // App / API access
-    corsOrigins: z.string().optional(), // Comma-separated origins, e.g. "http://localhost:5173,https://app.example.com"
+    // API access
     apiToken: z.string().optional(), // Bearer token for API auth, set by the user: enforced from the start
     // Generated token (add-on, deploy.sh): enforced from the first request that carries it
     apiTokenAuto: z.string().optional(),
     apiTokenStatePath: z.string().default("/data/.api_token_confirmed"),
-
-    // Speech-to-text (for HomeMind App)
-    sttProvider: z.enum(["openai", "none"]).default("none"),
-    sttApiKey: z.string().optional(), // Overrides openaiApiKey for STT; falls back to openaiApiKey if unset
-    sttBaseUrl: z.string().url().optional(), // Custom Whisper-compatible endpoint
-    sttModel: z.string().default("whisper-1"),
-
-    // Text-to-speech (for HomeMind App)
-    ttsProvider: z.enum(["openai", "none"]).default("none"),
-    ttsApiKey: z.string().optional(), // Overrides openaiApiKey for TTS; falls back to openaiApiKey if unset
-    ttsBaseUrl: z.string().url().optional(), // Custom OpenAI-compatible TTS endpoint
-    ttsModel: z.string().default("tts-1"),
-    ttsVoice: z.string().default("alloy"),
   })
   .superRefine((data, ctx) => {
     if (data.llmProvider === "anthropic" && !data.anthropicApiKey) {
@@ -151,19 +137,9 @@ export function loadConfig(): Config {
     layoutDomains: emptyToUndefined(process.env.LAYOUT_DOMAINS),
     layoutFromExposed: emptyToUndefined(process.env.LAYOUT_FROM_EXPOSED),
     toolsFromExposed: emptyToUndefined(process.env.TOOLS_FROM_EXPOSED),
-    corsOrigins: emptyToUndefined(process.env.CORS_ORIGINS),
     apiToken: emptyToUndefined(process.env.API_TOKEN?.trim()),
     apiTokenAuto: emptyToUndefined(process.env.API_TOKEN_AUTO?.trim()),
     apiTokenStatePath: emptyToUndefined(process.env.API_TOKEN_STATE_PATH),
-    sttProvider: emptyToUndefined(process.env.STT_PROVIDER),
-    sttApiKey: emptyToUndefined(process.env.STT_API_KEY),
-    sttBaseUrl: emptyToUndefined(process.env.STT_BASE_URL),
-    sttModel: emptyToUndefined(process.env.STT_MODEL),
-    ttsProvider: emptyToUndefined(process.env.TTS_PROVIDER),
-    ttsApiKey: emptyToUndefined(process.env.TTS_API_KEY),
-    ttsBaseUrl: emptyToUndefined(process.env.TTS_BASE_URL),
-    ttsModel: emptyToUndefined(process.env.TTS_MODEL),
-    ttsVoice: emptyToUndefined(process.env.TTS_VOICE),
   });
 
   if (!result.success) {

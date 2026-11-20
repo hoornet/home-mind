@@ -1,6 +1,5 @@
 import "dotenv/config";
 import express from "express";
-import cors from "cors";
 import { createRequire } from "module";
 import { loadConfig } from "./config.js";
 import { createAuthMiddleware, type AutomaticToken } from "./api/auth.js";
@@ -20,8 +19,6 @@ import { AssistExposure } from "./ha/exposure.js";
 import { scheduleNothingExposedNotice } from "./jobs/nothing-exposed-notice.js";
 import { createChatEngine, createFactExtractor } from "./llm/factory.js";
 import { createRouter } from "./api/routes.js";
-import { createSttService } from "./stt/stt-service.js";
-import { createTtsService } from "./tts/tts-service.js";
 import { MemoryCleanupJob } from "./jobs/memory-cleanup.js";
 
 // Load configuration
@@ -97,31 +94,8 @@ console.log(`  ✓ Topology scanner: home layout ${topology.hasLayout() ? "loade
 const llm = createChatEngine(config, memory, conversations, extractor, ha, scanner, topology);
 console.log(`  LLM client: ${config.llmProvider}/${config.llmModel}`);
 
-// Initialize STT (optional — only when STT_PROVIDER is set)
-const stt = createSttService(config);
-if (stt) {
-  console.log(`  STT: ${config.sttProvider} / ${config.sttModel}`);
-} else {
-  console.log("  STT: disabled");
-}
-
-// Initialize TTS (optional — only when TTS_PROVIDER is set)
-const tts = createTtsService(config);
-if (tts) {
-  console.log(`  TTS: ${config.ttsProvider} / ${config.ttsModel} (voice: ${config.ttsVoice})`);
-} else {
-  console.log("  TTS: disabled");
-}
-
 // Create Express app
 const app = express();
-
-// CORS middleware (only when CORS_ORIGINS is configured)
-if (config.corsOrigins) {
-  const origins = config.corsOrigins.split(",").map((o) => o.trim());
-  app.use(cors({ origin: origins, credentials: true }));
-  console.log(`  CORS: ${origins.join(", ")}`);
-}
 
 // Refuses compressed bodies before the token check: see api/json-body.ts.
 app.use(express.json(JSON_BODY_OPTIONS));
@@ -165,7 +139,7 @@ console.log(
 );
 
 // Mount API routes
-app.use("/api", createRouter(llm, memory, "shodh", version, config.customPrompt, conversations, stt ?? undefined, tts ?? undefined));
+app.use("/api", createRouter(llm, memory, "shodh", version, config.customPrompt, conversations));
 
 // Root endpoint
 app.get("/", (_req, res) => {

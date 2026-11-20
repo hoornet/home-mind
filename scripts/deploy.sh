@@ -73,21 +73,6 @@ if [ -z "$(env_value API_TOKEN)" ] && [ -z "$(env_value API_TOKEN_AUTO)" ]; then
     echo "to protect the API, remove the integration in Home Assistant and add it again with this token."
 fi
 
-# Optional: HomeMind App source (sibling directory). When present, the PWA
-# frontend is built and started alongside the server via the `app` compose
-# profile. When missing, deployment proceeds with Shodh + server only.
-APP_DIR="$(dirname "$PROJECT_DIR")/home-mind-app"
-if [ -d "$APP_DIR/.git" ]; then
-    echo "Updating home-mind-app..."
-    git -C "$APP_DIR" pull
-    export COMPOSE_PROFILES="app"
-elif [ -d "$APP_DIR" ]; then
-    echo "Using existing home-mind-app directory"
-    export COMPOSE_PROFILES="app"
-else
-    echo "home-mind-app not found at $APP_DIR (optional) — deploying server only"
-fi
-
 echo "Building and starting containers..."
 cd "$PROJECT_DIR"
 

@@ -1,32 +1,8 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import multer from "multer";
 import type { IChatEngine } from "../llm/interface.js";
 import type { IMemoryStore } from "../memory/interface.js";
 import type { IConversationStore } from "../memory/types.js";
-import type { ISttService } from "../stt/stt-service.js";
-import type { ITtsService } from "../tts/tts-service.js";
-
-/**
- * Limits for the one multipart endpoint this server has (`POST /api/stt`).
- *
- * `fieldArrayIndexLimit` is the fix for GHSA-535w-7cp7-47q4, and it is not
- * optional: multer defaults it to Infinity and only enforces it when the key is
- * actually present, so upgrading to 2.3.0 without setting it changes nothing.
- * A field name like `items[4294967294]` otherwise makes append-field allocate a
- * maximum-length sparse array, and a second field on the same base then walks
- * its whole length — one request, and the process stops answering anything.
- *
- * Zero, because this endpoint takes `audio` and `language` and nothing else.
- * No field name we send contains a bracket, so any index at all is an attack
- * rather than a caller we would break.
- */
-export const UPLOAD_LIMITS = {
-  fileSize: 25 * 1024 * 1024,
-  fieldArrayIndexLimit: 0,
-} as const;
-
-const upload = multer({ storage: multer.memoryStorage(), limits: { ...UPLOAD_LIMITS } });
 
 // Request validation schemas
 export const ChatRequestSchema = z.object({
@@ -109,9 +85,7 @@ export function createRouter(
   memoryBackend: "sqlite" | "shodh" = "sqlite",
   version: string = "0.0.0",
   defaultCustomPrompt?: string,
-  conversations?: IConversationStore,
-  stt?: ISttService,
-  tts?: ITtsService
+  conversations?: IConversationStore
 ): Router {
   const router = Router();
 
@@ -384,64 +358,6 @@ export function createRouter(
     } catch (error) {
       console.error("Delete conversation error:", error);
       const message = error instanceof Error ? error.message : "Unknown error";
-      res.status(500).json({ error: message });
-    }
-  });
-
-  /**
-   * POST /api/stt
-   * Transcribe audio to text using Whisper (HomeMind App only).
-   * Accepts multipart/form-data with an "audio" field.
-   * Returns 501 when STT_PROVIDER is not configured.
-   */
-  router.post("/stt", upload.single("audio"), async (req: Request, res: Response) => {
-    if (!stt) {
-      res.status(501).json({ error: "STT is not enabled on this server" });
-      return;
-    }
-
-    if (!req.file) {
-      res.status(400).json({ error: "No audio file provided (field name: audio)" });
-      return;
-    }
-
-    try {
-      const { buffer, mimetype, originalname } = req.file;
-      const language = typeof req.body.language === "string" && req.body.language ? req.body.language : undefined;
-      const text = await stt.transcribe(buffer, mimetype, originalname || "audio.webm", language);
-      res.json({ text });
-    } catch (error) {
-      console.error("STT error:", error);
-      const message = error instanceof Error ? error.message : "Transcription failed";
-      res.status(500).json({ error: message });
-    }
-  });
-
-  /**
-   * POST /api/tts
-   * Synthesize text to speech (HomeMind App only).
-   * Accepts JSON { text, language? } and returns audio/mpeg.
-   * Returns 501 when TTS_PROVIDER is not configured.
-   */
-  router.post("/tts", async (req: Request, res: Response) => {
-    if (!tts) {
-      res.status(501).json({ error: "TTS is not enabled on this server" });
-      return;
-    }
-
-    const { text, language } = req.body;
-    if (typeof text !== "string" || !text.trim()) {
-      res.status(400).json({ error: "text is required" });
-      return;
-    }
-
-    try {
-      const audio = await tts.synthesize(text, language);
-      res.setHeader("Content-Type", "audio/mpeg");
-      res.send(audio);
-    } catch (error) {
-      console.error("TTS error:", error);
-      const message = error instanceof Error ? error.message : "Synthesis failed";
       res.status(500).json({ error: message });
     }
   });
