@@ -213,7 +213,7 @@ This project publishes no artifact for the server (CI runs the tests since 2026-
 2. **Tag and push the tag.** The tag must exist before the next step can build.
 3. Only then bump `version` in `home_mind/config.yaml` and `HOME_MIND_REF` in `home_mind/Dockerfile` to match.
 
-Get that backwards and the add-on points at a tag that isn't there yet, and today nothing catches that but the build failing on a user's machine.
+Get that backwards and the add-on points at a tag that isn't there yet. CI's pin check (`.github/workflows/addon.yml`) catches both directions: on main it fails until `HOME_MIND_REF` matches the server version and the tag exists; on a pull request that bumps the server it passes with a "release pending" notice, as long as the new version is not tagged yet and the add-on still points at a released one.
 
 It has already gone wrong. On 2026-08-09 `main` was on 0.16.1 while GitHub's *Latest release* still read **0.15.7** — four versions, including `forget_memory` (the headline feature of 0.16.0), invisible to everyone who wasn't reading commits. A Reddit post titled "Home Mind 0.16" would have sent people to a Releases page showing 0.15.x.
 
