@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.1
+
+- **If the add-on's port is already in use, the server stops and says why** in the add-on log, so the add-on can start it again once the port is free, rather than showing "Ready" for a server that cannot answer. Server 0.22.1; no settings to change.
+
 ## 0.22.0
 
 - **The "not protected yet" reminder comes back every 6 hours while it applies.** Home Assistant forgets notifications when it restarts; the reminder now returns until the Home Mind integration uses the API token, and stops then.
