@@ -2,6 +2,13 @@
 
 All notable changes to Home Mind are documented here.
 
+## [0.22.1] - 2026-11-20
+
+### Fixed (index.ts, api/listen.ts)
+- **When its port is already in use, the server stops and says why.** If something else holds port 3100, for example another copy of Home Mind that is still running, the server now logs `Could not listen on port 3100` and exits, so Docker or the add-on can start it again once the port is free, rather than showing "Ready" for a server that cannot answer.
+
+No configuration change.
+
 ## [0.22.0] - 2026-11-20
 
 ### Security (jobs/api-token-notice.ts)
