@@ -209,9 +209,12 @@ cleanupJob.start();
 // With the tools bounded, a home that exposes nothing gives the assistant
 // nothing to reach; tell the user why rather than leave Home Mind looking broken.
 // A generated token protects nothing until the integration uses it: say so.
-const cancelApiTokenNotice = automaticToken
-  ? scheduleApiTokenNotice(ha, () => authMiddleware.enforced())
-  : () => {};
+// With a token of the user's own it is enforced from the start, and the check
+// clears a notice left from before it was set.
+const cancelApiTokenNotice =
+  config.apiToken || automaticToken
+    ? scheduleApiTokenNotice(ha, () => authMiddleware.enforced())
+    : () => {};
 
 const cancelExposureNotice = config.toolsFromExposed
   ? scheduleNothingExposedNotice(ha, exposure)
