@@ -52,6 +52,9 @@ schema:
   ollama_base_url: str?
   # Behaviour
   custom_prompt: str?
+  # Reply after an action an OpenAI-compatible model ends without a word
+  # (ACTION_DONE_REPLY). Unset means the server default, "Done.".
+  action_done_reply: str?
   # Ceiling on one written reply, in tokens. Absent from `options:` on purpose:
   # unset means the server's own default, which can improve without every
   # existing install being pinned to today's number.
