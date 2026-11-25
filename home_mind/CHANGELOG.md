@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.22.1-1
+## 0.22.2
 
 - **New `reasoning_effort` option** for OpenAI-compatible models. Some newer OpenAI models, such as GPT-5.6 and GPT-6, only call tools when it is set to `none`; Gemini works best with `low`. Leave it empty and nothing changes. If a model doesn't accept the setting, Home Mind stops sending it to that model by itself. Contributed by @maprolim (#71). Server 0.22.1, unchanged.
 
