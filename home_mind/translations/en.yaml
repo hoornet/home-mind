@@ -20,6 +20,13 @@ configuration:
   openai_max_tokens:
     name: OpenAI max tokens
     description: Upper limit on the response length.
+  reasoning_effort:
+    name: Reasoning effort
+    description: >-
+      Sent as reasoning_effort on OpenAI-compatible calls. Leave empty to not
+      send it. Newer OpenAI models (GPT-5.6, GPT-6) refuse tools over this API
+      unless it is none, and Gemini works best with low. A model that rejects
+      the setting simply gets it no more.
   ollama_base_url:
     name: Ollama base URL
     description: >-
