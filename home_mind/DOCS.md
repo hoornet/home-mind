@@ -52,6 +52,7 @@ Finally set Home Mind as the conversation agent under
 | `openai_api_key` | Required for `openai`. |
 | `openai_base_url` | Override for OpenAI-compatible endpoints. |
 | `openai_max_tokens` | Response cap for OpenAI. |
+| `reasoning_effort` | `none`, `minimal`, `low`, `medium` or `high`, sent as `reasoning_effort` on OpenAI-compatible calls. Leave empty to not send it. Newer OpenAI models such as `gpt-6-luna` refuse tools on this API unless it is `none`; Gemini works best with `low`. A model that rejects the setting gets it no more. |
 | `ollama_base_url` | Required for `ollama`, e.g. `http://192.168.1.10:11434/v1`. |
 
 ### Behaviour
