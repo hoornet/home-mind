@@ -45,6 +45,10 @@ schema:
   openai_api_key: password?
   openai_base_url: str?
   openai_max_tokens: int(1,)?
+  # OpenAI-compatible `reasoning_effort` (REASONING_EFFORT). Unset means the
+  # parameter is not sent. Newer OpenAI models need `none` to call tools over
+  # /v1/chat/completions.
+  reasoning_effort: list(none|minimal|low|medium|high)?
   ollama_base_url: str?
   # Behaviour
   custom_prompt: str?
