@@ -37,6 +37,14 @@ configuration:
     description: >-
       Added to the system prompt. Use it to give the assistant a name and a
       personality.
+  action_done_reply:
+    name: Reply after an action
+    description: >-
+      What the assistant says when it has done what you asked but the model
+      added no words of its own, which some OpenAI-compatible models such as
+      Gemini often do. Leave empty for "Done.". If you talk to it in another
+      language, write it in that language, for example "Hotovo." or
+      "Erledigt.". Used with the openai and ollama providers.
   layout_from_exposed:
     name: Layout from exposed entities
     description: >-
